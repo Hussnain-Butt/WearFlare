@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import Navbar from './Navbar';
 
 const ContactUs = () => {
   const [firstName, setFirstName] = useState('');
@@ -44,7 +45,8 @@ const ContactUs = () => {
       <div className="glow-effect" />
       
       {/* Navigation section */}
-      <nav className="relative z-10 flex justify-between items-center py-6 px-8 text-white">
+      <Navbar />
+      {/* <nav className="relative z-10 flex justify-between items-center py-6 px-8 text-white">
         <div className="flex items-center gap-8">
           <a href="#" className="font-bold text-lg">HOME</a>
           <a href="#" className="font-bold text-lg">MEN</a>
@@ -58,7 +60,7 @@ const ContactUs = () => {
           <a href="#"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></a>
           <a href="#"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg></a>
         </div>
-      </nav>
+      </nav> */}
 
       {/* Main content */}
       <div className="relative z-10 container mx-auto px-8 py-8">

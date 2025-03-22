@@ -132,7 +132,7 @@ const SignupForm = () => {
           
           <div className="text-center mt-3 animate-fade-in" style={{ animationDelay: '0.9s' }}>
             <p className="text-white text-sm">
-              Have an account? <Link to="/" className="text-[#7A68A6] hover:underline ml-1">Sign in</Link>
+              Have an account? <Link to="/login" className="text-[#7A68A6] hover:underline ml-1">Sign in</Link>
             </p>
           </div>
         </form>
