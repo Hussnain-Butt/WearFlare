@@ -50,7 +50,6 @@ const Navbar = () => {
               </button>
               {dropdownOpen && (
                 <div className="absolute mt-2 w-40 bg-white shadow-md rounded-md z-50">
-            <Link to="/virtual-fitting-room" className="block px-4 py-2 hover:bg-gray-100">Virtual Fitting Room</Link>
 
             <Link to="/3d-avatar-customization" className="block px-4 py-2 hover:bg-gray-100">3D Avatar Customization</Link>
 
