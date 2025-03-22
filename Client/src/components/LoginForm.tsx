@@ -1,35 +1,67 @@
-import React, { useState } from "react";
+import React, { useState, useContext, FormEvent } from "react";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../context/AuthContext"; // ✅ Import AuthContext
 
-const LoginForm = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+const LoginForm: React.FC = () => {
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    throw new Error("AuthContext is undefined. Make sure AuthProvider is wrapping the app.");
+  }
+  const { setUser } = authContext;
+  const navigate = useNavigate();
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!username || !password) {
+    if (!email || !password) {
       showToast("Please fill in all fields", "error");
       return;
     }
 
     setIsLoading(true);
 
-    // Simulate login process
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      const data = await response.json();
       setIsLoading(false);
-      showToast("You've been logged in successfully!", "success");
-    }, 1500);
+
+      if (response.ok) {
+        showToast("Logged in successfully!", "success");
+        setUser({ token: data.token });
+
+        // ✅ Store token in LocalStorage if Remember Me is checked
+        if (rememberMe) {
+          localStorage.setItem("token", data.token);
+        } else {
+          sessionStorage.setItem("token", data.token);
+        }
+
+        navigate("/");
+      } else {
+        showToast(data.message, "error");
+      }
+    } catch (error) {
+      setIsLoading(false);
+      showToast("Server error", "error");
+    }
   };
 
   return (
@@ -38,16 +70,16 @@ const LoginForm = () => {
         <h1 className="text-black text-center text-3xl font-semibold mb-6">Sign in</h1>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* Username Field */}
+          {/* Email Field */}
           <div>
-            <label className="text-gray-700 text-sm font-medium block mb-2">Username</label>
+            <label className="text-gray-700 text-sm font-medium block mb-2">Email</label>
             <div className="relative">
               <input
-                type="text"
-                placeholder="Enter your username"
+                type="email"
+                placeholder="Enter your email"
                 className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pl-10 outline-none focus:ring-2 focus:ring-[#B8860B] transition"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                 <User size={20} />
@@ -91,7 +123,7 @@ const LoginForm = () => {
               <span className="text-gray-600 text-sm">Remember Me</span>
             </label>
 
-            <Link to="#" className="text-[#7A68A6] text-sm hover:underline">
+            <Link to="/forgot-password" className="text-[#7A68A6] text-sm hover:underline">
               Forgot Password?
             </Link>
           </div>

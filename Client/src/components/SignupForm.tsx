@@ -17,27 +17,40 @@ const SignupForm = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!fullName || !email || !password || !confirmPassword) {
       showToast("Please fill in all fields", "error");
       return;
     }
-
+  
     if (password !== confirmPassword) {
       showToast("Passwords do not match", "error");
       return;
     }
-
+  
     setIsLoading(true);
-
-    // Simulate signup process
-    setTimeout(() => {
+  
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, email, password }),
+      });
+  
+      const data = await response.json();
       setIsLoading(false);
-      showToast("Account created successfully!", "success");
-    }, 1500);
+      if (response.ok) {
+        showToast("Account created successfully!", "success");
+      } else {
+        showToast(data.message, "error");
+      }
+    } catch (error) {
+      setIsLoading(false);
+      showToast("Server error", "error");
+    }
   };
+  
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-5">

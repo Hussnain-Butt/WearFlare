@@ -1,5 +1,7 @@
-// db.js (Database connection setup)
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const connectDB = async () => {
   try {
@@ -7,11 +9,11 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('MongoDB Connected');
+    console.log("✅ MongoDB Connected...");
   } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
-    process.exit(1); // Exit process if DB connection fails
+    console.error("❌ MongoDB Connection Error:", error);
+    process.exit(1);
   }
 };
 
-module.exports = connectDB;
+export default connectDB;

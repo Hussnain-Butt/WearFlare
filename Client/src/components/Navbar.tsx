@@ -1,10 +1,25 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState,useContext } from "react";
+import { Link, useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { Search, ShoppingBag, Menu, X, ChevronDown } from "lucide-react";
+import AuthContext from "../context/AuthContext"; // ✅ Import AuthContext
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    throw new Error("AuthContext is undefined. Make sure AuthProvider is wrapping the App.");
+  }
+  const { user, logout } = authContext; // ✅ Get user and logout function from AuthContext
+
+  const navigate = useNavigate(); // ✅ Now use useNavigate() here
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login"); // ✅ Redirect to login page after logout
+  };
+
 
   return (
     <nav className="bg-white shadow-md w-full">
@@ -52,9 +67,21 @@ const Navbar = () => {
             <Link to="/cart">
               <ShoppingBag className="h-6 w-6 hover:text-[#B8860B]" />
             </Link>
-            <Link to="/signup" className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-[#996F0B] transition">
-              Signup
-            </Link>
+            
+            {user ? (
+              // 🔴 Logout Button when user is logged in
+              <button
+                onClick={handleLogout}
+                className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+              >
+                Logout
+              </button>
+            ) : (
+              // 🟢 Signup Button when user is NOT logged in
+              <Link to="/signup" className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-[#996F0B] transition">
+                Signup
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -102,9 +129,21 @@ const Navbar = () => {
               <Link to="/cart">
                 <ShoppingBag className="h-6 w-6 hover:text-[#B8860B]" />
               </Link>
-              <Link to="/signup" className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-[#996F0B] transition w-full text-center">
+              
+            {user ? (
+              // 🔴 Logout Button when user is logged in
+              <button
+                onClick={logout}
+                className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+              >
+                Logout
+              </button>
+            ) : (
+              // 🟢 Signup Button when user is NOT logged in
+              <Link to="/signup" className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-[#996F0B] transition">
                 Signup
               </Link>
+            )}
             </div>
           </div>
         )}
