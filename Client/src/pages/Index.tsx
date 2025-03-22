@@ -13,58 +13,6 @@ import Navbar from '@/components/Navbar';
 const Index = () => {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
-
-      {/* main navbar  */}
-      <nav className="flex justify-between text-black w-full items-center px-8 py-6 relative z-10">
-      <div className="flex gap-8 items-center">
-        <Link to="/" className="font-bold">HOME</Link>
-        <Link to="#" className="font-bold">MEN</Link>
-        <Link to="#" className="font-bold t">WOMEN</Link>
-        <Link to="/virtual-fitting-room-creation" className="font-bold">VIRTUAL FITTING ROOM CREATION</Link>
-        <Link to="/virtual-fitting-room" className="font-bold">VIRTUAL FITTING ROOM</Link>
-        <Link to="/3d-avatar-customization" className="font-bold">3D AVATAR CUSTOMIZATION</Link>
-      </div>
-      <div className="flex gap-6 items-center">
-        <Link to="#"><Search className="h-6 w-6" /></Link>
-        <Link to="#"><Heart className="h-6 w-6" /></Link>
-        <Link to="#"><User className="h-6 w-6" /></Link>
-        <Link to="#"><ShoppingBag className="h-6 w-6" /></Link>
-      </div>
-    </nav>
-
-      {/* Navigation Bar */}
-      <nav className="flex justify-between items-center py-4 px-6 md:px-12">
-        <div className="flex items-center gap-8">
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img 
-              src="/lovable-uploads/834c4203-b1ea-4cb0-8dbe-044cbc51ec0c.png" 
-              alt="WearFlare Logo" 
-              className="h-10"
-            />
-          </Link>
-          
-          {/* Navigation Links */}
-          <div className="flex items-center gap-6 text-gray-800 text-sm">
-            <Link to="/" className="font-medium">Home</Link>
-            <Link to="#" className="font-medium">Men</Link>
-            <Link to="#" className="font-medium">Women</Link>
-            <Link to="#" className="font-medium">Avatar</Link>
-            <Link to="#" className="font-medium">About Us</Link>
-          </div>
-        </div>
-        
-        {/* User Icons */}
-        <div className="flex items-center gap-4">
-          <Link to="/login" className="text-gray-700 hover:text-black">
-            <User className="h-5 w-5" />
-          </Link>
-          <Link to="#" className="text-gray-700 hover:text-black">
-            <ShoppingCart className="h-5 w-5" />
-          </Link>
-        </div>
-      </nav>
-
 <section className="w-full py-12 px-8 md:px-16">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
@@ -288,9 +236,7 @@ const Index = () => {
       {/* Autumn Fashion Sale Banner */}
       <img src={autoumnPic} alt="" className='my-8' />
       {/* <AutumnFashionSale  /> */}
-      
-      {/* Footer */}
-      <Footer />
+    
     </div>
   );
 };

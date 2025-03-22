@@ -44,8 +44,7 @@ const ContactUs = () => {
       <div className="corner-dark-bottom" />
       <div className="glow-effect" />
       
-      {/* Navigation section */}
-      <Navbar />
+   
       {/* <nav className="relative z-10 flex justify-between items-center py-6 px-8 text-white">
         <div className="flex items-center gap-8">
           <a href="#" className="font-bold text-lg">HOME</a>

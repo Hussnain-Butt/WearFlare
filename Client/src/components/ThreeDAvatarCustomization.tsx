@@ -41,23 +41,25 @@ const ThreeDAvatarCustomization = () => {
   };
 
   return (
-    <div className="min-h-screen w-full background overflow-x-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#231539] via-[#3A2160] to-[#17112A] z-0" />
-      
-      {/* Navigation section */}
-      <Navbar />
-      
+    <div className="min-h-screen w-full background overflow-x-hidden py-20">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#B8860B] via-[#A37408] to-[#8C5F06] z-0" />
       {/* Page Title */}
-      <div className="relative z-10 flex flex-col items-center pt-4 text-white">
-        <div className='flex '>
-        <div className="w-6 h-6 rounded-full bg-white mt-1 mr-2"> <UserRound className='text-purple-800' />  </div>
-        <h1 className="text-3xl font-serif font-bold ">Create Your 3D Avatar</h1>
+      <div className="relative z-10 flex flex-col items-center pt-6 text-white mb-10">
+      {/* Header Title Section */}
+      <div className="flex items-center mb-3">
+        <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#8C5F06] shadow-lg mr-3">
+          <UserRound className="text-white w-5 h-5" />
         </div>
-       
-        <p className="text-sm text-center text-gray-300 max-w-xl">
-          Customize your avatar by changing the measurements and physical characteristics
-        </p>
+        <h1 className="text-4xl font-semibold tracking-wide text-white drop-shadow-lg">
+          Create Your 3D Avatar
+        </h1>
       </div>
+
+      {/* Subtitle Text */}
+      <p className="text-base text-center text-gray-300 max-w-2xl px-4">
+        Customize your avatar by changing the measurements and physical characteristics.
+      </p>
+    </div>
       
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center mt-4">
@@ -133,7 +135,7 @@ const ThreeDAvatarCustomization = () => {
               </div>
               
               <Button 
-                className="mt-4 bg-[#4B3B75] hover:bg-[#5D4D8A] text-white px-8 py-2 absolute  rounded-full"
+                className="mt-4 bg-[#B8860B]  text-white px-8 py-2 absolute  rounded-full"
               >
                 Customize Avatar
               </Button>
@@ -186,125 +188,62 @@ const ThreeDAvatarCustomization = () => {
         </div>
         
         {/* Measurement and Photo Section */}
-        <div className="w-full max-w-5xl bg-black/50 rounded-lg p-4 mx-auto mb-10">
-          <div className="grid grid-cols-12 gap-8">
-            <div className="col-span-5 flex flex-col">
-              <div className="flex items-center mb-4">
-                <Camera className="h-6 w-6 text-white mr-2" />
-                <h3 className="text-white font-bold">Photos</h3>
-              </div>
-              
-              <div className="border border-gray-600 rounded-lg aspect-square flex flex-col items-center justify-center text-white">
-                <div className="mb-4 mt-auto">
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-white/70" />
-                </div>
-                <p className="text-sm text-white/70 mb-auto">Click or drag photos to upload</p>
-                
-                <Button variant="outline" className="mb-4 bg-indigo-900/50 text-white border-indigo-900">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Save Avatar
-                </Button>
-              </div>
-            </div>
-            
-            <div className="col-span-7 flex flex-col">
-              <h3 className="text-white font-bold text-xl mb-4 text-center">Measurement</h3>
-              
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="height" className="text-white text-sm">Height (cm)</Label>
-                  <Input 
-                    id="height" 
-                    type="number" 
-                    value={measurements.height}
-                    onChange={(e) => handleMeasurementChange('height', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="weight" className="text-white text-sm">Weight (kg)</Label>
-                  <Input 
-                    id="weight" 
-                    type="number" 
-                    value={measurements.weight}
-                    onChange={(e) => handleMeasurementChange('weight', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="chest" className="text-white text-sm">Chest (cm)</Label>
-                  <Input 
-                    id="chest" 
-                    type="number" 
-                    value={measurements.chest}
-                    onChange={(e) => handleMeasurementChange('chest', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="waist" className="text-white text-sm">Wait (cm)</Label>
-                  <Input 
-                    id="waist" 
-                    type="number" 
-                    value={measurements.waist}
-                    onChange={(e) => handleMeasurementChange('waist', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="hips" className="text-white text-sm">Hips (cm)</Label>
-                  <Input 
-                    id="hips" 
-                    type="number" 
-                    value={measurements.hips}
-                    onChange={(e) => handleMeasurementChange('hips', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-              </div>
-              
-              <h3 className="text-white font-bold text-xl mb-4 text-center">Body Features</h3>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <Label htmlFor="skinTone" className="text-white text-sm">Skin Tone</Label>
-                  <Input 
-                    id="skinTone" 
-                    value={bodyFeatures.skinTone}
-                    onChange={(e) => handleFeatureChange('skinTone', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="hairColor" className="text-white text-sm">Hair Color</Label>
-                  <Input 
-                    id="hairColor" 
-                    value={bodyFeatures.hairColor}
-                    onChange={(e) => handleFeatureChange('hairColor', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="eyeColor" className="text-white text-sm">Eye Color</Label>
-                  <Input 
-                    id="eyeColor" 
-                    value={bodyFeatures.eyeColor}
-                    onChange={(e) => handleFeatureChange('eyeColor', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="bodyType" className="text-white text-sm">Body Type</Label>
-                  <Input 
-                    id="bodyType" 
-                    value={bodyFeatures.bodyType}
-                    onChange={(e) => handleFeatureChange('bodyType', e.target.value)}
-                    className="bg-transparent border-gray-700 text-white"
-                  />
-                </div>
-              </div>
-            </div>
+        <div className="w-full max-w-5xl bg-gradient-to-b from-[#81A1C1]/20 to-[#5E81AC]/20 rounded-lg p-6 mx-auto mb-10 shadow-lg">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Photo Upload Section */}
+        <div className="md:col-span-5 flex flex-col">
+          <div className="flex items-center mb-4">
+            <Camera className="h-6 w-6 text-white mr-2" />
+            <h3 className="text-white font-bold text-lg">Photos</h3>
+          </div>
+
+          <div className="border border-[#B8860B] rounded-lg aspect-square flex flex-col items-center justify-center bg-[#B8860B] hover:bg-[#A8860B] transition-all text-white">
+            <Upload className="h-12 w-12 text-white mb-2" />
+            <p className="text-sm text-white">Click or drag to upload</p>
+            <Button variant="outline" className="mt-4 bg-[#B8860B] hover:bg-[#A8860B] text-white border-none py-2 px-4">
+              <Camera className="h-5 w-5 mr-2" />
+              Upload Photo
+            </Button>
           </div>
         </div>
+
+        {/* Measurements & Features Section */}
+        <div className="md:col-span-7 flex flex-col">
+          <h3 className="text-white font-bold text-2xl mb-4 text-center">Measurement</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {["height", "weight", "chest", "waist", "hips"].map((field) => (
+              <div key={field}>
+                <Label htmlFor={field} className="text-white text-sm capitalize">{field} (cm)</Label>
+                <Input
+                  id={field}
+                  type="number"
+                  value={measurements[field]}
+                  onChange={(e) => handleMeasurementChange(field, e.target.value)}
+                  className="bg-[#B8860B] border-[#B8860B] text-white rounded-md"
+                />
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-white font-bold text-2xl mt-6 mb-4 text-center">Body Features</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {["skinTone", "hairColor", "eyeColor", "bodyType"].map((feature) => (
+              <div key={feature}>
+                <Label htmlFor={feature} className="text-white text-sm capitalize">{feature.replace(/([A-Z])/g, " $1")}</Label>
+                <Input
+                  id={feature}
+                  value={bodyFeatures[feature]}
+                  onChange={(e) => handleFeatureChange(feature, e.target.value)}
+                  className="bg-[#B8860B] border-[#B8860B] text-white rounded-md"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
       </div>
     </div>
   );

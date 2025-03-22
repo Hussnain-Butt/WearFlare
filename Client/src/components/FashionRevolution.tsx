@@ -17,7 +17,7 @@ const FashionRevolution = () => {
       Don't just wear clothes; wear your personality! Join the WearFlare revolution and express yourself like never before. Let's make fashion fun again!
     </p>
     <Link to="/avatar-creation">
-      <Button className="bg-[#8D7253]  text-4xl hover:bg-[#7d654a] text-white rounded-full p-6">
+      <Button className="bg-[#8D7253]  text-2xl hover:bg-[#7d654a] text-white rounded-full p-3 px-9">
         Create Now
       </Button>
     </Link>

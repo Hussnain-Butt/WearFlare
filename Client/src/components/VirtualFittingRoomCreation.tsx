@@ -6,40 +6,38 @@ import women from "../../public/image-1.png";
 
 const VirtualFittingRoomCreation = () => {
   return (
-    <div className="w-full background min-h-screen relative">
-      {/* Background Gradient */}
-      <div className="bg-gradient-to-br absolute from-[#231539] inset-0 to-[#17112A] via-[#3A2160] z-0" />
-      <Navbar />
+    <div className="w-full min-h-screen relative flex flex-col items-center justify-center">
+      {/* Background Gradient Updated */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#B8860B] via-[#A37408] to-[#8C5F06] z-0" />
 
-      <div className="flex flex-col justify-center absolute inset-0 items-center z-10">
-        <h1 className="text-5xl text-center text-white font-bold font-serif mb-16 md:text-6xl">
+      {/* Main Content */}
+      <div className="relative text-center z-10">
+        <h1 className="text-4xl md:text-4xl text-white font-serif font-semibold mb-12">
           Please create your avatar first
         </h1>
-        <div>
-          <Link
-            to="/customize-avatar"
-            className="bg-[#463275] rounded-full text-white text-xl font-bold hover:bg-[#503a85] px-12 py-4 transition-colors"
-          >
-            Create Avatar
-          </Link>
-        </div>
+
+        {/* Create Avatar Button */}
+        <Link
+          to="/customize-avatar"
+          className="bg-white text-[#B8860B] text-lg font-medium px-8 py-4 rounded-full shadow-md transition-all"
+        >
+          Create Avatar
+        </Link>
       </div>
 
-      {/* Bottom Left Image */}
-      <img   
-           src={women}
-
-        alt="Men Avatar"
-        className="h-[300px] w-auto absolute bottom-0 left-0"
-      />
-
-      {/* Bottom Right Image */}
-      <img     
-         src={men}
-
-        alt="Women Avatar"
-        className="h-[300px] w-auto absolute bottom-0 right-0"
-      />
+      {/* Large Poster-Style Images */}
+      <div className="absolute bottom-0 w-full flex justify-between px-0">
+        <img
+          src={women}
+          alt="Women Avatar"
+          className="h-[500px] w-auto rounded-md object-cover"
+        />
+        <img
+          src={men}
+          alt="Men Avatar"
+          className="h-[500px] w-auto rounded-md object-cover"
+        />
+      </div>
     </div>
   );
 };
