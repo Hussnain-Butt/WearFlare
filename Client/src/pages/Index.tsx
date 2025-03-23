@@ -229,10 +229,6 @@ const Index = () => {
 
 
 
-      {/* <div>
-        <img src={studio} alt="" />
-        <StudioShowcase/>
-      </div> */}
       {/* Autumn Fashion Sale Banner */}
       <img src={autoumnPic} alt="" className='my-8' />
       {/* <AutumnFashionSale  /> */}
