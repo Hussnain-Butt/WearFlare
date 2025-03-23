@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
-import girl from "../../public/image.png"
-import boys from "../../public/image-1.png"
-import boy from "../../public/img1-virtual-fitting-room.png"
+import girl from "../../public/girls.png"
+import boys from "../../public/boys.png"
+import boy from "../../public/booy.png"
 
 const FashionShowcase: React.FC = () => {
   const circleRef = useRef<HTMLDivElement>(null);

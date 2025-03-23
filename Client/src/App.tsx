@@ -11,10 +11,9 @@ import NavbarComponent from "./components/NavbarComponent";
 import Footer from "./components/Footer";
 import Men from "./pages/Men";
 import Women from "./pages/Women";
-import { Cart } from "./pages/Cart";
 import { Account } from "./pages/Account";
 import WishList from "./pages/WishList";
-
+import Cart from "./pages/Cart";
 const App = () => (
   <Router>
     <NavbarComponent />

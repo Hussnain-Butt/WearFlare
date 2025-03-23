@@ -1,8 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
-import men from "../../public/image.png";
-import women from "../../public/image-1.png";
+import men from "../../public/boys.png";
+import women from "../../public/girls.png";
 
 const VirtualFittingRoomCreation = () => {
   return (
