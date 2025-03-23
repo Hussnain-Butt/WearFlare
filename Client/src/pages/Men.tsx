@@ -3,22 +3,22 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import kurta1 from "../../public/kurta1.png";
-import kurta2 from "../../public/kurta2.png";
-import kurta3 from "../../public/kurta3.png";
-import kurta4 from "../../public/kurta4.png";
-import kameez1 from "../../public/kameez1.png"
-import kameez2 from "../../public/kameez2.png"
-import kameez3 from "../../public/kameez3.png"
-import kameez4 from "../../public/kameez 4.png"
-import wedding1 from "../../public/wedding1.png"
-import wedding2 from "../../public/wedding2.png"
-import wedding3 from "../../public/wedding3.png"
-import wedding4 from "../../public/weding4.png"
-import shirt1 from "../../public/shirt1.png"
-import shirt2 from "../../public/shirt2.png"
-import shirt3 from "../../public/shirt3.png"
-import shirt4 from "../../public/shirt4.png"
+import kurta1 from "/kurta1.png";
+import kurta2 from "/kurta2.png";
+import kurta3 from "/kurta3.png";
+import kurta4 from "/kurta4.png";
+import kameez1 from "/kameez1.png"
+import kameez2 from "/kameez2.png"
+import kameez3 from "/kameez3.png"
+import kameez4 from "/kameez 4.png"
+import wedding1 from "/wedding1.png"
+import wedding2 from "/wedding2.png"
+import wedding3 from "/wedding3.png"
+import wedding4 from "/weding4.png"
+import shirt1 from "/shirt1.png"
+import shirt2 from "/shirt2.png"
+import shirt3 from "/shirt3.png"
+import shirt4 from "/shirt4.png"
 import MensComponents from "@/components/MensComponents";
 import NewsLetter from "@/components/NewsLetter";
 

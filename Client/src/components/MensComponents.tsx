@@ -1,5 +1,5 @@
 import React from 'react'
-import arrival_image from "../../public/new_arrival.png"
+import arrival_image from "/new_arrival.png"
 const MensComponents = () => {
   return (
     <div>

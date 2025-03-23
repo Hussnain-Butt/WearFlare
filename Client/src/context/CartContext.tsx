@@ -37,11 +37,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const removeFromCart = (id: number) => {
-    setCart((prevCart) =>
-      prevCart.filter((item) => item.id !== id)
-    );
+//   const removeFromCart = (id: number) => {
+//     setCart((prevCart) =>
+//       prevCart.filter((item) => item.id !== id)
+//     );
+//   };
+
+const removeFromCart = (id: number) => {
+    setCart((prevCart) => {
+      return prevCart
+        .map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+        )
+        .filter((item) => item.quantity > 0); // Remove item only if quantity becomes 0
+    });
   };
+  
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = cart.reduce((sum, item) => sum + parseFloat(item.price.replace(/[^0-9.]/g, "")) * item.quantity, 0);
