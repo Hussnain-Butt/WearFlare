@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import bgsignin from '/bg-for-signin.png';
 
 const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +54,9 @@ const SignupForm = () => {
   
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-5">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-5"
+    style={{ backgroundImage: `url(${bgsignin})`, backgroundSize: "cover", backgroundPosition: "center" }}
+    >
       <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-lg">
         <h1 className="text-black text-center text-3xl font-semibold mb-6">Sign up</h1>
 

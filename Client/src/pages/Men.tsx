@@ -60,8 +60,10 @@ const products = [
 const categories = ["All", "Shalwar Kameez", "Sweatshirt", "Wedding", "Kurta"];
 
 const Men: React.FC = () => {
+  
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const { addToCart, totalItems } = useCart();
+
 
   const filteredProducts =
     selectedCategory === "All"
@@ -83,8 +85,26 @@ const Men: React.FC = () => {
       </div>
 
       <section className="w-full py-10 px-6 md:px-12 bg-[#D3C5B8] mt-10 my-32">
-        <h2 className="text-4xl font-medium text-center mb-8 text-[#725D45]">Men's Traditional</h2>
-        
+        <h2 className="text-4xl font-medium text-center mb-8 text-[#725D45]">Men's Western</h2>
+
+      {/* Category Filter Buttons */}
+      <div className="flex flex-wrap justify-center mb-6 gap-3">
+  {categories.map((category) => (
+    <button 
+      key={category} 
+      className={`px-4 py-2 rounded-full transition-all duration-300 ${
+        selectedCategory === category 
+          ? "bg-[#6b5745] text-white" 
+          : "bg-white text-black hover:bg-[#6b5745] hover:text-white"
+      }`} 
+      onClick={() => setSelectedCategory(category)}
+    >
+      {category}
+    </button>
+  ))}
+</div>
+
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
             <div key={product.id} className="flex flex-col items-center">

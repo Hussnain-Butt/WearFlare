@@ -2,6 +2,7 @@ import React, { useState, useContext, FormEvent } from "react";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext"; // ✅ Import AuthContext
+import bgsignin from '/bg-for-signin.png';
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -65,7 +66,10 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-5">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-5"
+    style={{ backgroundImage: `url(${bgsignin})`, backgroundSize: "cover", backgroundPosition: "center" }}
+    
+    >
       <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-lg">
         <h1 className="text-black text-center text-3xl font-semibold mb-6">Sign in</h1>
 

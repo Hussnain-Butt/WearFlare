@@ -2,7 +2,7 @@ import React, { useState,useContext } from "react";
 import { Link, useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { Search, ShoppingBag, Menu, X, ChevronDown } from "lucide-react";
 import AuthContext from "../context/AuthContext"; // ✅ Import AuthContext
-
+import logo from "/logo.png"
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -26,10 +26,8 @@ const Navbar = () => {
       <div className="max-w-10xl mx-auto px-6 sm:px-10 lg:px-16">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center flex-shrink-0">
-            <div className="flex border-2 border-[#B8860B] h-12 w-12 rounded-full justify-center items-center">
-              <span className="text-[#B8860B] text-2xl font-bold font-serif">WF</span>
-            </div>
+          <Link to="/" className="">
+            <img src={logo} className="h-[50px]" alt="" />
           </Link>
 
           {/* Desktop Menu */}
@@ -123,6 +121,9 @@ const Navbar = () => {
                 </div>
               )}
             </div>
+
+            <Link to="/contact" className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all">Contact Us</Link>
+
 
             {/* Mobile Icons & Signup */}
             <div className="flex gap-6 mt-4 px-5">
