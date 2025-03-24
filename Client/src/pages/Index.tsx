@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Features from '@/components/Features';
 import PopularSection from '@/components/PopularSection';
+import Faqs from '@/components/Faqs';
 const Index = () => {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
@@ -106,12 +107,14 @@ const Index = () => {
         </div>
       </section>
       
+
       {/* Most Popular Section */}
       <PopularSection/>
       
       {/* Fashion Revolution Component */}
       <FashionRevolution />
 
+      <Faqs/>
      
       
       <div className='my-10'>

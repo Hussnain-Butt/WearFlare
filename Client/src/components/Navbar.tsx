@@ -2,7 +2,8 @@ import React, { useState,useContext } from "react";
 import { Link, useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { Search, ShoppingBag, Menu, X, ChevronDown } from "lucide-react";
 import AuthContext from "../context/AuthContext"; // ✅ Import AuthContext
-import logo from "/logo.png"
+import logo from "/logoWeb.jpg"
+// import logos from "/logo.jpg"
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);

@@ -59,8 +59,16 @@ const ThreeDAvatarCustomization = () => {
       <p className="text-base text-center text-gray-300 max-w-2xl px-4">
         Customize your avatar by changing the measurements and physical characteristics.
       </p>
-    </div>
+
+      <div className="w-full flex justify-center mt-5">
+              <Button className="bg-white hover:bg-white text-[#B8860B] text-lg font-medium py-4 px-10 rounded-full">
+                Try own
+              </Button>
+        </div>
       
+    </div>
+
+   
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center mt-4">
         {/* Avatar Customization Area */}
