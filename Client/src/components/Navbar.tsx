@@ -42,15 +42,8 @@ const Navbar = () => {
             <Link to="/women" className="font-bold hover:text-[#B8860B] capitalize">
               Women
             </Link>
-            <Link
-              to="/virtual-fitting-room-creation"
-              className="font-bold hover:text-[#B8860B] capitalize"
-            >
-              Virtual Fitting Room Creation
-            </Link>
-            <Link to="/virtual-fitting-room" className="font-bold hover:text-[#B8860B] capitalize">
-              Virtual Fitting Room
-            </Link>
+            {/* <Link to="/virtual-fitting-room-creation" className="font-bold hover:text-[#B8860B] capitalize">Virtual Fitting Room Creation</Link>
+            <Link to="/virtual-fitting-room" className="font-bold hover:text-[#B8860B] capitalize">Virtual Fitting Room</Link> */}
 
             {/* Pages Dropdown */}
             <div className="relative">
@@ -66,9 +59,11 @@ const Navbar = () => {
                     3D Avatar Customization
                   </Link>
 
-                  <Link to="/account" className="block px-4 py-2 hover:bg-gray-100">
-                    My Account
+                  <Link to="/3d-avatar-customization" className="block px-4 py-2 hover:bg-gray-100">
+                    3D Avatar Customization
                   </Link>
+
+                  {/* <Link to="/account" className="block px-4 py-2 hover:bg-gray-100">My Account</Link> */}
                   <Link to="/wishlist" className="block px-4 py-2 hover:bg-gray-100">
                     Wishlist
                   </Link>
@@ -135,18 +130,8 @@ const Navbar = () => {
             >
               Women
             </Link>
-            <Link
-              to="/virtual-fitting-room-creation"
-              className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
-            >
-              Virtual Fitting Room Creation
-            </Link>
-            <Link
-              to="/virtual-fitting-room"
-              className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
-            >
-              Virtual Fitting Room
-            </Link>
+            {/* <Link to="/virtual-fitting-room-creation" className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all">Virtual Fitting Room Creation</Link>
+            <Link to="/virtual-fitting-room" className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all">Virtual Fitting Room</Link> */}
 
             {/* Pages Dropdown in Mobile Menu */}
             <div className="relative">
@@ -161,9 +146,7 @@ const Navbar = () => {
                   <Link to="/3d-avatar-customization" className="block px-4 py-2 hover:bg-gray-100">
                     3D Avatar Customization
                   </Link>
-                  <Link to="/account" className="block px-4 py-2 hover:bg-gray-100">
-                    My Account
-                  </Link>
+                  {/* <Link to="/account" className="block px-4 py-2 hover:bg-gray-100">My Account</Link> */}
                   <Link to="/wishlist" className="block px-4 py-2 hover:bg-gray-100">
                     Wishlist
                   </Link>

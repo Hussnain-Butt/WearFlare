@@ -31,7 +31,7 @@ interface Product {
 }
 
 
-const products = [
+export const menProducts = [
   // Kurta
   { id: 1, title: "BLACK BLENDED KURTA", price: "PKR 3,592.00", category: "Kurta", image: kurta1},
   { id: 2, title: "GRAY BLENDED FORMAL KURTA", price: "PKR 18,990.00", category: "Kurta", image: kurta2},
@@ -67,8 +67,8 @@ const Men: React.FC = () => {
 
   const filteredProducts =
     selectedCategory === "All"
-      ? products
-      : products.filter((product) => product.category === selectedCategory);
+      ? menProducts
+      : menProducts.filter((product) => product.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-[#eee8e3]">

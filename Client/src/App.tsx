@@ -14,6 +14,7 @@ import Women from "./pages/Women";
 import { Account } from "./pages/Account";
 import WishList from "./pages/WishList";
 import Cart from "./pages/Cart";
+import Shop from "./pages/Shop";
 const App = () => (
   <Router>
     <NavbarComponent />
@@ -29,6 +30,7 @@ const App = () => (
       <Route path="/women" element={<Women />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/account" element={<Account />} />
+      <Route path="/shop" element={<Shop />} />
       <Route path="/wishlist" element={<WishList />} />
     </Routes>
     <Footer/>
