@@ -1,39 +1,46 @@
-import React, { useState } from "react";
-import { useCart } from "../context/CartContext";
-import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
-import {menProducts} from "../pages/Men";
-import {womenProducts} from "../pages/Women";
+import React, { useState } from 'react'
+import { useCart } from '../context/CartContext'
+import { Link } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
+import { menProducts } from '../pages/Men'
+import { womenProducts } from '../pages/Women'
 
-const categories = ["All", "Kurta", "Shalwar Kameez", "Sweatshirt", "Wedding", "Sweater", "Hoodie", "Pants","Shirt"];
-const allProducts = [...menProducts, ...womenProducts];
-const itemsPerPage = 8;
+const categories = ['All', 'Shirts', 'Jackets', 'Sweatshirt', 'Pants']
+const allProducts = [...menProducts, ...womenProducts]
+const itemsPerPage = 8
 
 const Shop = () => {
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [currentPage, setCurrentPage] = useState(1);
-  const { addToCart , totalItems} = useCart();
+  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [currentPage, setCurrentPage] = useState(1)
+  const { addToCart, totalItems } = useCart()
 
-  const filteredProducts = selectedCategory === "All" 
-    ? allProducts 
-    : allProducts.filter((product) => product.category === selectedCategory);
+  const filteredProducts =
+    selectedCategory === 'All'
+      ? allProducts
+      : allProducts.filter((product) => product.category === selectedCategory)
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const displayedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const displayedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  )
 
   return (
     <div className="min-h-screen bg-[#eee8e3]">
-       <div className="w-full py-3 px-8 bg-[#e5dfd8] flex justify-between">
-             <div className="flex justify-between">
-               <Link to="/" className="text-sm text-gray-700">HOME</Link>
-               <ChevronRight className="h-5" />
-               <Link to="/women" className="text-sm text-gray-700">WOMEN</Link>
-             </div>
-             <Link to="/cart" className="relative">
-               🛒 Cart ({totalItems})
-             </Link>
-            
-           </div>
+      <div className="w-full py-3 px-8 bg-[#e5dfd8] flex justify-between">
+        <div className="flex justify-between">
+          <Link to="/" className="text-sm text-gray-700">
+            HOME
+          </Link>
+          <ChevronRight className="h-5" />
+          <Link to="/women" className="text-sm text-gray-700">
+            WOMEN
+          </Link>
+        </div>
+        <Link to="/cart" className="relative">
+          🛒 Cart ({totalItems})
+        </Link>
+      </div>
 
       <section className="w-full py-10 px-6 md:px-12 bg-[#D3C5B8] mt-10 my-32">
         <h2 className="text-4xl font-medium text-center mb-8 text-[#725D45]">Shop Clothing</h2>
@@ -44,10 +51,13 @@ const Shop = () => {
               key={category}
               className={`px-4 py-2 rounded-full transition-all duration-300 ${
                 selectedCategory === category
-                  ? "bg-[#6b5745] text-white"
-                  : "bg-white text-black hover:bg-[#6b5745] hover:text-white"
+                  ? 'bg-[#6b5745] text-white'
+                  : 'bg-white text-black hover:bg-[#6b5745] hover:text-white'
               }`}
-              onClick={() => { setSelectedCategory(category); setCurrentPage(1); }}
+              onClick={() => {
+                setSelectedCategory(category)
+                setCurrentPage(1)
+              }}
             >
               {category}
             </button>
@@ -58,7 +68,11 @@ const Shop = () => {
           {displayedProducts.map((product) => (
             <div key={product.id} className="flex flex-col items-center">
               <div className="bg-white p-4 w-full">
-                <img src={product.image} alt={product.title} className="w-full object-cover" />
+                <img
+                  src={product.image}
+                  alt={product.title}
+                  className="w-[450px] h-[450px] object-cover" // Set a fixed height and width
+                />
               </div>
               <div className="mt-3 text-center">
                 <p className="text-sm text-gray-800 font-medium">{product.title}</p>
@@ -81,8 +95,8 @@ const Shop = () => {
               key={index + 1}
               className={`mx-1 px-4 py-2 rounded-full transition-all duration-300 ${
                 currentPage === index + 1
-                  ? "bg-[#6b5745] text-white"
-                  : "bg-white text-black hover:bg-[#6b5745] hover:text-white"
+                  ? 'bg-[#6b5745] text-white'
+                  : 'bg-white text-black hover:bg-[#6b5745] hover:text-white'
               }`}
               onClick={() => setCurrentPage(index + 1)}
             >
@@ -92,7 +106,7 @@ const Shop = () => {
         </div>
       </section>
     </div>
-  );
-};
+  )
+}
 
-export default Shop;
+export default Shop

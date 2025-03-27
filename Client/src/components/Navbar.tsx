@@ -42,34 +42,18 @@ const Navbar = () => {
             <Link to="/women" className="font-bold hover:text-[#B8860B] capitalize">
               Women
             </Link>
+            <Link to="/shop" className="font-bold hover:text-[#B8860B] capitalize">
+              Shop
+            </Link>
+            <Link
+              to="/3d-avatar-customization"
+              className="font-bold hover:text-[#B8860B] capitalize"
+            >
+              3D Avatar Customization
+            </Link>
             {/* <Link to="/virtual-fitting-room-creation" className="font-bold hover:text-[#B8860B] capitalize">Virtual Fitting Room Creation</Link>
             <Link to="/virtual-fitting-room" className="font-bold hover:text-[#B8860B] capitalize">Virtual Fitting Room</Link> */}
 
-            {/* Pages Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="font-bold flex items-center hover:text-[#B8860B] capitalize"
-              >
-                Pages <ChevronDown className="ml-1 w-4 h-4" />
-              </button>
-              {dropdownOpen && (
-                <div className="absolute mt-2 w-40 bg-white shadow-md rounded-md z-50">
-                  <Link to="/3d-avatar-customization" className="block px-4 py-2 hover:bg-gray-100">
-                    3D Avatar Customization
-                  </Link>
-
-                  <Link to="/3d-avatar-customization" className="block px-4 py-2 hover:bg-gray-100">
-                    3D Avatar Customization
-                  </Link>
-
-                  {/* <Link to="/account" className="block px-4 py-2 hover:bg-gray-100">My Account</Link> */}
-                  <Link to="/wishlist" className="block px-4 py-2 hover:bg-gray-100">
-                    Wishlist
-                  </Link>
-                </div>
-              )}
-            </div>
             <Link to="/contact" className="font-bold hover:text-[#B8860B] capitalize">
               Contact Us{' '}
             </Link>
@@ -130,29 +114,20 @@ const Navbar = () => {
             >
               Women
             </Link>
+            <Link
+              to="/shop"
+              className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
+            >
+              Shop
+            </Link>
+            <Link
+              to="/3d-avatar-customization"
+              className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
+            >
+              3D Avatar Customization
+            </Link>
             {/* <Link to="/virtual-fitting-room-creation" className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all">Virtual Fitting Room Creation</Link>
             <Link to="/virtual-fitting-room" className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all">Virtual Fitting Room</Link> */}
-
-            {/* Pages Dropdown in Mobile Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="font-bold flex items-center justify-between w-full py-3 px-5 hover:bg-slate-200 transition-all"
-              >
-                Pages <ChevronDown className="ml-1 w-4 h-4" />
-              </button>
-              {dropdownOpen && (
-                <div className="bg-white shadow-md rounded-md">
-                  <Link to="/3d-avatar-customization" className="block px-4 py-2 hover:bg-gray-100">
-                    3D Avatar Customization
-                  </Link>
-                  {/* <Link to="/account" className="block px-4 py-2 hover:bg-gray-100">My Account</Link> */}
-                  <Link to="/wishlist" className="block px-4 py-2 hover:bg-gray-100">
-                    Wishlist
-                  </Link>
-                </div>
-              )}
-            </div>
 
             <Link
               to="/contact"
