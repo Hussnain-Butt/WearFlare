@@ -1,3 +1,4 @@
+// AdminSidebar.js
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -13,58 +14,91 @@ import { GiLoveLetter } from 'react-icons/gi'
 import { MdUpcoming } from 'react-icons/md'
 
 const AdminSidebar = () => {
-  const [isExpanded, setIsExpanded] = useState(false) // ✅ Toggle State
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768) // ✅ Detect Mobile Screens
+  const [isExpanded, setIsExpanded] = useState(false) // Expand/Collapse State
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768) // Mobile Detection
 
-  // ✅ Detect Screen Resize
+  // ✅ Listen for screen resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  return (
-    <div
-      className={` text-white h-auto flex flex-col py-16 transition-all duration-300 bg-[#c8a98a] h-screen
-        ${isMobile ? 'w-20 items-center' : isExpanded ? 'w-72 px-6' : 'w-20 items-center'}
-      `}
-    >
-      {/* ✅ Toggle Button */}
-      {!isMobile && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className={`w-full flex ${isExpanded ? 'justify-end' : 'justify-center'} mb-6`}
-        >
-          {isExpanded ? (
-            <FaTimes className="text-2xl cursor-pointer" />
-          ) : (
-            <FaBars className="text-2xl cursor-pointer" />
-          )}
-        </button>
-      )}
+  // ✅ Toggle sidebar
+  const toggleSidebar = () => setIsExpanded(!isExpanded)
 
-      {/* ✅ Navigation Links */}
-      <ul className="space-y-6 w-full pt-14">
-        <li>
-          <Link
-            to="/admin/dashboard"
-            className={`flex items-center gap-3 px-4 py-2 text-lg rounded-lg hover:bg-[#6b5745] transition-all duration-300 
-            ${isExpanded && !isMobile ? 'justify-start' : 'justify-center'}`}
-          >
-            <FaTachometerAlt className="text-xl" /> {!isMobile && isExpanded && 'Dashboard'}
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/admin/dashboard/users"
-            className={`flex items-center gap-3 px-4 py-2 text-lg rounded-lg hover:bg-[#6b5745] transition-all duration-300 
-            ${isExpanded && !isMobile ? 'justify-start' : 'justify-center'}`}
-          >
-            <FaUser className="text-xl" /> {!isMobile && isExpanded && 'Users'}
-          </Link>
-        </li>
-      </ul>
-    </div>
+  // ** Decide how the sidebar should look on mobile vs. desktop
+  //    (You can tweak this logic if you want a different behavior on mobile.)
+  //    - Example: if on mobile, we can keep it always collapsed unless user explicitly toggles it.
+  const sidebarWidth = !isMobile
+    ? isExpanded
+      ? 'w-64' // Expanded (desktop)
+      : 'w-20' // Collapsed (desktop)
+    : 'w-20' // Mobile by default collapsed
+
+  return (
+    <aside
+      className={`bg-[#c8a98a] text-white h-auto flex flex-col transition-all duration-300 
+                  ${sidebarWidth} 
+                  ${(!isMobile && !isExpanded) || isMobile ? 'items-center' : ''}`}
+    >
+      {/* Header / Brand */}
+      <div className="flex items-center justify-between w-full px-4 py-4 border-b border-[#a1846b]">
+        {!isMobile && isExpanded ? (
+          // Expanded: Show brand name
+          <h1 className="text-xl font-bold">Admin Panel</h1>
+        ) : (
+          // Collapsed: Show icon in center
+          <div className="flex items-center justify-center w-full"></div>
+        )}
+
+        {/* Desktop toggle button (top-right) */}
+        {!isMobile && (
+          <button onClick={toggleSidebar} className="text-2xl ml-2">
+            {isExpanded ? <FaTimes /> : <FaBars />}
+          </button>
+        )}
+      </div>
+
+      {/* Nav Links */}
+      <nav className="flex-1 overflow-y-auto w-full mt-4">
+        <ul className="flex flex-col space-y-2">
+          <li>
+            <Link
+              to="/admin/dashboard"
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-[#6b5745] 
+                          transition-all duration-300 
+                          ${!isMobile && isExpanded ? 'justify-start' : 'justify-center'}`}
+            >
+              <FaTachometerAlt className="text-xl" />
+              {!isMobile && isExpanded && <span>Dashboard</span>}
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/admin/dashboard/users"
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-[#6b5745] 
+                          transition-all duration-300 
+                          ${!isMobile && isExpanded ? 'justify-start' : 'justify-center'}`}
+            >
+              <FaUser className="text-xl" />
+              {!isMobile && isExpanded && <span>Users</span>}
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/admin/dashboard/products"
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-[#6b5745] 
+                          transition-all duration-300 
+                          ${!isMobile && isExpanded ? 'justify-start' : 'justify-center'}`}
+            >
+              <FaBook className="text-xl" />
+              {!isMobile && isExpanded && <span>Products</span>}
+            </Link>
+          </li>
+        </ul>
+      </nav>
+    </aside>
   )
 }
 

@@ -15,6 +15,9 @@ import Cart from './pages/Cart'
 import Shop from './pages/Shop'
 import AdminLogin from '../src/admin/pages/AdminLogin'
 import AdminDashboard from '../src/admin/pages/AdminDashboard'
+import Users from '../src/admin/pages/Users'
+import Products from './admin/pages/Products'
+
 import DashboardLayout from '../src/admin/layout/DashboardLayout' // Admin Dashboard Layout
 const App = () => (
   <Router>
@@ -39,6 +42,8 @@ const App = () => (
       {/* Admin Dashboard with Layout */}
       <Route path="/admin/dashboard/*" element={<DashboardLayout />}>
         <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<Users />} />
+        <Route path="products" element={<Products />} />
       </Route>
     </Routes>
     <Footer />

@@ -36,15 +36,16 @@ const Navbar = () => {
             <Link to="/" className="font-bold hover:text-[#B8860B] capitalize">
               Home
             </Link>
+            <Link to="/shop" className="font-bold hover:text-[#B8860B] capitalize">
+              Shop
+            </Link>
             <Link to="/men" className="font-bold hover:text-[#B8860B] capitalize">
               Men
             </Link>
             <Link to="/women" className="font-bold hover:text-[#B8860B] capitalize">
               Women
             </Link>
-            <Link to="/shop" className="font-bold hover:text-[#B8860B] capitalize">
-              Shop
-            </Link>
+
             <Link
               to="/3d-avatar-customization"
               className="font-bold hover:text-[#B8860B] capitalize"
@@ -103,6 +104,12 @@ const Navbar = () => {
               Home
             </Link>
             <Link
+              to="/shop"
+              className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
+            >
+              Shop
+            </Link>
+            <Link
               to="/men"
               className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
             >
@@ -114,12 +121,7 @@ const Navbar = () => {
             >
               Women
             </Link>
-            <Link
-              to="/shop"
-              className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
-            >
-              Shop
-            </Link>
+
             <Link
               to="/3d-avatar-customization"
               className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"

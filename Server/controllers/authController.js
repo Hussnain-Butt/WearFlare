@@ -1,71 +1,70 @@
-import User from "../models/User.js";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
+const User = require('../models/User')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs')
+const dotenv = require('dotenv')
 
-dotenv.config();
+dotenv.config()
 
 // Generate JWT Token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
-};
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1d' })
+}
 
 // **REGISTER USER**
-export const registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { fullName, email, password } = req.body
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    const existingUser = await User.findOne({ email })
+    if (existingUser) return res.status(400).json({ message: 'User already exists' })
 
     // Create user
-    const user = await User.create({ fullName, email, password });
+    const user = await User.create({ fullName, email, password })
 
     res.status(201).json({
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       token: generateToken(user._id),
-    });
+    })
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: 'Server Error' })
   }
-};
+}
 
 // **LOGIN USER**
-export const loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body
 
-    // Validate input
     if (!email || !password) {
-      return res.status(400).json({ message: "Please provide email and password" });
+      return res.status(400).json({ message: 'Please provide email and password' })
     }
 
-    // Check if user exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email })
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: 'Invalid credentials' })
     }
 
-    // Match password
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: 'Invalid credentials' })
     }
 
-    // Send response with token
     res.json({
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       token: generateToken(user._id),
-    });
-
+    })
   } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Login Error:', error)
+    res.status(500).json({ message: 'Server Error' })
   }
-};
+}
 
+module.exports = {
+  registerUser,
+  loginUser,
+}

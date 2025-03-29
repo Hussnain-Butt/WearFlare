@@ -2,6 +2,7 @@
 const Admin = require('../models/adminModel')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const User = require('../models/User')
 
 // Admin login function
 const adminLogin = async (req, res) => {
@@ -28,4 +29,41 @@ const adminLogin = async (req, res) => {
   }
 }
 
-module.exports = { adminLogin }
+// Fetch all users
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+    res.json(users)
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
+  }
+}
+
+// Delete a user
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params
+    await User.findByIdAndDelete(id)
+    res.json({ message: 'User deleted' })
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
+  }
+}
+
+// Update user info
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params
+    const updatedUser = await User.findByIdAndUpdate(id, req.body, { new: true })
+    res.json(updatedUser)
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
+  }
+}
+
+module.exports = {
+  adminLogin,
+  getAllUsers,
+  deleteUser,
+  updateUser,
+}

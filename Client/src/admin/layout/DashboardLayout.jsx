@@ -1,20 +1,18 @@
 // components/DashboardLayout.js
 import React from 'react'
-import { Outlet } from 'react-router-dom' // For nested routes like AdminDashboard
+import { Outlet } from 'react-router-dom'
 import AdminSidebar from '../components/AdminSidebar'
-// import Footer from './Footer'
 
 const DashboardLayout = () => {
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-gray-100">
+      {/* Sidebar */}
       <AdminSidebar />
-      <div className="dashboard-container">
-        {/* Your admin sidebar or any layout components can go here */}
-        <div className="dashboard-content">
-          <Outlet /> {/* Nested routes like AdminDashboard will be displayed here */}
-        </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-6 sm:p-8 overflow-y-auto">
+        <Outlet /> {/* Renders nested routes like AdminDashboard */}
       </div>
-      {/* <Footer /> */}
     </div>
   )
 }

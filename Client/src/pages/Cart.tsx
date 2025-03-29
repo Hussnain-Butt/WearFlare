@@ -27,7 +27,7 @@ const Cart = () => {
                 </button>
 
                 <Link
-                  to="/women"
+                  to="/shop"
                   className="text-lg text-[#6b5745] underline italic font-medium transition duration-300"
                 >
                   Continue Shopping
@@ -46,7 +46,7 @@ const Cart = () => {
                   className="flex flex-col items-center bg-[#F5EDE2] p-5 rounded-lg shadow-md w-full"
                 >
                   <img
-                    src={item.image}
+                    src={`http://localhost:5000${item.image}`}
                     alt={item.title}
                     className="w-32 h-32 object-cover rounded-md"
                   />

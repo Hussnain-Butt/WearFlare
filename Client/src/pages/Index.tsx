@@ -48,16 +48,6 @@ const Index = () => {
           {/* Third Part - Search Bar & Image Below */}
           <div className="md:col-span-3 flex flex-col gap-6">
             {/* Search Box */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search"
-                className="w-full px-4 py-2.5 rounded-full bg-[#e9e2d8] text-gray-800 outline-none"
-              />
-              <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600">
-                <Search className="h-5 w-5" />
-              </button>
-            </div>
 
             {/* Second Image */}
             <img src={banner3} alt="Fashion Model" className="w-full  object-cover" />
@@ -81,7 +71,7 @@ const Index = () => {
 
           <div>
             <Link
-              to="#"
+              to="/shop"
               className="inline-flex items-center justify-center rounded-full border border-gray-800 px-28 py-2 text-sm text-gray-800 hover:bg-gray-100"
             >
               Shop Now
