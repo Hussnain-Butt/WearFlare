@@ -3,6 +3,7 @@ const dotenv = require('dotenv')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const path = require('path')
+const fs = require('fs')
 
 const connectDB = require('./config/db')
 const authRoutes = require('./routes/authRoutes')
@@ -11,6 +12,13 @@ const productRoutes = require('./routes/productRoutes') // This was missing from
 
 const app = express()
 
+const uploadPaths = ['uploads', 'uploads/photos', 'uploads/models', 'uploads/configs']
+
+uploadPaths.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+  }
+})
 // Load environment variables
 dotenv.config()
 
