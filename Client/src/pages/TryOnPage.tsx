@@ -34,10 +34,18 @@ const TryOnPage = () => {
 
     const formData = new FormData()
     formData.append('userImage', uploadedImage)
-    formData.append(
-      'clothingImage',
-      `https://backend-production-c8ff.up.railway.app/${product.image}`,
-    )
+    // Ensure product.image doesn't start with a slash OR handle it
+    let clothingImageUrl = `https://backend-production-c8ff.up.railway.app${product.image}`
+    if (product.image.startsWith('/')) {
+      clothingImageUrl = `https://backend-production-c8ff.up.railway.app${product.image}`
+    } else {
+      clothingImageUrl = `https://backend-production-c8ff.up.railway.app/${product.image}`
+    }
+    // OR clean it up on the backend if easier:
+    // const clothingImage = req.body.clothingImage?.trim().replace(/([^:]\/)\/+/g, "$1");
+
+    formData.append('clothingImage', clothingImageUrl)
+    formData.append('clothingImage', clothingImageUrl)
 
     try {
       const res = await axios.post(
