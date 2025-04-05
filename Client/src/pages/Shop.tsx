@@ -25,7 +25,7 @@ const Shop: React.FC = () => {
   // Fetch all products (both men and women)
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/products`)
+      .get(`https://backend-production-c8ff.up.railway.app/api/products`)
       .then((res) => setProducts(res.data))
       .catch((err) => console.error(err))
   }, [])
@@ -88,7 +88,7 @@ const Shop: React.FC = () => {
             <div key={product._id} className="flex flex-col items-center">
               <div className="bg-white p-4 w-full">
                 <img
-                  src={`http://localhost:5000${product.image}`}
+                  src={`https://backend-production-c8ff.up.railway.app${product.image}`}
                   alt={product.title}
                   className="w-[450px] h-[450px] object-cover"
                 />

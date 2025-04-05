@@ -26,7 +26,7 @@ const Women: React.FC = () => {
   // Fetch products designated for women
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/products?gender=women`)
+      .get(`https://backend-production-c8ff.up.railway.app/api/products?gender=women`)
       .then((res) => setProducts(res.data))
       .catch((err) => console.error('Error fetching products:', err))
   }, [])
@@ -86,7 +86,7 @@ const Women: React.FC = () => {
             <div key={product._id} className="flex flex-col items-center">
               <div className="bg-white p-4 w-full">
                 <img
-                  src={`http://localhost:5000${product.image}`}
+                  src={`https://backend-production-c8ff.up.railway.app${product.image}`}
                   alt={product.title}
                   className="w-[450px] h-[450px] object-cover"
                 />

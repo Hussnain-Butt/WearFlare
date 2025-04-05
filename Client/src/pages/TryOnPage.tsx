@@ -15,7 +15,7 @@ const TryOnPage = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/products/${productId}`)
+      .get(`https://backend-production-c8ff.up.railway.app/api/products/${productId}`)
       .then((res) => setProduct(res.data))
       .catch((err) => console.error(err))
   }, [productId])
@@ -34,14 +34,21 @@ const TryOnPage = () => {
 
     const formData = new FormData()
     formData.append('userImage', uploadedImage)
-    formData.append('clothingImage', `http://localhost:5000${product.image}`)
+    formData.append(
+      'clothingImage',
+      `https://backend-production-c8ff.up.railway.app/${product.image}`,
+    )
 
     try {
-      const res = await axios.post('http://localhost:5000/api/tryon', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
+      const res = await axios.post(
+        'https://backend-production-c8ff.up.railway.app/api/tryon',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         },
-      })
+      )
       setTryOnResult(res.data.outputImageUrl)
     } catch (err) {
       console.error('Try-on failed:', err)

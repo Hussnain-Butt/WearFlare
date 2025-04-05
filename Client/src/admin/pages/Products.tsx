@@ -29,7 +29,9 @@ const Products: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get<Product[]>('http://localhost:5000/api/products')
+      const res = await axios.get<Product[]>(
+        'https://backend-production-c8ff.up.railway.app/api/products',
+      )
       setProducts(res.data)
     } catch (error) {
       console.error('Failed to fetch products:', error)
@@ -78,12 +80,16 @@ const Products: React.FC = () => {
 
     try {
       if (isEditMode) {
-        await axios.put(`http://localhost:5000/api/products/${editId}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
+        await axios.put(
+          `https://backend-production-c8ff.up.railway.app/api/products/${editId}`,
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          },
+        )
         toast.success('✅ Product updated!')
       } else {
-        await axios.post('http://localhost:5000/api/products', formData, {
+        await axios.post('https://backend-production-c8ff.up.railway.app/api/products', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
         toast.success('✅ Product added!')
@@ -112,7 +118,7 @@ const Products: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/products/${id}`)
+      await axios.delete(`https://backend-production-c8ff.up.railway.app/api/products/${id}`)
       toast.success('🗑️ Product deleted')
       fetchProducts()
     } catch (error) {
@@ -207,7 +213,7 @@ const Products: React.FC = () => {
           {products.map((product) => (
             <div key={product._id} className="bg-white shadow p-4 rounded-md">
               <img
-                src={`http://localhost:5000${product.image}`}
+                src={`https://backend-production-c8ff.up.railway.app${product.image}`}
                 alt={product.title}
                 className="h-48 w-full object-cover rounded-md"
               />

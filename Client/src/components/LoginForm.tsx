@@ -1,74 +1,81 @@
-import React, { useState, useContext, FormEvent } from "react";
-import { User, Lock, Eye, EyeOff } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import AuthContext from "../context/AuthContext"; // ✅ Import AuthContext
-import bgsignin from '/bg-for-signin.png';
+import React, { useState, useContext, FormEvent } from 'react'
+import { User, Lock, Eye, EyeOff } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import AuthContext from '../context/AuthContext' // ✅ Import AuthContext
+import bgsignin from '/bg-for-signin.png'
 
 const LoginForm: React.FC = () => {
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [rememberMe, setRememberMe] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const [rememberMe, setRememberMe] = useState<boolean>(false)
+  const [email, setEmail] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
-  const authContext = useContext(AuthContext);
+  const authContext = useContext(AuthContext)
   if (!authContext) {
-    throw new Error("AuthContext is undefined. Make sure AuthProvider is wrapping the app.");
+    throw new Error('AuthContext is undefined. Make sure AuthProvider is wrapping the app.')
   }
-  const { setUser } = authContext;
-  const navigate = useNavigate();
+  const { setUser } = authContext
+  const navigate = useNavigate()
 
-  const showToast = (message: string, type: "success" | "error") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!email || !password) {
-      showToast("Please fill in all fields", "error");
-      return;
+      showToast('Please fill in all fields', 'error')
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
+      const response = await fetch(
+        'https://backend-production-c8ff.up.railway.app/api/auth/login',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), password }),
+        },
+      )
 
-      const data = await response.json();
-      setIsLoading(false);
+      const data = await response.json()
+      setIsLoading(false)
 
       if (response.ok) {
-        showToast("Logged in successfully!", "success");
-        setUser({ token: data.token });
+        showToast('Logged in successfully!', 'success')
+        setUser({ token: data.token })
 
         // ✅ Store token in LocalStorage if Remember Me is checked
         if (rememberMe) {
-          localStorage.setItem("token", data.token);
+          localStorage.setItem('token', data.token)
         } else {
-          sessionStorage.setItem("token", data.token);
+          sessionStorage.setItem('token', data.token)
         }
 
-        navigate("/");
+        navigate('/')
       } else {
-        showToast(data.message, "error");
+        showToast(data.message, 'error')
       }
     } catch (error) {
-      setIsLoading(false);
-      showToast("Server error", "error");
+      setIsLoading(false)
+      showToast('Server error', 'error')
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-5"
-    style={{ backgroundImage: `url(${bgsignin})`, backgroundSize: "cover", backgroundPosition: "center" }}
-    
+    <div
+      className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-5"
+      style={{
+        backgroundImage: `url(${bgsignin})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
     >
       <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-lg">
         <h1 className="text-black text-center text-3xl font-semibold mb-6">Sign in</h1>
@@ -96,7 +103,7 @@ const LoginForm: React.FC = () => {
             <label className="text-gray-700 text-sm font-medium block mb-2">Password</label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 placeholder="********"
                 className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pl-10 pr-10 outline-none focus:ring-2 focus:ring-[#B8860B] transition"
                 value={password}
@@ -141,7 +148,7 @@ const LoginForm: React.FC = () => {
             {isLoading ? (
               <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
             ) : (
-              "Sign in"
+              'Sign in'
             )}
           </button>
 
@@ -157,12 +164,16 @@ const LoginForm: React.FC = () => {
 
       {/* Toast Notification */}
       {toast && (
-        <div className={`fixed bottom-5 right-5 px-4 py-2 rounded-md text-white shadow-lg ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
+        <div
+          className={`fixed bottom-5 right-5 px-4 py-2 rounded-md text-white shadow-lg ${
+            toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+          }`}
+        >
           {toast.message}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default LoginForm;
+export default LoginForm

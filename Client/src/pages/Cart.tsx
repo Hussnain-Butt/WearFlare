@@ -46,7 +46,7 @@ const Cart = () => {
                   className="flex flex-col items-center bg-[#F5EDE2] p-5 rounded-lg shadow-md w-full"
                 >
                   <img
-                    src={`http://localhost:5000${item.image}`}
+                    src={`https://backend-production-c8ff.up.railway.app${item.image}`}
                     alt={item.title}
                     className="w-32 h-32 object-cover rounded-md"
                   />
