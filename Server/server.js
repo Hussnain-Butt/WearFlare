@@ -32,12 +32,15 @@ uploadPaths.forEach((dir) => {
 // -------------------------------
 // ✅ CORS Middleware Setup
 // -------------------------------
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://frontend-production-c902.up.railway.app', // ✅ <-- Add this line
+]
+
 app.use(
   cors({
-    origin: [
-      'https://frontend-production-0ee2.up.railway.app',
-      'https://backend-production-c8ff.up.railway.app',
-    ],
+    origin: allowedOrigins,
     credentials: true,
   }),
 )
