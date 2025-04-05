@@ -1,3 +1,5 @@
+// No changes needed from the previous version provided.
+// It will correctly display the new 504 timeout error or the existing 502 error.
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
@@ -15,8 +17,10 @@ const TryOnPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null) // State for error message
 
   useEffect(() => {
+    // Use the correct backend URL
+    const backendApiUrl = 'https://backend-production-c8ff.up.railway.app'
     axios
-      .get(`https://backend-production-c8ff.up.railway.app/api/products/${productId}`)
+      .get(`${backendApiUrl}/api/products/${productId}`)
       .then((res) => setProduct(res.data))
       .catch((err) => {
         console.error('Failed to fetch product:', err)
@@ -47,39 +51,48 @@ const TryOnPage = () => {
     formData.append('userImage', uploadedImage)
 
     // Construct clothing image URL (ensure no double slashes)
-    let backendUrl = 'https://backend-production-c8ff.up.railway.app'
+    const backendUrl = 'https://backend-production-c8ff.up.railway.app' // Define backend URL
     let imagePath = product.image
     let clothingImageUrl = imagePath.startsWith('/')
       ? `${backendUrl}${imagePath}`
       : `${backendUrl}/${imagePath}`
 
     formData.append('clothingImage', clothingImageUrl)
-    // !!! REMOVED DUPLICATE LINE HERE !!!
 
     try {
       const res = await axios.post(
-        'https://backend-production-c8ff.up.railway.app/api/tryon',
+        `${backendUrl}/api/tryon`, // Use defined backend URL
         formData,
         {
-          headers: {
-            // Content-Type is set automatically by browser for FormData
-            // 'Content-Type': 'multipart/form-data', // Usually not needed with FormData in browser
-          },
+          // Content-Type is set automatically by browser for FormData
         },
       )
       setTryOnResult(res.data.outputImageUrl)
     } catch (err) {
       console.error('Try-on failed:', err)
-      // Try to get a more specific error message from the backend response
+      // Extract error message from backend response or provide a default
       const backendError =
         err.response?.data?.error ||
         err.response?.data?.details ||
-        'Try-on request failed. Please check the console.'
-      setErrorMessage(`Error: ${backendError}`)
+        'Try-on request failed. Please check the console or try again later.'
+      const status = err.response?.status // Get status code if available
+
+      // Customize message for specific errors if needed
+      let displayError = backendError
+      if (status === 504) {
+        displayError =
+          'The virtual try-on service took too long to respond. Please try again in a few moments.'
+      } else if (status === 502) {
+        displayError =
+          'Could not connect to the virtual try-on service. It might be temporarily unavailable.'
+      }
+
+      setErrorMessage(`Error: ${displayError}`)
       setTryOnResult(null) // Clear result on error
     } finally {
       setIsLoading(false)
-      setShowTryButton(false) // Maybe hide button again after attempt? Or keep it? Your choice.
+      // Decide whether to hide the button or not
+      // setShowTryButton(false);
     }
   }
 
@@ -102,7 +115,7 @@ const TryOnPage = () => {
           className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 max-w-md w-full"
           role="alert"
         >
-          <strong className="font-bold">Error: </strong>
+          {/* <strong className="font-bold">Error: </strong> */}
           <span className="block sm:inline">{errorMessage}</span>
         </div>
       )}
@@ -132,7 +145,7 @@ const TryOnPage = () => {
               <img
                 src={previewImageUrl}
                 alt="Uploaded Preview"
-                className="object-contain max-h-full max-w-full" // Use contain to see whole image
+                className="object-contain max-h-full max-w-full"
               />
             </div>
           )}
@@ -140,7 +153,7 @@ const TryOnPage = () => {
           {showTryButton && (
             <Button
               onClick={handleTryOn}
-              disabled={isLoading || !uploadedImage} // Disable if loading or no image
+              disabled={isLoading || !uploadedImage}
               className="mt-6 bg-[#c8a98a] text-[#6b5745] px-6 py-2 rounded-full hover:bg-white transition flex items-center disabled:opacity-50"
             >
               {isLoading ? (
@@ -156,16 +169,14 @@ const TryOnPage = () => {
 
         {/* Right: Try-On Result */}
         <div className="w-[400px] bg-[#fffefc] text-[#6b5745] p-6 rounded-xl shadow-md flex flex-col items-center justify-center min-h-[400px]">
-          {' '}
-          {/* Added min-height */}
           <ImagePlus className="h-10 w-10 mb-3" />
-          {isLoading &&
-            !tryOnResult && ( // Show loader here too while waiting for result
-              <div className="flex flex-col items-center text-center">
-                <Loader2 className="animate-spin w-8 h-8 mb-2" />
-                <p>Generating your try-on...</p>
-              </div>
-            )}
+          {isLoading && !tryOnResult && (
+            <div className="flex flex-col items-center text-center">
+              <Loader2 className="animate-spin w-8 h-8 mb-2" />
+              <p>Generating your try-on...</p>
+              <p className="text-sm text-gray-500">(This may take up to a minute)</p>
+            </div>
+          )}
           {tryOnResult && !isLoading && (
             <img
               src={tryOnResult}
