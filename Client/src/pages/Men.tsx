@@ -5,7 +5,7 @@ import axios from 'axios'
 import { useCart } from '../context/CartContext'
 import MensComponents from '@/components/MensComponents'
 import NewsLetter from '@/components/NewsLetter'
-
+import { useNavigate } from 'react-router-dom'
 interface Product {
   _id: string
   title: string
@@ -18,10 +18,12 @@ interface Product {
 const categories = ['All', 'Pants', 'Sweatshirt', 'Jackets', 'Shirts']
 
 const Men: React.FC = () => {
+  // inside component:
   const [products, setProducts] = useState<Product[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const { addToCart, totalItems } = useCart()
 
+  const navigate = useNavigate()
   // Fetch products designated for men
   useEffect(() => {
     axios
@@ -94,7 +96,10 @@ const Men: React.FC = () => {
                 >
                   Add to Cart 🛒
                 </button>
-                <button className="mt-2 ml-2 px-4 py-2 bg-[#8B4513] text-white rounded-full hover:bg-[#70421e]">
+                <button
+                  className="mt-2 ml-2 px-4 py-2 bg-[#8B4513] text-white rounded-full hover:bg-[#70421e]"
+                  onClick={() => navigate(`/try-on/${product._id}`)}
+                >
                   Try Now
                 </button>
               </div>

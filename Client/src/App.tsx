@@ -19,6 +19,7 @@ import Users from '../src/admin/pages/Users'
 import Products from './admin/pages/Products'
 
 import DashboardLayout from '../src/admin/layout/DashboardLayout' // Admin Dashboard Layout
+import TryOnPage from './pages/TryOnPage'
 const App = () => (
   <Router>
     <NavbarComponent />
@@ -27,6 +28,7 @@ const App = () => (
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<SignupForm />} />
       <Route path="/contact" element={<ContactUs />} />
+      <Route path="/try-on/:productId" element={<TryOnPage />} />
 
       <Route path="/3d-avatar-customization" element={<ThreeDAvatarCustomization />} />
       <Route path="/men" element={<Men />} />

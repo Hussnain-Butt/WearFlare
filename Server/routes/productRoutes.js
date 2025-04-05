@@ -23,5 +23,6 @@ router.get('/', productController.getProducts)
 router.post('/', upload.single('image'), productController.createProduct)
 router.put('/:id', upload.single('image'), productController.updateProduct) // ✅ Update
 router.delete('/:id', productController.deleteProduct) // ✅ Delete
+router.get('/:id', productController.getProductById)
 
 module.exports = router
