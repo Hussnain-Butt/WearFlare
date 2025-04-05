@@ -35,8 +35,8 @@ uploadPaths.forEach((dir) => {
 app.use(
   cors({
     origin: [
-      'http://localhost:5173',
-      'https://0b51-2400-adc5-173-bd00-61d7-788-79fd-de39.ngrok-free.app',
+      'https://frontend-production-0ee2.up.railway.app',
+      'https://backend-production-c8ff.up.railway.app',
     ],
     credentials: true,
   }),
