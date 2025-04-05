@@ -12,40 +12,49 @@ const TryOnPage = () => {
   const [tryOnResult, setTryOnResult] = useState<string | null>(null)
   const [showTryButton, setShowTryButton] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null) // State for error message
 
   useEffect(() => {
     axios
       .get(`https://backend-production-c8ff.up.railway.app/api/products/${productId}`)
       .then((res) => setProduct(res.data))
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error('Failed to fetch product:', err)
+        setErrorMessage('Failed to load product details.')
+      })
   }, [productId])
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadedImage(file)
+    // Revoke previous URL to prevent memory leaks
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl)
+    }
     setPreviewImageUrl(URL.createObjectURL(file))
     setShowTryButton(true)
+    setTryOnResult(null) // Clear previous result
+    setErrorMessage(null) // Clear previous error
   }
 
   const handleTryOn = async () => {
     if (!uploadedImage || !product) return
     setIsLoading(true)
+    setErrorMessage(null) // Clear previous error
 
     const formData = new FormData()
     formData.append('userImage', uploadedImage)
-    // Ensure product.image doesn't start with a slash OR handle it
-    let clothingImageUrl = `https://backend-production-c8ff.up.railway.app${product.image}`
-    if (product.image.startsWith('/')) {
-      clothingImageUrl = `https://backend-production-c8ff.up.railway.app${product.image}`
-    } else {
-      clothingImageUrl = `https://backend-production-c8ff.up.railway.app/${product.image}`
-    }
-    // OR clean it up on the backend if easier:
-    // const clothingImage = req.body.clothingImage?.trim().replace(/([^:]\/)\/+/g, "$1");
+
+    // Construct clothing image URL (ensure no double slashes)
+    let backendUrl = 'https://backend-production-c8ff.up.railway.app'
+    let imagePath = product.image
+    let clothingImageUrl = imagePath.startsWith('/')
+      ? `${backendUrl}${imagePath}`
+      : `${backendUrl}/${imagePath}`
 
     formData.append('clothingImage', clothingImageUrl)
-    formData.append('clothingImage', clothingImageUrl)
+    // !!! REMOVED DUPLICATE LINE HERE !!!
 
     try {
       const res = await axios.post(
@@ -53,22 +62,50 @@ const TryOnPage = () => {
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            // Content-Type is set automatically by browser for FormData
+            // 'Content-Type': 'multipart/form-data', // Usually not needed with FormData in browser
           },
         },
       )
       setTryOnResult(res.data.outputImageUrl)
     } catch (err) {
       console.error('Try-on failed:', err)
+      // Try to get a more specific error message from the backend response
+      const backendError =
+        err.response?.data?.error ||
+        err.response?.data?.details ||
+        'Try-on request failed. Please check the console.'
+      setErrorMessage(`Error: ${backendError}`)
+      setTryOnResult(null) // Clear result on error
     } finally {
       setIsLoading(false)
-      setShowTryButton(false)
+      setShowTryButton(false) // Maybe hide button again after attempt? Or keep it? Your choice.
     }
   }
+
+  // Cleanup preview URL on component unmount
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) {
+        URL.revokeObjectURL(previewImageUrl)
+      }
+    }
+  }, [previewImageUrl])
 
   return (
     <div className="min-h-screen bg-[#f8f6f2] flex flex-col items-center px-4 py-10">
       <h2 className="text-3xl font-semibold text-[#6b5745] mb-10">Virtual Try-On</h2>
+
+      {/* Display Error Message */}
+      {errorMessage && (
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 max-w-md w-full"
+          role="alert"
+        >
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{errorMessage}</span>
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row gap-10">
         {/* Left: Upload Section */}
@@ -91,11 +128,11 @@ const TryOnPage = () => {
           </label>
 
           {previewImageUrl && (
-            <div className="mt-6 w-full h-[300px] overflow-hidden rounded-lg bg-white flex items-center justify-center">
+            <div className="mt-6 w-full h-[300px] overflow-hidden rounded-lg bg-gray-200 flex items-center justify-center">
               <img
                 src={previewImageUrl}
-                alt="Uploaded"
-                className="object-cover max-h-full max-w-full"
+                alt="Uploaded Preview"
+                className="object-contain max-h-full max-w-full" // Use contain to see whole image
               />
             </div>
           )}
@@ -103,8 +140,8 @@ const TryOnPage = () => {
           {showTryButton && (
             <Button
               onClick={handleTryOn}
-              disabled={isLoading}
-              className="mt-6 bg-[#c8a98a] text-[#6b5745] px-6 py-2 rounded-full hover:bg-white transition flex items-center"
+              disabled={isLoading || !uploadedImage} // Disable if loading or no image
+              className="mt-6 bg-[#c8a98a] text-[#6b5745] px-6 py-2 rounded-full hover:bg-white transition flex items-center disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -118,16 +155,28 @@ const TryOnPage = () => {
         </div>
 
         {/* Right: Try-On Result */}
-        <div className="w-[400px] bg-[#fffefc] text-[#6b5745] p-6 rounded-xl shadow-md flex flex-col items-center justify-center">
+        <div className="w-[400px] bg-[#fffefc] text-[#6b5745] p-6 rounded-xl shadow-md flex flex-col items-center justify-center min-h-[400px]">
+          {' '}
+          {/* Added min-height */}
           <ImagePlus className="h-10 w-10 mb-3" />
-          {tryOnResult ? (
+          {isLoading &&
+            !tryOnResult && ( // Show loader here too while waiting for result
+              <div className="flex flex-col items-center text-center">
+                <Loader2 className="animate-spin w-8 h-8 mb-2" />
+                <p>Generating your try-on...</p>
+              </div>
+            )}
+          {tryOnResult && !isLoading && (
             <img
               src={tryOnResult}
               alt="Try-On Result"
               className="w-full rounded-lg object-contain"
             />
-          ) : (
-            <p className="text-center text-[#6b5745]">Your try-on preview will appear here</p>
+          )}
+          {!tryOnResult && !isLoading && (
+            <p className="text-center text-[#6b5745]">
+              {errorMessage ? 'Failed to generate.' : 'Your try-on preview will appear here'}
+            </p>
           )}
         </div>
       </div>
