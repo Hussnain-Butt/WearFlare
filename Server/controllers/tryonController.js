@@ -3,115 +3,122 @@ const fs = require('fs')
 const FormData = require('form-data')
 const axios = require('axios')
 
-// Define timeout duration in milliseconds (e.g., 60 seconds)
+// Fashnai API ke liye timeout (milliseconds mein - yeh 60 seconds hai)
 const FASHNAI_API_TIMEOUT = 60000
 
 exports.handleTryOn = async (req, res) => {
-  const userImagePath = req.file ? req.file.path : null // Store path for cleanup
+  const userImagePath = req.file ? req.file.path : null // File path save karein cleanup ke liye
 
   try {
     const userImage = req.file
-    const clothingImage = req.body.clothingImage?.trim()
+    const clothingImage = req.body.clothingImage?.trim() // Clothing image URL
 
-    // --- Input Validation ---
+    // --- Input Check ---
     if (!userImage) {
-      console.error('❌ Error: No user image uploaded.')
-      return res.status(400).json({ error: 'User image is required.' })
+      console.error('❌ Error: User image nahi mili.')
+      return res.status(400).json({ error: 'User image zaroori hai.' })
     }
     if (!clothingImage) {
-      console.error('❌ Error: No clothing image URL provided.')
-      // Clean up uploaded file if validation fails early
-      if (userImagePath) fs.unlink(userImagePath, () => {})
-      return res.status(400).json({ error: 'Clothing image URL is required.' })
+      console.error('❌ Error: Clothing image URL nahi mila.')
+      if (userImagePath) fs.unlink(userImagePath, () => {}) // Agar validation fail ho toh file delete kardein
+      return res.status(400).json({ error: 'Clothing image URL zaroori hai.' })
     }
 
     console.log('🧾 USER IMAGE Path:', userImage.path)
     console.log('🧾 CLOTHING IMAGE URL:', clothingImage)
 
-    // --- Prepare data for Fashnai API ---
+    // --- Fashnai API ke liye Data Tayyar Karein ---
     const formData = new FormData()
     let readStream
     try {
+      // File se stream banayein
       readStream = fs.createReadStream(userImage.path)
       formData.append('userImage', readStream)
     } catch (streamError) {
-      console.error('❌ Error creating read stream for user image:', streamError)
-      console.error('❌ Faulty Path:', userImage.path)
+      console.error('❌ Error: User image file read karne mein error:', streamError)
+      console.error('❌ Kharab Path:', userImage.path)
       if (userImagePath) fs.unlink(userImagePath, () => {}) // Cleanup
-      return res.status(500).json({ error: 'Failed to process uploaded user image.' })
+      return res.status(500).json({ error: 'User image process nahi ho saki.' })
     }
-    formData.append('clothingImage', clothingImage)
+    formData.append('clothingImage', clothingImage) // URL bhejein
 
-    // --- Call Fashnai API ---
-    console.log(`⏳ Calling Fashnai API (Timeout: ${FASHNAI_API_TIMEOUT / 1000}s)...`)
-    const response = await axios.post('https://api.fashnai.com/virtual-tryon', formData, {
-      headers: {
-        ...formData.getHeaders(),
-        Authorization: `Bearer fa-1Lp3hA4GxY7N-UbGMCQjjW4BnAHXZbpDEkxT8`, // Ensure this key is valid!
+    // --- Fashnai API Call Karein ---
+    console.log(`⏳ Fashnai API ko call ja rahi hai (Timeout: ${FASHNAI_API_TIMEOUT / 1000}s)...`)
+    const response = await axios.post(
+      'https://api.fashnai.com/virtual-tryon', // Fashnai API endpoint
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(), // Content-Type: multipart/form-data set karega
+          // API Key check karein ke yeh sahi aur active hai!
+          Authorization: `Bearer fa-1Lp3hA4GxY7N-UbGMCQjjW4BnAHXZbpDEkxT8`,
+        },
+        timeout: FASHNAI_API_TIMEOUT, // Timeout set karein
       },
-      timeout: FASHNAI_API_TIMEOUT, // Set timeout
-    })
+    )
 
-    console.log('✅ Fashnai API Success:', response.status)
+    console.log('✅ Fashnai API se response mil gaya:', response.status)
 
-    // --- Send response to Frontend ---
+    // --- Frontend ko Jawab Bhejein ---
+    // Check karein ke Fashnai se 'outputImageUrl' mila hai
     if (response.data && response.data.outputImageUrl) {
       return res.json({ outputImageUrl: response.data.outputImageUrl })
     } else {
-      console.error('❌ Fashnai API response missing outputImageUrl:', response.data)
-      return res.status(500).json({ error: 'Virtual Try-On service returned unexpected data.' })
+      console.error('❌ Fashnai API response mein outputImageUrl nahi hai:', response.data)
+      return res.status(500).json({ error: 'Virtual Try-On service se ajeeb data mila.' })
     }
   } catch (error) {
-    // --- Handle Errors ---
-    console.error('❌ Try-On failed in catch block.')
+    // --- Error Handle Karein ---
+    console.error('❌ Try-On process fail ho gaya (catch block).')
 
     if (axios.isAxiosError(error)) {
-      console.error('❌ Axios Error Code:', error.code) // Log code (e.g., 'ECONNABORTED' for timeout)
+      console.error('❌ Axios Error Code:', error.code) // Error code log karein (Jaise 'ECONNABORTED' timeout ke liye)
 
-      // Check for timeout specifically
+      // Timeout ka error check karein
       if (error.code === 'ECONNABORTED') {
         console.error(
-          `❌ Fashnai API request timed out after ${FASHNAI_API_TIMEOUT / 1000} seconds.`,
+          `❌ Fashnai API request ${FASHNAI_API_TIMEOUT / 1000} seconds ke baad time out ho gayi.`,
         )
         return res
           .status(504)
-          .json({ error: 'Virtual Try-On service timed out. Please try again later.' }) // 504 Gateway Timeout
+          .json({ error: 'Virtual Try-On service time out ho gayi. Baad mein try karein.' }) // 504 Gateway Timeout
       }
 
       if (error.response) {
-        // Fashnai responded with an error status (4xx, 5xx)
+        // Fashnai ne error status ke saath jawab diya (4xx, 5xx)
         console.error('❌ Fashnai API Status:', error.response.status)
         console.error('❌ Fashnai API Data:', error.response.data)
         return res.status(error.response.status || 500).json({
-          error: 'Virtual Try-On service failed.',
-          details: error.response.data || 'No details from service.',
+          error: 'Virtual Try-On service fail ho gayi.',
+          details: error.response.data || 'Service se koi details nahi mili.',
         })
       } else if (error.request) {
-        // Request made, but no response (could be network issue, DNS, Fashnai down)
-        console.error('❌ No response received from Fashnai API:', error.request)
-        // This still leads to the 502 error
+        // Request bheji gayi, lekin Fashnai se koi jawab nahi aaya (Network issue, Fashnai down, etc.)
+        console.error(
+          '❌ Fashnai API se koi response nahi mila:',
+          error.request ? 'Request object available' : 'Request object missing',
+        )
+        // Yahan 502 error bhej rahe hain
         return res.status(502).json({ error: 'No response from Virtual Try-On service.' })
       } else {
-        // Error setting up the request
-        console.error('❌ Error setting up request to Fashnai:', error.message)
-        return res.status(500).json({ error: 'Failed to initiate Virtual Try-On request.' })
+        // Request set karne mein hi error aa gaya
+        console.error('❌ Fashnai request set karne mein error:', error.message)
+        return res.status(500).json({ error: 'Virtual Try-On request shuru nahi ho saki.' })
       }
     } else {
-      // Non-Axios error
+      // Koi aur error (Axios ke alawa)
       console.error('❌ Non-Axios Error:', error)
-      return res
-        .status(500)
-        .json({ error: 'An unexpected internal error occurred during Virtual Try-On.' })
+      return res.status(500).json({ error: 'Try-On ke dauran unexpected internal error aaya.' })
     }
   } finally {
-    // --- Cleanup ---
-    // Ensure file is deleted even if API call fails
+    // --- Safai (Cleanup) ---
+    // User ki upload ki hui image file delete kardein, chahe success ho ya fail
     if (userImagePath) {
       fs.unlink(userImagePath, (err) => {
         if (err) {
-          console.error('❌ Error deleting uploaded file:', userImagePath, err)
+          console.error('❌ Uploaded file delete karne mein error:', userImagePath, err)
         } else {
-          // console.log('🧹 Cleaned up uploaded file:', userImagePath);
+          // console.log('🧹 Uploaded file delete ho gayi:', userImagePath);
         }
       })
     }
