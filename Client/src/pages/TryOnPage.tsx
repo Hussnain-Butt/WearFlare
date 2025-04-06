@@ -1,25 +1,35 @@
-// src/pages/TryOnPage.jsx (or wherever your component is)
-import React, { useState, useEffect } from 'react'
+// src/pages/TryOnPage.jsx
+import React, { useState, useEffect, useRef } from 'react' // Added useRef
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
 import { Upload, ImagePlus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
+const POLLING_INTERVAL = 5000 // Check status every 5 seconds (5000ms)
+const MAX_POLLING_ATTEMPTS = 24 // Try for max 2 minutes (24 * 5s = 120s)
 
 const TryOnPage = () => {
   const { productId } = useParams()
   const [product, setProduct] = useState<any>(null)
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
-  const [tryOnResult, setTryOnResult] = useState<string | null>(null) // Still used for *displaying* result if available later
+  const [tryOnResult, setTryOnResult] = useState<string | null>(null) // Final image URL
   const [showTryButton, setShowTryButton] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false) // Loading state for initial request AND polling
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [infoMessage, setInfoMessage] = useState<string | null>(null) // For info like "Processing..."
+  const [infoMessage, setInfoMessage] = useState<string | null>(null)
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null) // Store the active job ID
+
+  // Ref to store interval ID for cleanup
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pollingAttemptsRef = useRef<number>(0)
+
+  // Backend URL (use environment variable in real app)
+  const backendApiUrl =
+    process.env.REACT_APP_BACKEND_URL || 'https://backend-production-c8ff.up.railway.app'
 
   // --- Fetch Product Details ---
   useEffect(() => {
-    const backendApiUrl =
-      process.env.REACT_APP_BACKEND_URL || 'https://backend-production-c8ff.up.railway.app'
     if (productId) {
       axios
         .get(`${backendApiUrl}/api/products/${productId}`)
@@ -29,139 +39,184 @@ const TryOnPage = () => {
           setErrorMessage('Failed to load product details.')
         })
     }
-  }, [productId])
+    // Cleanup polling interval on component unmount or productId change
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+      }
+    }
+  }, [productId, backendApiUrl]) // Added backendApiUrl dependency
+
+  // --- Stop Polling Function ---
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+      pollingAttemptsRef.current = 0 // Reset attempts
+      console.log('Polling stopped.')
+    }
+  }
+
+  // --- Start Polling Function ---
+  const startPolling = (jobId) => {
+    stopPolling() // Clear any previous interval
+    setCurrentJobId(jobId) // Store the new job ID
+    pollingAttemptsRef.current = 0 // Reset attempts count
+    setInfoMessage(`Processing started (Job ID: ${jobId}). Checking status...`)
+    setIsLoading(true) // Keep loading state active during polling
+
+    pollingIntervalRef.current = setInterval(async () => {
+      if (!jobId) {
+        // Safety check
+        stopPolling()
+        return
+      }
+
+      pollingAttemptsRef.current += 1
+      console.log(`Polling attempt ${pollingAttemptsRef.current} for Job ID: ${jobId}`)
+
+      if (pollingAttemptsRef.current > MAX_POLLING_ATTEMPTS) {
+        console.error('Polling timeout reached.')
+        setErrorMessage('Try-on request timed out after checking status for too long.')
+        stopPolling()
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        // Call the backend status check endpoint
+        const statusRes = await axios.get(`${backendApiUrl}/api/tryon/status/${jobId}`)
+        const { status, outputImageUrl, error: statusError } = statusRes.data
+
+        console.log('Status check response:', statusRes.data)
+
+        if (status === 'completed' && outputImageUrl) {
+          setTryOnResult(outputImageUrl)
+          setInfoMessage('Try-on completed!')
+          setErrorMessage(null)
+          stopPolling()
+          setIsLoading(false)
+        } else if (status === 'failed') {
+          setErrorMessage(`Try-on failed: ${statusError || 'Unknown reason'}`)
+          setInfoMessage(null)
+          stopPolling()
+          setIsLoading(false)
+        } else if (status === 'check_failed') {
+          // Error occurred during the status check itself (backend reported)
+          setErrorMessage(`Failed to check status: ${statusError || 'Unknown error'}`)
+          setInfoMessage(null)
+          stopPolling() // Stop polling if status check fails persistently
+          setIsLoading(false)
+        } else {
+          // Still processing, starting, in_queue etc. Keep polling.
+          setInfoMessage(`Status: ${status}... (Job ID: ${jobId})`)
+        }
+      } catch (pollError) {
+        console.error('Error during status polling:', pollError)
+        // Handle potential network errors during polling or if backend status endpoint itself fails
+        const errMsg =
+          pollError.response?.data?.error || pollError.message || 'Could not check job status.'
+        setErrorMessage(`Error checking status: ${errMsg}`)
+        stopPolling() // Stop polling on error
+        setIsLoading(false)
+      }
+    }, POLLING_INTERVAL)
+  }
 
   // --- Handle Image Upload ---
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    stopPolling() // Stop polling if a new image is uploaded
+    setCurrentJobId(null) // Clear old job ID
     setUploadedImage(file)
     if (previewImageUrl) {
       URL.revokeObjectURL(previewImageUrl)
     }
     setPreviewImageUrl(URL.createObjectURL(file))
     setShowTryButton(true)
-    setTryOnResult(null) // Clear previous result
-    setErrorMessage(null) // Clear previous error
-    setInfoMessage(null) // Clear previous info message
-  }
-
-  // --- Handle Try-On Request ---
-  const handleTryOn = async () => {
-    if (!uploadedImage || !product) return
-    setIsLoading(true)
+    setTryOnResult(null)
     setErrorMessage(null)
     setInfoMessage(null)
-    setTryOnResult(null) // Clear previous result image
+  }
+
+  // --- Handle Try-On Request Initiation ---
+  const handleTryOn = async () => {
+    if (!uploadedImage || !product) return
+    stopPolling() // Ensure no old polling is running
+    setIsLoading(true) // Set loading for the initial POST request
+    setErrorMessage(null)
+    setInfoMessage('Initiating try-on request...')
+    setTryOnResult(null)
+    setCurrentJobId(null)
 
     const formData = new FormData()
-    formData.append('userImage', uploadedImage) // Backend needs this file
-
-    // Construct clothing image URL for the backend
-    const backendUrl =
-      process.env.REACT_APP_BACKEND_URL || 'https://backend-production-c8ff.up.railway.app'
+    formData.append('userImage', uploadedImage)
     let imagePath = product.image
     let clothingImageUrl = imagePath.startsWith('/')
-      ? `${backendUrl}${imagePath}`
-      : `${backendUrl}/${imagePath}`
-
-    formData.append('clothingImage', clothingImageUrl) // Backend needs this URL
+      ? `${backendApiUrl}${imagePath}`
+      : `${backendApiUrl}/${imagePath}`
+    formData.append('clothingImage', clothingImageUrl)
 
     try {
-      const res = await axios.post(
-        `${backendUrl}/api/tryon`, // Call our backend endpoint
-        formData,
-        {
-          // Content-Type is set automatically for FormData by the browser
-        },
-      )
+      // Call backend to START the job
+      const res = await axios.post(`${backendApiUrl}/api/tryon`, formData)
 
-      // --- Process Backend Response ---
-      // Check if the backend successfully initiated the job
+      // Check response from backend initiating call
       if (res.data && res.data.jobId) {
-        console.log('Try-on job initiated:', res.data.jobId)
-        setInfoMessage(`Processing started (Job ID: ${res.data.jobId}). Result will appear later.`)
-        // TODO: Implement logic to periodically check the job status using the jobId
-        // and fetch the actual result image URL when ready.
-        // For now, we just display the info message.
-        setTryOnResult(null) // Ensure no old image is shown
-      }
-      // Handle cases where backend might *still* send outputImageUrl (e.g., placeholder or error simulation)
-      else if (res.data && res.data.outputImageUrl) {
-        console.warn('Backend sent outputImageUrl directly:', res.data.outputImageUrl)
-        setTryOnResult(res.data.outputImageUrl) // Display it if backend sends it
-        setInfoMessage(null)
-      }
-      // Handle other success messages from backend
-      else if (res.data && res.data.message) {
-        console.log('Backend message:', res.data.message)
-        setInfoMessage(res.data.message)
-        setTryOnResult(null)
+        // Job initiated successfully, start polling for status
+        startPolling(res.data.jobId)
+        // Note: setIsLoading(true) is already set and will remain true during polling
       } else {
-        // Unexpected success response from backend
-        console.error('Unexpected response structure from backend:', res.data)
-        setErrorMessage('Received an unexpected response from the server.')
-        setTryOnResult(null)
+        // Backend didn't return jobId as expected
+        console.error('Backend did not return jobId after initiation:', res.data)
+        setErrorMessage(res.data?.message || 'Failed to start try-on job. Unexpected response.')
+        setIsLoading(false) // Stop loading if initiation failed immediately
       }
     } catch (err) {
-      console.error('Try-on failed:', err)
-      // Extract error message from backend response or provide a default
+      // Handle errors from the initial POST request
+      console.error('Try-on initiation failed:', err)
       const backendError =
         err.response?.data?.error ||
         err.response?.data?.details ||
-        'Try-on request failed. Please check the console or try again later.'
+        'Failed to initiate try-on request.'
       const status = err.response?.status
-
       let displayError = backendError
-      if (status === 504) {
-        displayError = 'The virtual try-on service timed out. Please try again in a few moments.'
-      } else if (status === 502) {
-        displayError =
-          'Could not connect to the virtual try-on service. It might be temporarily unavailable.'
-      } else if (status) {
-        displayError = `Request failed: ${backendError} (Status: ${status})`
-      } else {
-        displayError = `Request failed: ${backendError}`
-      }
-
-      setErrorMessage(displayError) // Show specific error
-      setTryOnResult(null)
-      setInfoMessage(null)
-    } finally {
-      setIsLoading(false)
-      // Keep the button visible maybe? Or hide it:
-      // setShowTryButton(false);
+      // Customize based on status code if needed
+      displayError = status ? `Error ${status}: ${backendError}` : backendError
+      setErrorMessage(displayError)
+      setIsLoading(false) // Stop loading if initiation fails
     }
+    // No finally block needed here for setIsLoading, polling handles it
   }
 
-  // --- Cleanup Preview URL ---
+  // --- Cleanup Preview URL and Polling on Unmount ---
   useEffect(() => {
     return () => {
       if (previewImageUrl) {
         URL.revokeObjectURL(previewImageUrl)
       }
+      stopPolling() // Clean up interval on unmount
     }
-  }, [previewImageUrl])
+  }, [previewImageUrl]) // Dependency array ensures this runs only when previewImageUrl changes or on unmount
 
   // --- Render Component ---
   return (
     <div className="min-h-screen bg-[#f8f6f2] flex flex-col items-center px-4 py-10">
       <h2 className="text-3xl font-semibold text-[#6b5745] mb-10">Virtual Try-On</h2>
 
-      {/* Display Error Message */}
-      {errorMessage && (
+      {/* Display Error or Info Messages */}
+      {errorMessage /* Error has priority */ && (
         <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 max-w-md w-full"
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 max-w-lg w-full"
           role="alert"
         >
           <span className="block sm:inline">Error: {errorMessage}</span>
         </div>
       )}
-
-      {/* Display Info Message */}
-      {infoMessage && !errorMessage && (
+      {!errorMessage && infoMessage /* Show info if no error */ && (
         <div
-          className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-6 max-w-md w-full"
+          className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-6 max-w-lg w-full"
           role="alert"
         >
           <span className="block sm:inline">{infoMessage}</span>
@@ -170,7 +225,7 @@ const TryOnPage = () => {
 
       <div className="flex flex-col md:flex-row gap-10">
         {/* Left: Upload Section */}
-        <div className="w-[400px] bg-[#6b5745] text-[#c8a98a] p-6 rounded-xl shadow-md flex flex-col items-center">
+        <div className="w-full max-w-[400px] bg-[#6b5745] text-[#c8a98a] p-6 rounded-xl shadow-md flex flex-col items-center">
           <Upload className="h-12 w-12 mb-4" />
           <p className="mb-4 text-center">Upload your photo to try this outfit</p>
           <input
@@ -203,7 +258,8 @@ const TryOnPage = () => {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="animate-spin mr-2 w-4 h-4" /> Generating...
+                  {' '}
+                  <Loader2 className="animate-spin mr-2 w-4 h-4" /> Processing...{' '}
                 </>
               ) : (
                 'Generate Try-On'
@@ -213,16 +269,17 @@ const TryOnPage = () => {
         </div>
 
         {/* Right: Try-On Result */}
-        <div className="w-[400px] bg-[#fffefc] text-[#6b5745] p-6 rounded-xl shadow-md flex flex-col items-center justify-center min-h-[400px]">
+        <div className="w-full max-w-[400px] bg-[#fffefc] text-[#6b5745] p-6 rounded-xl shadow-md flex flex-col items-center justify-center min-h-[400px]">
           <ImagePlus className="h-10 w-10 mb-3" />
-          {/* Display Loading state */}
+          {/* Display Loading state (covers initial POST and polling) */}
           {isLoading && (
             <div className="flex flex-col items-center text-center">
               <Loader2 className="animate-spin w-8 h-8 mb-2" />
-              <p>Initiating try-on...</p>
+              <p>{infoMessage || 'Processing...'}</p> {/* Show specific info or generic */}
+              <p className="text-sm text-gray-500">(May take up to a minute or two)</p>
             </div>
           )}
-          {/* Display the final result image IF available */}
+          {/* Display the final result image when loading is done and result exists */}
           {!isLoading && tryOnResult && (
             <img
               src={tryOnResult}
@@ -230,13 +287,13 @@ const TryOnPage = () => {
               className="w-full rounded-lg object-contain"
             />
           )}
-          {/* Display Info/Placeholder message when not loading and no result image */}
+          {/* Display Placeholder/Final Info/Error when not loading and no result image */}
           {!isLoading && !tryOnResult && (
             <p className="text-center text-[#6b5745]">
-              {infoMessage
-                ? infoMessage.split('.')[0] // Show first part of info message if available
-                : errorMessage
-                ? 'Failed to generate.' // Show error status if error occurred
+              {errorMessage
+                ? 'Failed to generate.' // Show failure status
+                : infoMessage
+                ? infoMessage // Show final info message (like 'Completed!')
                 : 'Your try-on preview will appear here'}{' '}
               {/* Default placeholder */}
             </p>
