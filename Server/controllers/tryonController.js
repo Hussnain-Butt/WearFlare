@@ -1,62 +1,104 @@
 // controllers/tryonController.js
 const fs = require('fs')
 const axios = require('axios')
-const path = require('path')
+const path = require('path') // Keep path required if used
 
-const FASHNAI_API_TIMEOUT = 60000 // Timeout for POST /run
-const FASHNAI_STATUS_TIMEOUT = 10000 // Shorter timeout for GET /status
+console.log('--- Loading tryonController.js ---') // Log: Controller loaded
+
+// Timeout for Fashn.ai API (in milliseconds - this is 60 seconds)
+const FASHNAI_API_TIMEOUT = 60000
+const FASHNAI_STATUS_TIMEOUT = 15000 // Increased status timeout slightly
+// Your public backend URL (Use environment variable)
 const MY_BACKEND_BASE_URL =
   process.env.BACKEND_URL || 'https://backend-production-c8ff.up.railway.app'
-const FASHNAI_API_KEY = process.env.FASHNAI_API_KEY || 'fa-v0kUsjkkMQHI-Dqpu7R1k9ZmuTWkP6Y6Jbrpt' // Use environment variable
+// Fashn.ai API Key (Use environment variable)
+const FASHNAI_API_KEY = process.env.FASHNAI_API_KEY || 'fa-v0kUsjkkMQHI-Dqpu7R1k9ZmuTWkP6Y6Jbrpt'
 
-// <<<--- [ EXISTING handleTryOn function remains the same as the previous good version ] --- >>>
-// (Woh function jo POST /v1/run call karta hai aur jobId return karta hai)
+if (!FASHNAI_API_KEY || FASHNAI_API_KEY === 'YOUR_API_KEY_HERE' || FASHNAI_API_KEY.length < 10) {
+  console.warn('⚠️ WARNING: FASHNAI_API_KEY environment variable seems missing or invalid!')
+}
+
+// <<<--- Function to initiate the job --- >>>
 exports.handleTryOn = async (req, res) => {
+  console.log('--- ENTERED handleTryOn controller ---') // Log: Function entered
   const userImageFile = req.file
   const userImagePath = userImageFile ? userImageFile.path : null
 
+  // Ensure Fashn.ai API key is somewhat valid before proceeding
+  if (!FASHNAI_API_KEY || FASHNAI_API_KEY.length < 10) {
+    console.error('❌ ERROR: Fashn.ai API Key is missing or invalid in environment variables.')
+    // Don't try to delete file if it wasn't uploaded
+    // if (userImagePath) fs.unlink(userImagePath, ()=>{});
+    return res.status(500).json({ error: 'Server configuration error: Missing API Key.' })
+  }
+
   try {
     const clothingImageURL = req.body.clothingImage?.trim()
+
+    // --- Input Validation ---
     if (!userImageFile) {
-      /* ... validation ... */ return res.status(400).json({ error: 'User image is required.' })
+      console.error('❌ Error: User image file object not found in request after Multer.')
+      // No need to check userImagePath here as file object is missing
+      return res.status(400).json({ error: 'User image file upload failed or missing.' })
     }
     if (!clothingImageURL) {
-      /* ... validation ... */ if (userImagePath) fs.unlink(userImagePath, () => {})
+      console.error('❌ Error: Clothing image URL not received in request body.')
+      if (userImagePath)
+        fs.unlink(userImagePath, () => {
+          console.log(`Deleted ${userImagePath} due to missing clothing URL.`)
+        })
       return res.status(400).json({ error: 'Clothing image URL is required.' })
     }
+    console.log('--- Input validation passed ---') // Log: Validation passed
 
+    // --- Construct Public URL for User Image ---
     const userImageFileName = userImageFile.filename
-    // Make sure this path segment '/uploads/userImages/' matches your static serving route
+    if (!userImageFileName) {
+      console.error('❌ Error: Multer did not provide a filename for the uploaded user image.')
+      if (userImagePath)
+        fs.unlink(userImagePath, () => {
+          console.log(`Deleted ${userImagePath} due to missing filename.`)
+        })
+      return res.status(500).json({ error: 'Failed to get filename for uploaded image.' })
+    }
     const userImagePublicURL = `${MY_BACKEND_BASE_URL}/uploads/userImages/${userImageFileName}`
 
     console.log('🧾 USER IMAGE Public URL:', userImagePublicURL)
     console.log('🧾 CLOTHING IMAGE URL:', clothingImageURL)
 
+    // --- Prepare JSON Data ---
     const requestData = {
       model_image: userImagePublicURL,
       garment_image: clothingImageURL,
-      category: 'auto',
+      category: 'auto', // Or derive from product if needed
     }
 
+    // --- Call Fashn.ai API ---
     console.log(`⏳ Calling Fashn.ai API V1 /run (Timeout: ${FASHNAI_API_TIMEOUT / 1000}s)...`)
-    console.log('🚀 Sending JSON Data:', JSON.stringify(requestData))
+    // console.log('🚀 Sending JSON Data:', JSON.stringify(requestData)); // Avoid logging potentially large URLs unless debugging
 
-    const response = await axios.post('https://api.fashn.ai/v1/run', requestData, {
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${FASHNAI_API_KEY}`,
+    const response = await axios.post(
+      /* ... same axios call as before ... */
+      'https://api.fashn.ai/v1/run',
+      requestData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${FASHNAI_API_KEY}`,
+        },
+        timeout: FASHNAI_API_TIMEOUT,
       },
-      timeout: FASHNAI_API_TIMEOUT,
-    })
+    )
 
     console.log('✅ Fashn.ai API V1 /run Response Status:', response.status)
     console.log('✅ Fashn.ai API V1 /run Response Data:', response.data)
 
+    // --- Process Response ---
     if (response.data && response.data.id && response.data.error === null) {
       console.log(`✅ Try-on job started successfully with ID: ${response.data.id}`)
       return res.json({
-        message: 'Try-on job initiated successfully.', // Keep message concise
+        message: 'Try-on job initiated successfully.',
         jobId: response.data.id,
       })
     } else if (response.data && response.data.error) {
@@ -71,114 +113,176 @@ exports.handleTryOn = async (req, res) => {
         .json({ error: 'Virtual Try-On service returned unexpected data structure.' })
     }
   } catch (error) {
-    // ... [ Existing detailed error handling for axios errors ] ...
-    console.error('❌ Try-On process failed (catch block in handleTryOn).')
+    // --- Handle Errors ---
+    console.error('--- ERROR caught in handleTryOn ---') // Log: Error caught
+    // Log the specific error before detailed handling
+    console.error(error)
+
     if (axios.isAxiosError(error)) {
-      /* ... Detailed Axios error handling ... */
+      console.error('❌ Axios Error Code:', error.code)
+      if (error.code === 'ECONNABORTED') {
+        /* ... Timeout handling ... */ return res
+          .status(504)
+          .json({ error: 'Virtual Try-On service timed out.' })
+      }
+      if (error.response) {
+        /* ... API error handling ... */ console.error(
+          '❌ Fashn.ai API Status:',
+          error.response.status,
+        )
+        console.error('❌ Fashn.ai API Data:', error.response.data)
+        const fashnError = error.response.data?.error || error.response.data
+        return res
+          .status(error.response.status || 500)
+          .json({
+            error: 'Virtual Try-On service request failed.',
+            details: fashnError || 'No details.',
+          })
+      }
+      if (error.request) {
+        /* ... No response handling ... */ console.error(
+          '❌ No response from Fashn.ai API:',
+          error.message,
+        )
+        return res.status(502).json({ error: 'No response from Virtual Try-On service.' })
+      } else {
+        /* ... Request setup error handling ... */ console.error(
+          '❌ Error setting up request:',
+          error.message,
+        )
+        return res.status(500).json({ error: 'Failed to initiate request.' })
+      }
     } else {
-      /* ... Non-Axios error handling ... */
+      // Non-Axios error
+      console.error('❌ Non-Axios Error in handleTryOn:', error)
+      return res
+        .status(500)
+        .json({ error: 'An unexpected internal error occurred.', details: error.message })
     }
-    // Ensure appropriate error response is sent
-    // Example simplified:
-    return res.status(500).json({ error: 'Failed to initiate try-on job.', details: error.message })
   } finally {
+    // --- Cleanup ---
+    // Only attempt delete if userImagePath was set (meaning upload likely started)
     if (userImagePath) {
-      fs.unlink(userImagePath, (err) => {
-        /* ... unlink logic ... */
+      // Check if file still exists before unlinking
+      fs.access(userImagePath, fs.constants.F_OK, (errAccess) => {
+        if (!errAccess) {
+          fs.unlink(userImagePath, (errUnlink) => {
+            if (errUnlink) {
+              console.error('❌ Error deleting uploaded file:', userImagePath, errUnlink)
+            } else {
+              console.log('🧹 Cleaned up uploaded file:', userImagePath)
+            }
+          })
+        } else {
+          console.log(`🧹 File already gone or inaccessible, no need to delete: ${userImagePath}`)
+        }
       })
+    } else {
+      console.log('🧹 No user image path recorded, skipping cleanup.')
     }
   }
 }
 
-// <<<--- [ NEW function to check status ] --- >>>
+// <<<--- Function to check the status --- >>>
 exports.checkTryOnStatus = async (req, res) => {
-  const { jobId } = req.params // Get jobId from URL parameter
+  console.log('--- ENTERED checkTryOnStatus controller ---') // Log: Status check entered
+  const { jobId } = req.params
 
   if (!jobId) {
+    console.log('❌ Missing jobId in status check request.')
     return res.status(400).json({ error: 'Job ID is required.' })
+  }
+  // Ensure Fashn.ai API key is somewhat valid before proceeding
+  if (!FASHNAI_API_KEY || FASHNAI_API_KEY.length < 10) {
+    console.error('❌ ERROR: Fashn.ai API Key is missing or invalid in environment variables.')
+    return res
+      .status(500)
+      .json({ status: 'check_failed', error: 'Server configuration error: Missing API Key.' })
   }
 
   console.log(`⏳ Checking status for Job ID: ${jobId}...`)
 
   try {
     const response = await axios.get(
-      `https://api.fashn.ai/v1/status/${jobId}`, // <-- Correct status endpoint
+      /* ... same status check axios call ... */
+      `https://api.fashn.ai/v1/status/${jobId}`,
       {
         headers: {
-          // Key needs to be stored securely, preferably environment variable
           Authorization: `Bearer ${FASHNAI_API_KEY}`,
           Accept: 'application/json',
         },
-        timeout: FASHNAI_STATUS_TIMEOUT, // Use a shorter timeout for status checks
+        timeout: FASHNAI_STATUS_TIMEOUT,
       },
     )
 
     console.log(`✅ Fashn.ai API V1 /status/${jobId} Response Status:`, response.status)
-    console.log(`✅ Fashn.ai API V1 /status/${jobId} Response Data:`, response.data)
+    // console.log(`✅ Fashn.ai API V1 /status/${jobId} Response Data:`, response.data); // Log data only if needed
 
-    // Check the response structure based on documentation
+    // --- Process Status Response ---
     if (response.data && response.data.id === jobId) {
+      /* ... Same logic as before to return status/output/error ... */
       const status = response.data.status
-      const output = response.data.output // This is an array
+      const output = response.data.output
       const errorDetails = response.data.error
 
       if (status === 'completed' && output && output.length > 0) {
-        // Job completed successfully, return the first image URL
-        return res.json({
-          status: 'completed',
-          outputImageUrl: output[0], // Send the first URL from the array
-        })
+        return res.json({ status: 'completed', outputImageUrl: output[0] })
       } else if (status === 'failed') {
-        // Job failed
         console.error(`❌ Job ID ${jobId} failed. Error: ${errorDetails}`)
-        return res.json({
-          status: 'failed',
-          error: errorDetails || 'Processing failed for an unknown reason.',
-        })
+        return res.json({ status: 'failed', error: errorDetails || 'Processing failed.' })
       } else {
-        // Job is still processing, starting, or in queue
-        return res.json({
-          status: status, // Send the current status (e.g., 'processing')
-        })
+        return res.json({ status: status }) // processing, starting, in_queue
       }
     } else {
-      // Unexpected response structure from Fashn.ai status endpoint
       console.error(`❌ Fashn.ai V1 /status/${jobId} response format unexpected:`, response.data)
       return res
         .status(500)
-        .json({ error: 'Received unexpected status data structure from service.' })
+        .json({ status: 'check_failed', error: 'Unexpected status data structure.' })
     }
   } catch (error) {
-    console.error(`❌ Error checking status for Job ID ${jobId}:`, error)
+    console.error(`--- ERROR caught in checkTryOnStatus for Job ID ${jobId} ---`) // Log: Status check error
+    // console.error(error); // Log full error object if needed for details
+
     if (axios.isAxiosError(error)) {
-      // Handle specific errors like 404 (Job not found), 429 (Rate limit), etc.
       if (error.response) {
-        console.error('❌ Fashn.ai Status API Error Status:', error.response.status)
-        console.error('❌ Fashn.ai Status API Error Data:', error.response.data)
-        // Return a specific status indicating the check failed
-        return res.status(error.response.status === 404 ? 404 : 500).json({
-          status: 'check_failed', // Custom status for frontend
-          error: `Failed to check job status (API Error ${error.response.status}).`,
-          details: error.response.data?.error || error.response.data,
-        })
-      } else if (error.request) {
-        console.error('❌ No response received from Fashn.ai Status API.')
+        /* ... Status check API error handling ... */ console.error(
+          '❌ Status API Status:',
+          error.response.status,
+        )
+        console.error('❌ Status API Data:', error.response.data)
+        return res
+          .status(error.response.status === 404 ? 404 : 500)
+          .json({
+            status: 'check_failed',
+            error: `Status check failed (API Error ${error.response.status}).`,
+            details: error.response.data?.error || error.response.data,
+          })
+      }
+      if (error.request) {
+        /* ... No response handling ... */ console.error('❌ No response from Status API.')
         return res
           .status(502)
-          .json({ status: 'check_failed', error: 'No response when checking job status.' })
+          .json({ status: 'check_failed', error: 'No response checking status.' })
       } else {
-        console.error('❌ Error setting up status check request:', error.message)
+        /* ... Request setup error handling ... */ console.error(
+          '❌ Error setting up status check:',
+          error.message,
+        )
         return res
           .status(500)
           .json({ status: 'check_failed', error: 'Could not initiate status check.' })
       }
     } else {
+      console.error('❌ Non-Axios Error in checkTryOnStatus:', error)
       return res
         .status(500)
         .json({
           status: 'check_failed',
-          error: 'An unexpected internal error occurred while checking status.',
+          error: 'Internal error checking status.',
+          details: error.message,
         })
     }
   }
 }
+
+console.log('--- tryonController.js loaded successfully ---') // Log: Controller loaded end
