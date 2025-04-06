@@ -51,7 +51,7 @@ exports.handleTryOn = async (req, res) => {
         headers: {
           ...formData.getHeaders(), // Content-Type: multipart/form-data set karega
           // API Key check karein ke yeh sahi aur active hai!
-          Authorization: `Bearer fa-1Lp3hA4GxY7N-UbGMCQjjW4BnAHXZbpDEkxT8`,
+          Authorization: `Bearer fa-v0kUsjkkMQHI-Dqpu7R1k9ZmuTWkP6Y6Jbrpt`,
         },
         timeout: FASHNAI_API_TIMEOUT, // Timeout set karein
       },
