@@ -2,7 +2,7 @@
 const express = require('express')
 const dotenv = require('dotenv')
 const cors = require('cors')
-const bodyParser = require('body-parser')
+// const bodyParser = require('body-parser'); // Deprecated for included parsers
 const path = require('path')
 const fs = require('fs')
 
@@ -15,41 +15,48 @@ const tryonRoutes = require('./routes/tryonRoutes')
 
 // Initialize App
 const app = express()
-console.log('--- Application Initializing ---') // Log: App init
+console.log('--- Application Initializing ---')
 
 // Load Environment Variables
 dotenv.config()
-console.log('--- Environment variables loaded (dotenv) ---') // Log: Env loaded
+console.log('--- Environment variables loaded (dotenv) ---')
 
 // Connect to MongoDB
-connectDB() // Assuming this logs success/failure internally
+connectDB() // Assuming this logs its status
 
-// Create upload directories if not exist
+// Create upload directories if they don't exist
+// IMPORTANT: Ensure 'uploads/userImages' is included and created.
 const uploadPaths = [
   'uploads',
   'uploads/userImages',
   'uploads/photos',
   'uploads/models',
   'uploads/configs',
-] // Added userImages
-console.log('--- Ensuring upload directories exist ---') // Log: Check dirs
+]
+console.log('--- Ensuring upload directories exist ---')
 uploadPaths.forEach((dir) => {
-  const fullPath = path.join(__dirname, dir) // Use absolute path for checking/creating
+  const fullPath = path.join(__dirname, dir)
   if (!fs.existsSync(fullPath)) {
-    console.log(`Creating directory: ${fullPath}`) // Log: Creating dir
-    fs.mkdirSync(fullPath, { recursive: true })
+    console.log(`Creating directory: ${fullPath}`)
+    try {
+      fs.mkdirSync(fullPath, { recursive: true })
+    } catch (err) {
+      console.error(`❌ FAILED to create directory: ${fullPath}`, err)
+      // Consider exiting if essential directories can't be made
+      // process.exit(1);
+    }
   }
 })
-console.log('--- Upload directories checked/created ---') // Log: Dirs done
+console.log('--- Upload directories checked/created ---')
 
 // -------------------------------
-// ✅ Health Check Endpoint (BEFORE CORS/Routes for simplicity)
+// ✅ Health Check Endpoint
 // -------------------------------
 app.get('/health', (req, res) => {
-  console.log('--- Received request on /health endpoint ---') // Log: Health check hit
+  console.log('--- Received request on /health endpoint ---')
   res.status(200).send('OK - Server is responding')
 })
-console.log('--- Health check endpoint registered ---') // Log: Health route registered
+console.log('--- Health check endpoint registered (/health) ---')
 
 // -------------------------------
 // ✅ CORS Middleware Setup
@@ -57,61 +64,77 @@ console.log('--- Health check endpoint registered ---') // Log: Health route reg
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://frontend-production-c902.up.railway.app',
+  process.env.FRONTEND_URL || 'https://frontend-production-c902.up.railway.app', // Use Env Var
 ]
-console.log('--- Configuring CORS with allowed origins:', allowedOrigins) // Log: CORS config
+console.log('--- Configuring CORS with allowed origins:', allowedOrigins)
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.'
-      console.error(`CORS Error: Origin ${origin} not allowed.`) // Log CORS block
-      return callback(new Error(msg), false)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      console.error(`CORS Error: Origin ${origin} not allowed.`)
+      callback(new Error(`Origin ${origin} not allowed by CORS policy.`))
     }
-    return callback(null, true)
   },
-  credentials: true,
+  credentials: true, // Allow cookies if needed for auth later
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly define methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'], // Define allowed headers
 }
 app.use(cors(corsOptions))
 
-// Optional: Preflight Requests Handling (cors middleware usually handles this)
-// app.options('*', cors(corsOptions)); // You might not need this explicit line
+// Handle preflight requests explicitly for all routes
+app.options('*', cors(corsOptions))
 
-console.log('--- CORS middleware applied ---') // Log: CORS applied
+console.log('--- CORS middleware applied ---')
 
 // -------------------------------
 // ✅ Parsers & Static Setup
 // -------------------------------
-// IMPORTANT: Limit request size if needed, especially for file uploads
-app.use(express.json({ limit: '10mb' })) // Increased limit for potential base64? Or keep reasonable
+// Set limits to prevent large payloads, adjust as needed
+app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
-// bodyParser is deprecated for json/urlencoded, included above. Remove if not used otherwise.
-// app.use(bodyParser.json());
 
-// Serve static uploads - IMPORTANT: Ensure this path is correct relative to where server runs
-console.log('--- Setting up static file serving for /uploads ---') // Log: Static setup
+// Serve static uploads from the 'uploads' directory
+console.log('--- Setting up static file serving for /uploads ---')
 const staticUploadsPath = path.join(__dirname, 'uploads')
-console.log(`Serving static files from: ${staticUploadsPath}`) // Log: Static path
-app.use('/uploads', express.static(staticUploadsPath))
-console.log('--- Static file serving configured ---') // Log: Static done
+console.log(`Serving static files from absolute path: ${staticUploadsPath}`)
+// Test if directory exists before serving
+if (fs.existsSync(staticUploadsPath)) {
+  app.use('/uploads', express.static(staticUploadsPath))
+  console.log('--- Static file serving configured for /uploads ---')
+} else {
+  console.error(
+    `❌ ERROR: Static files directory does not exist: ${staticUploadsPath}. File URLs will fail.`,
+  )
+}
 
 // -------------------------------
 // ✅ Routes Setup
 // -------------------------------
-console.log('--- Registering API routes ---') // Log: Route registration start
+console.log('--- Registering API routes ---')
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/admin', adminRoutes)
-app.use('/api/tryon', tryonRoutes) // This uses tryonRoutes.js
-console.log('--- API routes registered ---') // Log: Route registration end
+app.use('/api/tryon', tryonRoutes) // Uses tryonRoutes.js
+console.log('--- API routes registered ---')
 
-// Optional: Global Error Handler (Basic Example)
+// -------------------------------
+// Global Error Handler (Catches errors from routes/middleware)
+// -------------------------------
 app.use((err, req, res, next) => {
-  console.error('--- Global Error Handler Caught Error ---') // Log: Global error caught
-  console.error(err.stack)
-  res.status(500).send('Something broke on the server!')
+  console.error('--- Global Error Handler Caught Error ---')
+  console.error(`Error Path: ${req.path}`)
+  console.error(`Error Message: ${err.message}`)
+  console.error(err.stack) // Full stack trace
+
+  // Avoid sending stack trace in production
+  const statusCode = err.status || 500
+  res.status(statusCode).json({
+    error: 'An unexpected error occurred on the server.',
+    // Optionally include more detail in development
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined,
+  })
 })
 
 // -------------------------------
@@ -119,6 +142,5 @@ app.use((err, req, res, next) => {
 // -------------------------------
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
-  // This log confirms the server *started* listening, not necessarily that it's healthy
   console.log(`✅ Server running and listening on port ${PORT}`)
 })

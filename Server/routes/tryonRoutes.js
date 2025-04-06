@@ -3,76 +3,95 @@ const express = require('express')
 const multer = require('multer')
 const tryonController = require('../controllers/tryonController')
 const path = require('path') // Ensure path is required
-const fs = require('fs') // Require fs if using directory creation
+const fs = require('fs') // Require fs for directory check/creation
 
-console.log('--- Loading tryonRoutes.js ---') // Log: File loaded
+console.log('--- Loading tryonRoutes.js ---')
 
 const router = express.Router()
 
-// Configure Multer for image uploads
-const uploadDest = 'uploads/userImages/'
-console.log(`--- Configuring Multer: Destination set to ${path.resolve(uploadDest)} ---`) // Log: Multer config
+// --- Multer Configuration ---
+const uploadDest = 'uploads/userImages/' // Relative path from project root
+console.log(`--- Configuring Multer: Destination set to ${path.resolve(uploadDest)} ---`)
 
-// Ensure the destination directory exists
+// Ensure the destination directory exists synchronously on startup
 try {
   if (!fs.existsSync(uploadDest)) {
     console.log(`Creating Multer destination directory: ${uploadDest}`)
     fs.mkdirSync(uploadDest, { recursive: true })
   }
+  console.log(`Multer destination directory OK: ${uploadDest}`)
 } catch (err) {
   console.error(
-    `❌ CRITICAL: Failed to create Multer upload directory '${uploadDest}'. File uploads will fail. Error:`,
+    `❌ CRITICAL: Failed to ensure Multer upload directory '${uploadDest}'. File uploads will likely fail. Error:`,
     err,
   )
 }
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Destination should exist now, but callback is still needed
+    // Destination should exist now, just provide the path
     cb(null, uploadDest)
   },
   filename: function (req, file, cb) {
     try {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
       const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)
-      console.log(`--- Multer generating filename: ${filename} for file: ${file.originalname} ---`) // Log: Filename generation
+      console.log(
+        `--- Multer generating filename: ${filename} for original: ${file.originalname} ---`,
+      )
       cb(null, filename)
     } catch (err) {
       console.error('❌ Error in Multer filename generation:', err)
-      cb(err) // Pass error to Multer
+      cb(new Error('Failed to generate filename')) // Pass error to Multer
     }
   },
 })
 
-// File size limit (e.g., 5MB) - adjust as needed
+// Configure Multer middleware with size limit and file filter (optional)
+const MAX_FILE_SIZE_MB = 5
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
+  limits: { fileSize: MAX_FILE_SIZE_MB * 1024 * 1024 }, // Example: 5 MB limit
+  fileFilter: function (req, file, cb) {
+    // Optional: Accept only specific image types
+    const allowedTypes = /jpeg|jpg|png|webp/
+    const mimetype = allowedTypes.test(file.mimetype)
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
+    if (mimetype && extname) {
+      return cb(null, true)
+    }
+    cb(new Error(`File upload rejected: Only ${allowedTypes} types are allowed.`))
+  },
 })
 
-// POST route to initiate the try-on job
-// Added error handling for Multer specifically
+// --- Routes ---
+
+// POST route to initiate the try-on job (with Multer error handling)
 router.post(
   '/',
   (req, res, next) => {
-    console.log('--- Received POST request on /api/tryon ---') // Log: Request received
-    const uploader = upload.single('userImage')
+    console.log('--- Received POST request on /api/tryon ---')
+    const uploader = upload.single('userImage') // Middleware for single file upload
 
     uploader(req, res, function (err) {
+      // Handle Multer-specific errors first
       if (err instanceof multer.MulterError) {
-        // A Multer error occurred (e.g., file too large)
         console.error('❌ Multer Error:', err)
-        return res.status(400).json({ error: `File upload error: ${err.message}` })
+        let message = `File upload error: ${err.message}.`
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          message = `File is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`
+        }
+        return res.status(400).json({ error: message, code: err.code })
       } else if (err) {
-        // An unknown error occurred during upload
-        console.error('❌ Unknown Upload Error:', err)
-        return res.status(500).json({ error: 'An unknown error occurred during file upload.' })
+        // Handle other errors during upload (like fileFilter rejection)
+        console.error('❌ Upload Filter/Unknown Error:', err)
+        return res.status(400).json({ error: err.message || 'File upload failed.' })
       }
-      // If no upload error, proceed to the controller
+      // If upload is successful (or no file was sent but field existed), proceed to controller
       console.log(
-        '--- File upload successful (or no file), proceeding to handleTryOn controller ---',
-      ) // Log: Proceeding
-      next()
+        '--- Multer processing complete (success or no file), proceeding to handleTryOn controller ---',
+      )
+      next() // Call the next middleware/handler (tryonController.handleTryOn)
     })
   },
   tryonController.handleTryOn,
@@ -82,12 +101,13 @@ router.post(
 router.get(
   '/status/:jobId',
   (req, res, next) => {
-    console.log(`--- Received GET request on /api/tryon/status/${req.params.jobId} ---`) // Log: Status request
-    next()
+    // Basic validation or sanitization of jobId could be added here
+    console.log(`--- Received GET request on /api/tryon/status/${req.params.jobId} ---`)
+    next() // Proceed to the controller
   },
   tryonController.checkTryOnStatus,
 )
 
-console.log('--- Tryon routes registered (/ and /status/:jobId) ---') // Log: Routes registered
+console.log('--- Tryon routes registered (/ and /status/:jobId) ---')
 
 module.exports = router
