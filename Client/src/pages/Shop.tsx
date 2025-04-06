@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import axios from 'axios'
 import { useCart } from '../context/CartContext'
+import { useNavigate } from 'react-router-dom'
 
 const categories = ['All', 'Shirts', 'Jackets', 'Sweatshirt', 'Pants']
 const itemsPerPage = 8
@@ -21,6 +22,7 @@ const Shop: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [currentPage, setCurrentPage] = useState<number>(1)
   const { addToCart, totalItems } = useCart()
+  const navigate = useNavigate()
 
   // Fetch all products (both men and women)
   useEffect(() => {
@@ -96,12 +98,20 @@ const Shop: React.FC = () => {
               <div className="mt-3 text-center">
                 <p className="text-sm text-gray-800 font-medium">{product.title}</p>
                 <p className="text-sm font-medium mt-1">{product.price} Rs</p>
-                <button
-                  className="mt-2 px-4 py-2 bg-[#6b5745] text-white rounded-full hover:bg-[#5d4c3b]"
-                  onClick={() => addToCart(product)}
-                >
-                  Add to Cart 🛒
-                </button>
+                <div className="flex justify-center items-center gap-3">
+                  <button
+                    className="mt-2 px-4 py-2 bg-[#6b5745] text-white rounded-full hover:bg-[#5d4c3b]"
+                    onClick={() => addToCart(product)}
+                  >
+                    Add to Cart
+                  </button>
+                  <button
+                    className="mt-2 ml-2 px-4 py-2 bg-[#8B4513] text-white rounded-full hover:bg-[#70421e]"
+                    onClick={() => navigate(`/try-on/${product._id}`)}
+                  >
+                    Try Now
+                  </button>
+                </div>
               </div>
             </div>
           ))}

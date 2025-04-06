@@ -29,8 +29,6 @@ const App = () => (
       <Route path="/signup" element={<SignupForm />} />
       <Route path="/contact" element={<ContactUs />} />
       <Route path="/try-on/:productId" element={<TryOnPage />} />
-
-      <Route path="/3d-avatar-customization" element={<ThreeDAvatarCustomization />} />
       <Route path="/men" element={<Men />} />
       <Route path="/women" element={<Women />} />
       <Route path="/cart" element={<Cart />} />

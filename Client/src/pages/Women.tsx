@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext'
 import NewsLetter from '@/components/NewsLetter'
 import Features from '@/components/Features'
 import WomensComponents from '@/components/WomensComponent'
+import { useNavigate } from 'react-router-dom'
 
 interface Product {
   _id: string
@@ -22,7 +23,7 @@ const Women: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const { addToCart, totalItems } = useCart()
-
+  const navigate = useNavigate()
   // Fetch products designated for women
   useEffect(() => {
     axios
@@ -101,7 +102,10 @@ const Women: React.FC = () => {
                   >
                     Add to Cart
                   </button>
-                  <button className="mt-2 ml-2 px-4 py-2 bg-[#8B4513] text-white rounded-full hover:bg-[#70421e]">
+                  <button
+                    className="mt-2 ml-2 px-4 py-2 bg-[#8B4513] text-white rounded-full hover:bg-[#70421e]"
+                    onClick={() => navigate(`/try-on/${product._id}`)}
+                  >
                     Try Now
                   </button>
                 </div>

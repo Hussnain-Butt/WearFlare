@@ -46,12 +46,9 @@ const Navbar = () => {
               Women
             </Link>
 
-            <Link
-              to="/3d-avatar-customization"
-              className="font-bold hover:text-[#B8860B] capitalize"
-            >
-              3D Avatar Customization
-            </Link>
+            {/* <Link to="/tryon" className="font-bold hover:text-[#B8860B] capitalize">
+              Virtual Try On
+            </Link> */}
             {/* <Link to="/virtual-fitting-room-creation" className="font-bold hover:text-[#B8860B] capitalize">Virtual Fitting Room Creation</Link>
             <Link to="/virtual-fitting-room" className="font-bold hover:text-[#B8860B] capitalize">Virtual Fitting Room</Link> */}
 
