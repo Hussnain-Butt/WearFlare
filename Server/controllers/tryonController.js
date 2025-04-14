@@ -265,13 +265,11 @@ exports.checkTryOnStatus = async (req, res) => {
         const clientErrorStatus = [400, 401, 403, 404, 429].includes(error.response.status)
           ? error.response.status
           : 500
-        return res
-          .status(clientErrorStatus)
-          .json({
-            status: 'check_failed',
-            error: `Status check failed (API Error ${error.response.status}).`,
-            details: apiError,
-          })
+        return res.status(clientErrorStatus).json({
+          status: 'check_failed',
+          error: `Status check failed (API Error ${error.response.status}).`,
+          details: apiError,
+        })
       } else if (error.request) {
         console.error('Status API No Response Error:', error.message)
         return res
@@ -285,13 +283,11 @@ exports.checkTryOnStatus = async (req, res) => {
       }
     } else {
       console.error('Non-Axios Error in checkTryOnStatus:', error)
-      return res
-        .status(500)
-        .json({
-          status: 'check_failed',
-          error: 'Internal error checking status.',
-          details: error.message,
-        })
+      return res.status(500).json({
+        status: 'check_failed',
+        error: 'Internal error checking status.',
+        details: error.message,
+      })
     }
   }
 }

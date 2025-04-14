@@ -7,6 +7,7 @@ import NewsLetter from '@/components/NewsLetter'
 import Features from '@/components/Features'
 import WomensComponents from '@/components/WomensComponent'
 import { useNavigate } from 'react-router-dom'
+import AnimatedSection from '@/components/AnimatedSection'
 
 interface Product {
   _id: string
@@ -63,62 +64,64 @@ const Women: React.FC = () => {
         <h2 className="text-4xl font-medium text-center mb-8 text-[#725D45]">
           Women's Western Collection
         </h2>
+        <AnimatedSection direction="left">
+          {/* Category Filter Buttons */}
+          <div className="flex flex-wrap justify-center mb-6 gap-3">
+            {categories.map((category) => (
+              <button
+                key={category}
+                className={`px-4 py-2 rounded-full transition-all duration-300 ${
+                  selectedCategory === category
+                    ? 'bg-[#6b5745] text-white'
+                    : 'bg-white text-black hover:bg-[#6b5745] hover:text-white'
+                }`}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
 
-        {/* Category Filter Buttons */}
-        <div className="flex flex-wrap justify-center mb-6 gap-3">
-          {categories.map((category) => (
-            <button
-              key={category}
-              className={`px-4 py-2 rounded-full transition-all duration-300 ${
-                selectedCategory === category
-                  ? 'bg-[#6b5745] text-white'
-                  : 'bg-white text-black hover:bg-[#6b5745] hover:text-white'
-              }`}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
-            <div key={product._id} className="flex flex-col items-center">
-              <div className="bg-white p-4 w-full">
-                <img
-                  src={`https://backend-production-c8ff.up.railway.app${product.image}`}
-                  alt={product.title}
-                  className="w-[450px] h-[450px] object-cover"
-                />
-              </div>
-              <div className="mt-3 text-center">
-                <p className="text-sm text-gray-800 font-medium">{product.title}</p>
-                <p className="text-sm font-medium mt-1">{product.price} Rs</p>
-                <div className="flex justify-center items-center gap-3">
-                  <button
-                    className="mt-2 px-4 py-2 bg-[#6b5745] text-white rounded-full hover:bg-[#5d4c3b]"
-                    onClick={() => addToCart(product)}
-                  >
-                    Add to Cart
-                  </button>
-                  <button
-                    className="mt-2 ml-2 px-4 py-2 bg-[#8B4513] text-white rounded-full hover:bg-[#70421e]"
-                    onClick={() => navigate(`/try-on/${product._id}`)}
-                  >
-                    Try Now
-                  </button>
+          {/* Product Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {filteredProducts.map((product) => (
+              <div key={product._id} className="flex flex-col items-center">
+                <div className="bg-white p-4 w-full">
+                  <img
+                    src={`https://backend-production-c8ff.up.railway.app${product.image}`}
+                    alt={product.title}
+                    className="w-[450px] h-[450px] object-cover"
+                  />
+                </div>
+                <div className="mt-3 text-center">
+                  <p className="text-sm text-gray-800 font-medium">{product.title}</p>
+                  <p className="text-sm font-medium mt-1">{product.price} Rs</p>
+                  <div className="flex justify-center items-center gap-3">
+                    <button
+                      className="mt-2 px-4 py-2 bg-[#6b5745] text-white rounded-full hover:bg-[#5d4c3b]"
+                      onClick={() => addToCart(product)}
+                    >
+                      Add to Cart
+                    </button>
+                    <button
+                      className="mt-2 ml-2 px-4 py-2 bg-[#8B4513] text-white rounded-full hover:bg-[#70421e]"
+                      onClick={() => navigate(`/try-on/${product._id}`)}
+                    >
+                      Try Now
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </AnimatedSection>
       </section>
 
       <div className="my-24">
-        <img src="/women_banner.png" alt="Women Banner" />
+        <img src="/women_banner.png" alt="Women Banner" className="w-full" />
       </div>
-      <WomensComponents />
+
+      {selectedCategory === 'All' && <WomensComponents />}
       <Features />
       <NewsLetter />
     </div>

@@ -23,13 +23,13 @@ const Index = () => {
       <section className="w-full py-12 px-8 md:px-16">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* First Part - Single Image */}
-          <div className="md:col-span-3 flex items-center">
+          <div className="md:col-span-3 flex items-center animate__animated animate__backInLeft">
             <img src={banner2} alt="Fashion Model" className="w-[180px]  object-cover" />
           </div>
 
           {/* Second Part - Text Section */}
           <div className="md:col-span-6 flex flex-col justify-center text-center">
-            <h1 className="text-5xl italic md:text-7xl font-bold text-[#333] tracking-wide leading-[1.3] md:leading-[1.4]">
+            <h1 className="text-5xl italic md:text-7xl font-bold text-[#333] tracking-wide leading-[1.3] md:leading-[1.4] animate__animated animate__bounce">
               Find Your <br />
               Style{' '}
               <span className="text-[#B8860B] font-serif italic relative">
@@ -46,7 +46,7 @@ const Index = () => {
           </div>
 
           {/* Third Part - Search Bar & Image Below */}
-          <div className="md:col-span-3 flex flex-col gap-6">
+          <div className="md:col-span-3 flex flex-col gap-6 animate__animated animate__backInRight">
             {/* Search Box */}
 
             {/* Second Image */}
@@ -56,7 +56,7 @@ const Index = () => {
       </section>
 
       {/* Main Image Section */}
-      <section className="w-full px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section className="w-full px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-6 animate__animated animate__flash">
         {/* Left - Large Image */}
         <div className="w-full">
           <img src={banner1} alt="Fashion Couple" className="w-full h-[450px] object-cover" />
@@ -95,7 +95,7 @@ const Index = () => {
       <Features />
 
       {/* Autumn Fashion Sale Banner */}
-      <img src={autoumnPic} alt="" className="my-8" />
+      <img src={autoumnPic} alt="" className="my-8 w-full" />
       {/* <AutumnFashionSale  /> */}
     </div>
   )

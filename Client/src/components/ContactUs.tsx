@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Mail, Phone, MapPin, Globe } from 'lucide-react'
+import AnimatedSection from './AnimatedSection'
 
 const ContactUs = () => {
   const [firstName, setFirstName] = useState('')
@@ -40,50 +41,52 @@ const ContactUs = () => {
 
       <div className="max-w-6xl w-full bg-white shadow-lg rounded-lg p-10 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Contact Form */}
-        <div>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <AnimatedSection direction="left">
+          <div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="First Name"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#c8a98a]"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Last Name"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#c8a98a]"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+
               <input
-                type="text"
-                placeholder="First Name"
+                type="email"
+                placeholder="Email Address"
                 className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#c8a98a]"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
-              <input
-                type="text"
-                placeholder="Last Name"
+
+              <textarea
+                placeholder="Message"
+                rows={5}
                 className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#c8a98a]"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              ></textarea>
 
-            <input
-              type="email"
-              placeholder="Email Address"
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#c8a98a]"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-
-            <textarea
-              placeholder="Message"
-              rows={5}
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#c8a98a]"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            ></textarea>
-
-            <button
-              type="submit"
-              className="w-full bg-[#c8a98a] text-white py-3 rounded-md text-lg font-medium hover:bg-[#6b5745] transition duration-300 shadow-md"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Sending...' : 'Submit'}
-            </button>
-          </form>
-        </div>
+              <button
+                type="submit"
+                className="w-full bg-[#c8a98a] text-white py-3 rounded-md text-lg font-medium hover:bg-[#6b5745] transition duration-300 shadow-md"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Sending...' : 'Submit'}
+              </button>
+            </form>
+          </div>
+        </AnimatedSection>
 
         {/* Contact Information */}
         <div className="bg-[#F5EDE2] p-8 rounded-lg shadow-md">

@@ -1,70 +1,52 @@
 import React from 'react'
-import arrival_image from "/new_arrival.png"
+import Jackets from '../assets/mens jackets/jacket-1.jpg'
+import Shirts from '../assets/mens shirts/shirt-1.jpg'
+import Pants from '../assets/men pents/pant-1.jpg'
+import SweatShirt from '../assets/men sweatshirts/sweatshirt-1.jpg'
+
 const MensComponents = () => {
   return (
     <div>
-        
-            {/* New Arrival Section */}
-      <div className="my-24">
-      <img src={arrival_image} alt="" />
-      </div>
+      {/* New Arrival Section */}
 
-{/* Main Grid Layout */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 bg-[#e5dfd8] my-24">
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 bg-[#e5dfd8] my-24">
         {/* Jackets image */}
         <div className="relative bg-[#c9c2b8] p-1">
-          <img 
-            src="https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=1287&auto=format&fit=crop" 
-            alt="Man wearing jacket" 
-            className="w-full h-[500px] object-cover"
-          />
+          <img src={Jackets} alt="Man wearing jacket" className="w-full h-[500px] object-cover" />
           <div className="absolute bottom-5 right-5 text-left">
             <p className="text-black font-medium text-lg mb-1">Jackets</p>
-            
           </div>
         </div>
-        
+
         {/* Shirt image */}
         <div className="relative bg-[#c9c2b8] p-1">
-          <img 
-            src="https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=1287&auto=format&fit=crop" 
-            alt="Man wearing shirt" 
-            className="w-full h-[500px] object-cover"
-          />
+          <img src={Shirts} alt="Man wearing shirt" className="w-full h-[500px] object-cover" />
           <div className="absolute bottom-5 right-5 text-right">
             <p className="text-black font-medium text-lg mb-1">SHIRT</p>
-            
           </div>
         </div>
-        
+
         {/* Pants image */}
         <div className="relative bg-[#c9c2b8] p-1">
-          <img 
-            src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=1287&auto=format&fit=crop" 
-            alt="Pants" 
-            className="w-full h-[500px] object-cover"
-          />
+          <img src={Pants} alt="Pants" className="w-full h-[500px] object-cover" />
           <div className="absolute bottom-5 right-5 text-left">
             <p className="text-black font-medium text-lg mb-1">Pants</p>
-            
           </div>
         </div>
-        
+
         {/* Sweatshirt image */}
         <div className="relative bg-[#c9c2b8] p-1">
-          <img 
-            src="https://images.unsplash.com/photo-1516826957135-700dedea698c?q=80&w=1287&auto=format&fit=crop" 
-            alt="Man wearing sweatshirt" 
+          <img
+            src={SweatShirt}
+            alt="Man wearing sweatshirt"
             className="w-full h-[500px] object-cover"
           />
           <div className="absolute bottom-5 right-5 text-right">
             <p className="text-black font-medium text-lg mb-1">SWEATSHIRT</p>
-            
           </div>
         </div>
       </div>
-
-
     </div>
   )
 }
