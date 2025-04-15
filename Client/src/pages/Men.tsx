@@ -114,7 +114,7 @@ const Men: React.FC = () => {
         </div>
       )}
 
-      {selectedCategory === 'All' && <MensComponents />}
+      {/* {selectedCategory === 'All' && <MensComponents />} */}
 
       {selectedCategory === 'All' && <NewCollection />}
 

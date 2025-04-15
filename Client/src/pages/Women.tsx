@@ -120,7 +120,7 @@ const Women: React.FC = () => {
         </div>
       )}
 
-      {selectedCategory === 'All' && <WomensComponents />}
+      {/* {selectedCategory === 'All' && <WomensComponents />} */}
 
       {selectedCategory === 'All' && <NewsLetter />}
     </div>
