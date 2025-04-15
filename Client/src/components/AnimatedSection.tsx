@@ -5,7 +5,7 @@ const AnimatedSection = ({ children, direction = 'left', delay = 0 }) => {
     left: { initial: { opacity: 0, x: -300 }, animate: { opacity: 1, x: 0 } },
     right: { initial: { opacity: 0, x: 300 }, animate: { opacity: 1, x: 0 } },
     top: { initial: { opacity: 0, y: -300 }, animate: { opacity: 1, y: 0 } },
-    bottom: { initial: { opacity: 0, y: 300 }, animate: { opacity: 1, y: 0 } },
+    bottom: { initial: { opacity: 0, y: 100 }, animate: { opacity: 1, y: 0 } },
     fade: { initial: { opacity: 0 }, animate: { opacity: 1 } },
   }
 

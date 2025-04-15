@@ -117,10 +117,10 @@ const FashionShowcase: React.FC = () => {
                         <span className="text-neutral-700 uppercase text-xs sm:text-sm font-medium tracking-wider">
                           {item.title}
                         </span>
-                        <span className="text-neutral-900 font-semibold text-sm sm:text-base mt-1">
+                        {/* <span className="text-neutral-900 font-semibold text-sm sm:text-base mt-1">
                           {item.price}
-                        </span>
-                        <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                        </span> */}
+                        {/* <div className="flex flex-col sm:flex-row gap-2 mt-3">
                           <Button
                             variant="outline"
                             size="sm"
@@ -135,7 +135,7 @@ const FashionShowcase: React.FC = () => {
                           >
                             ADD TO CART
                           </Button>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   )}
@@ -150,9 +150,12 @@ const FashionShowcase: React.FC = () => {
                           className="w-full h-64 sm:h-80 md:h-96 lg:h-[30rem] object-cover transition-transform duration-300 hover:scale-105"
                         />
                       </div>
-                      <Button className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white text-black hover:bg-gray-100 rounded-full px-5 py-2 shadow-md text-xs font-medium tracking-wide">
+                      <Link
+                        to="/shop"
+                        className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white text-black hover:bg-gray-100 rounded-full px-5 py-2 shadow-md text-xs font-medium tracking-wide"
+                      >
                         NEW COLLECTION
-                      </Button>
+                      </Link>
                     </div>
                   )}
 
@@ -194,14 +197,14 @@ const FashionShowcase: React.FC = () => {
 
         {/* "See More Collection" button */}
         <div className="flex justify-center mt-12 md:mt-16 relative z-10">
-          <Link to="/shop">
+          {/* <Link to="/shop">
             <Button
               variant="outline"
               className="rounded-full border-neutral-400 text-neutral-700 hover:bg-white/70 hover:text-neutral-900 px-6 py-2 text-sm font-medium tracking-wider"
             >
               See More Collection
             </Button>
-          </Link>
+          </Link> */}
         </div>
       </AnimatedSection>
     </section>

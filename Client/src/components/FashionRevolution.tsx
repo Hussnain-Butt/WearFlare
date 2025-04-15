@@ -41,13 +41,16 @@ const FashionRevolution = () => {
         </div>
 
         {/* Boy Section - Positioned Half on Both Sections */}
+
         <div className="relative w-full">
           <div className="m-8 relative">
-            <img
-              src={boySection}
-              className="h-96 absolute left-20 top-1/2 -translate-y-1/2 z-10"
-              alt=""
-            />
+            <AnimatedSection direction="right">
+              <img
+                src={boySection}
+                className="h-96 absolute left-20 top-1/2 -translate-y-1/2 z-10"
+                alt=""
+              />
+            </AnimatedSection>
           </div>
         </div>
 

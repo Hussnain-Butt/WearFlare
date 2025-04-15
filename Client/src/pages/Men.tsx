@@ -7,6 +7,7 @@ import MensComponents from '@/components/MensComponents'
 import NewsLetter from '@/components/NewsLetter'
 import arrival_image from '/new_arrival.png'
 import AnimatedSection from '@/components/AnimatedSection'
+import NewCollection from '@/components/NewCollection'
 
 interface Product {
   _id: string
@@ -57,7 +58,6 @@ const Men: React.FC = () => {
 
       {/* Product Section */}
       <section className="w-full py-10 px-6 md:px-12 bg-[#D3C5B8] mt-10 my-32">
-        <h2 className="text-4xl font-medium text-center mb-8 text-[#725D45]">Men's Western</h2>
         <AnimatedSection direction="left">
           {/* Category Filter Buttons */}
           <div className="flex flex-wrap justify-center mb-6 gap-3">
@@ -108,11 +108,15 @@ const Men: React.FC = () => {
           </div>
         </AnimatedSection>
       </section>
-      <div className="my-24 w-full">
-        <img src={arrival_image} className="w-full" />
-      </div>
+      {selectedCategory === 'All' && (
+        <div className="my-24 w-full">
+          <img src={arrival_image} className="w-full" />
+        </div>
+      )}
 
       {selectedCategory === 'All' && <MensComponents />}
+
+      {selectedCategory === 'All' && <NewCollection />}
 
       <NewsLetter />
     </div>

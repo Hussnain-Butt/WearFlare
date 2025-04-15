@@ -61,9 +61,6 @@ const Women: React.FC = () => {
 
       {/* Product Section */}
       <section className="w-full py-10 px-6 md:px-12 bg-[#D3C5B8] mt-10 my-32">
-        <h2 className="text-4xl font-medium text-center mb-8 text-[#725D45]">
-          Women's Western Collection
-        </h2>
         <AnimatedSection direction="left">
           {/* Category Filter Buttons */}
           <div className="flex flex-wrap justify-center mb-6 gap-3">
@@ -117,13 +114,15 @@ const Women: React.FC = () => {
         </AnimatedSection>
       </section>
 
-      <div className="my-24">
-        <img src="/women_banner.png" alt="Women Banner" className="w-full" />
-      </div>
+      {selectedCategory === 'All' && (
+        <div className="my-24">
+          <img src="/women_banner.png" alt="Women Banner" className="w-full" />
+        </div>
+      )}
 
       {selectedCategory === 'All' && <WomensComponents />}
-      <Features />
-      <NewsLetter />
+
+      {selectedCategory === 'All' && <NewsLetter />}
     </div>
   )
 }
