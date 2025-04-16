@@ -166,7 +166,7 @@ const Products: React.FC = () => {
           <input
             type="text"
             placeholder="Description"
-            value={category}
+            value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full px-4 py-2 border border-[#c8a98a] rounded-md"
           />
