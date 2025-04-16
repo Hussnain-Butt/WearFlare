@@ -163,6 +163,13 @@ const Products: React.FC = () => {
             onChange={(e) => setCategory(e.target.value)}
             className="w-full px-4 py-2 border border-[#c8a98a] rounded-md"
           />
+          <input
+            type="text"
+            placeholder="Description"
+            value={category}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full px-4 py-2 border border-[#c8a98a] rounded-md"
+          />
           <select
             value={gender}
             onChange={(e) => setGender(e.target.value)}
