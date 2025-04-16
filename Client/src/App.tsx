@@ -21,6 +21,8 @@ import Products from './admin/pages/Products'
 import DashboardLayout from '../src/admin/layout/DashboardLayout' // Admin Dashboard Layout
 import TryOnPage from './pages/TryOnPage'
 import ProductDetailsPage from './pages/ProductDetailsPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
 const App = () => (
   <Router>
     <NavbarComponent />
@@ -37,6 +39,8 @@ const App = () => (
       <Route path="/shop" element={<Shop />} />
       <Route path="/wishlist" element={<WishList />} />
       <Route path="/product/:productId" element={<ProductDetailsPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLogin />} />
 
