@@ -226,7 +226,7 @@ const Products: React.FC = () => {
 
       {/* Add/Edit Product Form Section */}
       <div className="max-w-xl mx-auto bg-white shadow-lg rounded-lg p-6 sm:p-8 mb-12">
-        <h2 className="text-2xl font-semibold text-[#B8860B] mb-6 text-center">
+        <h2 className="text-2xl font-semibold text-[#c8a98a] mb-6 text-center">
           {isEditMode ? 'Edit Product Details' : 'Add New Product'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -241,7 +241,7 @@ const Products: React.FC = () => {
               placeholder="e.g., Classic Cotton T-Shirt"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-[#d3b899] rounded-md focus:ring-[#B8860B] focus:border-[#B8860B] transition duration-150 ease-in-out"
+              className="w-full px-4 py-2 border border-[#d3b899] rounded-md focus:ring-[#c8a98a] focus:border-[#c8a98a] transition duration-150 ease-in-out"
               required
             />
           </div>
@@ -257,7 +257,7 @@ const Products: React.FC = () => {
               placeholder="e.g., 1999"
               value={price} // Bind to the string state 'price'
               onChange={(e) => setPrice(e.target.value)} // Update the string state
-              className="w-full px-4 py-2 border border-[#d3b899] rounded-md focus:ring-[#B8860B] focus:border-[#B8860B] transition duration-150 ease-in-out"
+              className="w-full px-4 py-2 border border-[#d3b899] rounded-md focus:ring-[#c8a98a] focus:border-[#c8a98a] transition duration-150 ease-in-out"
               required
               min="0" // Prevent negative prices visually
               step="any" // Allow decimals
@@ -275,7 +275,7 @@ const Products: React.FC = () => {
               placeholder="e.g., T-Shirt, Jeans, Jacket"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2 border border-[#d3b899] rounded-md focus:ring-[#B8860B] focus:border-[#B8860B] transition duration-150 ease-in-out"
+              className="w-full px-4 py-2 border border-[#d3b899] rounded-md focus:ring-[#c8a98a] focus:border-[#c8a98a] transition duration-150 ease-in-out"
               required
             />
           </div>
@@ -289,7 +289,7 @@ const Products: React.FC = () => {
               id="gender"
               value={gender}
               onChange={(e) => setGender(e.target.value)}
-              className="w-full px-4 py-2 border border-[#d3b899] rounded-md bg-white focus:ring-[#B8860B] focus:border-[#B8860B] transition duration-150 ease-in-out"
+              className="w-full px-4 py-2 border border-[#d3b899] rounded-md bg-white focus:ring-[#c8a98a] focus:border-[#c8a98a] transition duration-150 ease-in-out"
               required
             >
               <option value="" disabled>
@@ -312,7 +312,7 @@ const Products: React.FC = () => {
               placeholder="Enter detailed product description here (optional)..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-[#d3b899] rounded-md focus:ring-[#B8860B] focus:border-[#B8860B] transition duration-150 ease-in-out h-28 resize-y" // Allow vertical resizing
+              className="w-full px-4 py-2 border border-[#d3b899] rounded-md focus:ring-[#c8a98a] focus:border-[#c8a98a] transition duration-150 ease-in-out h-28 resize-y" // Allow vertical resizing
               rows={4} // Suggest initial height
             />
           </div>
@@ -323,7 +323,7 @@ const Products: React.FC = () => {
               Product Image {isEditMode && '(Leave empty to keep current image)'}
             </label>
             <div className="flex items-center space-x-4">
-              <label className="cursor-pointer bg-[#B8860B] text-white py-2 px-4 rounded-md hover:bg-yellow-700 transition duration-150 ease-in-out text-sm font-medium shadow-sm">
+              <label className="cursor-pointer bg-[#c8a98a] text-white py-2 px-4 rounded-md hover:bg-yellow-700 transition duration-150 ease-in-out text-sm font-medium shadow-sm">
                 Choose File
                 <input
                   type="file"
@@ -366,7 +366,7 @@ const Products: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full flex justify-center items-center bg-[#B8860B] text-white py-2.5 px-5 rounded-md hover:bg-yellow-700 transition duration-150 ease-in-out font-semibold disabled:opacity-70 disabled:cursor-not-allowed shadow-sm`}
+              className={`w-full flex justify-center items-center bg-[#c8a98a] text-white py-2.5 px-5 rounded-md hover:bg-yellow-700 transition duration-150 ease-in-out font-semibold disabled:opacity-70 disabled:cursor-not-allowed shadow-sm`}
             >
               {loading ? ( // Show loading indicator
                 <>
@@ -414,7 +414,7 @@ const Products: React.FC = () => {
 
       {/* Display Existing Products Section */}
       <div className="max-w-7xl mx-auto mt-16">
-        <h3 className="text-xl font-semibold text-[#B8860B] mb-6 text-center sm:text-left">
+        <h3 className="text-xl font-semibold text-[#c8a98a] mb-6 text-center sm:text-left">
           Manage Existing Products
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
