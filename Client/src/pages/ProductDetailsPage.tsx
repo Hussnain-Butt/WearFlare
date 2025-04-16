@@ -142,13 +142,13 @@ const ProductDetailsPage: React.FC = () => {
             className="flex items-center text-xs sm:text-sm text-gray-500"
             aria-label="Breadcrumb"
           >
-            <Link to="/" className="hover:text-[#B8860B] transition-colors">
+            <Link to="/" className="hover:text-[#c8a98a] transition-colors">
               HOME
             </Link>
             <ChevronRight className="h-4 w-4 mx-1 text-gray-400" />
             <Link
               to={`/${product.gender.toLowerCase()}`}
-              className="hover:text-[#B8860B] transition-colors uppercase"
+              className="hover:text-[#c8a98a] transition-colors uppercase"
             >
               {product.gender}
             </Link>
@@ -159,7 +159,7 @@ const ProductDetailsPage: React.FC = () => {
                 {/* Assuming you have category pages like /men/shirts */}
                 <Link
                   to={`/${product.gender.toLowerCase()}?category=${product.category}`}
-                  className="hover:text-[#B8860B] transition-colors uppercase"
+                  className="hover:text-[#c8a98a] transition-colors uppercase"
                 >
                   {product.category}
                 </Link>
@@ -211,9 +211,9 @@ const ProductDetailsPage: React.FC = () => {
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`w-8 h-8 rounded-full border-2 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#B8860B] transition-all ${
+                      className={`w-8 h-8 rounded-full border-2 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#c8a98a] transition-all ${
                         selectedColor === color
-                          ? 'border-[#B8860B] ring-1 ring-[#B8860B]'
+                          ? 'border-[#c8a98a] ring-1 ring-[#c8a98a]'
                           : 'border-gray-300'
                       }`}
                       aria-label={`Select color ${color}`}
@@ -241,7 +241,7 @@ const ProductDetailsPage: React.FC = () => {
                     </span>
                   </h3>
                   {/* Optional: Size Guide Link/Modal */}
-                  <button className="text-xs sm:text-sm font-medium text-[#B8860B] hover:text-yellow-700 underline">
+                  <button className="text-xs sm:text-sm font-medium text-[#c8a98a] hover:text-yellow-700 underline">
                     Size Guide
                   </button>
                 </div>
@@ -250,9 +250,9 @@ const ProductDetailsPage: React.FC = () => {
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 border rounded-md text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#B8860B] ${
+                      className={`px-4 py-2 border rounded-md text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#c8a98a] ${
                         selectedSize === size
-                          ? 'bg-[#B8860B] text-white border-[#B8860B] shadow-sm'
+                          ? 'bg-[#c8a98a] text-white border-[#c8a98a] shadow-sm'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'
                       }`}
                     >
@@ -270,7 +270,7 @@ const ProductDetailsPage: React.FC = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={isAddingToCart || showAddedMessage} // Disable while adding or showing success
-                className={`w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#B8860B] hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B8860B] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed`}
+                className={`w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#c8a98a] hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c8a98a] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed`}
               >
                 {isAddingToCart ? (
                   <>

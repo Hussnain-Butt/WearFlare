@@ -34,7 +34,7 @@ const Cart = () => {
       {' '}
       {/* Add padding top/bottom */}
       <div className="container mx-auto max-w-6xl px-4">
-        <h2 className="text-3xl md:text-4xl font-semibold text-[#B8860B] mb-8 text-center">
+        <h2 className="text-3xl md:text-4xl font-semibold text-[#c8a98a] mb-8 text-center">
           Shopping Cart
         </h2>
 
@@ -43,7 +43,7 @@ const Cart = () => {
             <p className="text-xl text-gray-500 mb-6">Your cart is currently empty.</p>
             <Link
               to="/shop"
-              className="inline-block px-6 py-3 bg-[#B8860B] text-white text-lg font-medium rounded-full hover:bg-[#9e750a] transition duration-300 shadow-md"
+              className="inline-block px-6 py-3 bg-[#c8a98a] text-white text-lg font-medium rounded-full hover:bg-[#9e750a] transition duration-300 shadow-md"
             >
               Start Shopping
             </Link>
@@ -158,13 +158,13 @@ const Cart = () => {
                   {/* Assuming total includes only items for now */}
                 </div>
               </div>
-              <button className="w-full px-6 py-3 bg-[#B8860B] text-white text-lg font-medium rounded-full hover:bg-[#9e750a] transition duration-300 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B8860B]">
+              <button className="w-full px-6 py-3 bg-[#c8a98a] text-white text-lg font-medium rounded-full hover:bg-[#9e750a] transition duration-300 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c8a98a]">
                 Proceed to Checkout
               </button>
               <div className="text-center mt-4">
                 <Link
                   to="/shop"
-                  className="text-sm text-gray-600 hover:text-[#B8860B] underline transition duration-300"
+                  className="text-sm text-gray-600 hover:text-[#c8a98a] underline transition duration-300"
                 >
                   Continue Shopping
                 </Link>

@@ -1,14 +1,14 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import Navbar from "./Navbar";
-import men from "../../public/boys.png";
-import women from "../../public/girls.png";
+import React from 'react'
+import { Link } from 'react-router-dom'
+import Navbar from './Navbar'
+import men from '../../public/boys.png'
+import women from '../../public/girls.png'
 
 const VirtualFittingRoomCreation = () => {
   return (
     <div className="w-full min-h-screen relative flex flex-col items-center justify-center">
       {/* Background Gradient Updated */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#B8860B] via-[#A37408] to-[#8C5F06] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#c8a98a] via-[#A37408] to-[#8C5F06] z-0" />
 
       {/* Main Content */}
       <div className="relative text-center z-10">
@@ -19,7 +19,7 @@ const VirtualFittingRoomCreation = () => {
         {/* Create Avatar Button */}
         <Link
           to="/customize-avatar"
-          className="bg-white text-[#B8860B] text-lg font-medium px-8 py-4 rounded-full shadow-md transition-all"
+          className="bg-white text-[#c8a98a] text-lg font-medium px-8 py-4 rounded-full shadow-md transition-all"
         >
           Create Avatar
         </Link>
@@ -27,19 +27,11 @@ const VirtualFittingRoomCreation = () => {
 
       {/* Large Poster-Style Images */}
       <div className="absolute bottom-0 w-full flex justify-between px-0">
-        <img
-          src={women}
-          alt="Women Avatar"
-          className="h-[500px] w-auto rounded-md object-cover"
-        />
-        <img
-          src={men}
-          alt="Men Avatar"
-          className="h-[500px] w-auto rounded-md object-cover"
-        />
+        <img src={women} alt="Women Avatar" className="h-[500px] w-auto rounded-md object-cover" />
+        <img src={men} alt="Men Avatar" className="h-[500px] w-auto rounded-md object-cover" />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default VirtualFittingRoomCreation;
+export default VirtualFittingRoomCreation

@@ -88,7 +88,7 @@ const LoginForm: React.FC = () => {
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pl-10 outline-none focus:ring-2 focus:ring-[#B8860B] transition"
+                className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pl-10 outline-none focus:ring-2 focus:ring-[#c8a98a] transition"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -105,7 +105,7 @@ const LoginForm: React.FC = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="********"
-                className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pl-10 pr-10 outline-none focus:ring-2 focus:ring-[#B8860B] transition"
+                className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pl-10 pr-10 outline-none focus:ring-2 focus:ring-[#c8a98a] transition"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -142,7 +142,7 @@ const LoginForm: React.FC = () => {
           {/* Sign in Button */}
           <button
             type="submit"
-            className="w-full bg-[#B8860B] text-white rounded-lg py-3 font-semibold hover:bg-[#996F0B] transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center"
+            className="w-full bg-[#c8a98a] text-white rounded-lg py-3 font-semibold hover:bg-[#996F0B] transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -155,7 +155,7 @@ const LoginForm: React.FC = () => {
           {/* Sign-up Link */}
           <p className="text-center text-sm text-gray-600">
             No account?
-            <Link to="/signup" className="text-[#B8860B] font-medium hover:underline ml-1">
+            <Link to="/signup" className="text-[#c8a98a] font-medium hover:underline ml-1">
               Sign up
             </Link>
           </p>

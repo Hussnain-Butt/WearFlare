@@ -39,7 +39,7 @@ const Faqs = () => {
 
   return (
     <div className="bg-[#e9e2d8] text-white py-12 px-6 md:px-16 ">
-      <h2 className="text-3xl font-bold text-center text-[#B8860B] mb-8">
+      <h2 className="text-3xl font-bold text-center text-[#c8a98a] mb-8">
         Frequently Asked Questions
       </h2>
       <AnimatedSection direction="top">
@@ -47,14 +47,14 @@ const Faqs = () => {
           {faqs.map((faq, index) => (
             <div key={index} className="bg-white text-black  shadow-md rounded-xl">
               <button
-                className="w-full flex justify-between items-center px-5 py-4 text-left font-semibold text-[#B8860B] hover:bg-gray-100 transition"
+                className="w-full flex justify-between items-center px-5 py-4 text-left font-semibold text-[#c8a98a] hover:bg-gray-100 transition"
                 onClick={() => toggleFAQ(index)}
               >
                 {faq.question}
                 {openIndex === index ? (
-                  <ChevronUp className="text-[#B8860B]" />
+                  <ChevronUp className="text-[#c8a98a]" />
                 ) : (
-                  <ChevronDown className="text-[#B8860B]" />
+                  <ChevronDown className="text-[#c8a98a]" />
                 )}
               </button>
               <div

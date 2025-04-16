@@ -32,14 +32,14 @@ const Index = () => {
             <h1 className="text-5xl italic md:text-7xl font-bold text-[#333] tracking-wide leading-[1.3] md:leading-[1.4] animate__animated animate__bounce">
               Find Your <br />
               Style{' '}
-              <span className="text-[#B8860B] font-serif italic relative">
+              <span className="text-[#c8a98a] font-serif italic relative">
                 Here
                 <svg
                   className="absolute -bottom-2 left-0 w-full"
                   viewBox="0 0 100 20"
                   preserveAspectRatio="none"
                 >
-                  <path d="M0,10 Q50,20 100,10" stroke="#B8860B" strokeWidth="2" fill="none" />
+                  <path d="M0,10 Q50,20 100,10" stroke="#c8a98a" strokeWidth="2" fill="none" />
                 </svg>
               </span>
             </h1>

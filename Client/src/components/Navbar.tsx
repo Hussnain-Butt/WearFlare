@@ -51,31 +51,31 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-6 lg:space-x-8 flex-grow justify-center">
             <Link
               to="/"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#B8860B] transition-colors duration-200"
+              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
             >
               Home
             </Link>
             <Link
               to="/shop"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#B8860B] transition-colors duration-200"
+              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
             >
               Shop
             </Link>
             <Link
               to="/men"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#B8860B] transition-colors duration-200"
+              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
             >
               Men
             </Link>
             <Link
               to="/women"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#B8860B] transition-colors duration-200"
+              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
             >
               Women
             </Link>
             <Link
               to="/contact"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#B8860B] transition-colors duration-200"
+              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
             >
               Contact Us
             </Link>
@@ -86,7 +86,7 @@ const Navbar: React.FC = () => {
             {/* Search Button */}
             <button
               onClick={() => setShowSearchOverlay(true)}
-              className="p-2 text-gray-600 hover:text-[#B8860B] focus:outline-none transition-colors duration-200"
+              className="p-2 text-gray-600 hover:text-[#c8a98a] focus:outline-none transition-colors duration-200"
               aria-label="Search Products"
             >
               <Search className="h-5 w-5 lg:h-6 lg:w-6" />
@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
             {/* Cart Link with Badge */}
             <Link
               to="/cart"
-              className="relative p-2 text-gray-600 hover:text-[#B8860B] transition-colors duration-200"
+              className="relative p-2 text-gray-600 hover:text-[#c8a98a] transition-colors duration-200"
               aria-label={`Shopping Cart with ${totalItems} items`}
             >
               <ShoppingCart className="h-5 w-5 lg:h-6 lg:w-6" />
@@ -110,14 +110,14 @@ const Navbar: React.FC = () => {
             {user ? (
               <button
                 onClick={handleLogout}
-                className="bg-[#B8860B] text-white px-3 py-1.5 lg:px-4 lg:py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
+                className="bg-[#c8a98a] text-white px-3 py-1.5 lg:px-4 lg:py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
               >
                 Logout
               </button>
             ) : (
               <Link
                 to="/signup"
-                className="bg-[#B8860B] text-white px-3 py-1.5 lg:px-4 lg:py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
+                className="bg-[#c8a98a] text-white px-3 py-1.5 lg:px-4 lg:py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
               >
                 Signup
               </Link>
@@ -129,7 +129,7 @@ const Navbar: React.FC = () => {
             <Link
               to="/cart"
               onClick={closeMobileMenu}
-              className="relative p-2 mr-2 text-gray-600 hover:text-[#B8860B] transition-colors duration-200"
+              className="relative p-2 mr-2 text-gray-600 hover:text-[#c8a98a] transition-colors duration-200"
               aria-label={`Shopping Cart with ${totalItems} items`}
             >
               <ShoppingCart className="h-6 w-6" />
@@ -162,35 +162,35 @@ const Navbar: React.FC = () => {
             <Link
               to="/"
               onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#B8860B] hover:bg-gray-50"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
             >
               Home
             </Link>
             <Link
               to="/shop"
               onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#B8860B] hover:bg-gray-50"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
             >
               Shop
             </Link>
             <Link
               to="/men"
               onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#B8860B] hover:bg-gray-50"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
             >
               Men
             </Link>
             <Link
               to="/women"
               onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#B8860B] hover:bg-gray-50"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
             >
               Women
             </Link>
             <Link
               to="/contact"
               onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#B8860B] hover:bg-gray-50"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
             >
               Contact Us
             </Link>
@@ -207,7 +207,7 @@ const Navbar: React.FC = () => {
                   setShowSearchOverlay(true)
                   closeMobileMenu()
                 }}
-                className="p-2 text-gray-600 hover:text-[#B8860B] transition-colors duration-200"
+                className="p-2 text-gray-600 hover:text-[#c8a98a] transition-colors duration-200"
                 aria-label="Search Products"
               >
                 <Search className="h-6 w-6" />
@@ -226,7 +226,7 @@ const Navbar: React.FC = () => {
                   <Link
                     to="/signup"
                     onClick={closeMobileMenu}
-                    className="bg-[#B8860B] text-white px-4 py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
+                    className="bg-[#c8a98a] text-white px-4 py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
                   >
                     Signup
                   </Link>

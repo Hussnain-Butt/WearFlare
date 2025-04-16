@@ -119,7 +119,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
               <input
                 id="text-search"
                 type="text"
-                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:border-[#B8860B] flex-grow"
+                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:border-[#c8a98a] flex-grow"
                 placeholder="Enter product title..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -128,7 +128,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
               <button
                 onClick={handleTextSearch}
                 disabled={isSearchingText || !searchQuery} // Disable while searching or if query is empty
-                className={`bg-[#B8860B] text-white px-4 py-2 rounded hover:bg-[#996F0B] transition-colors whitespace-nowrap ${
+                className={`bg-[#c8a98a] text-white px-4 py-2 rounded hover:bg-[#996F0B] transition-colors whitespace-nowrap ${
                   isSearchingText || !searchQuery ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
@@ -200,7 +200,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
                            file:mr-4 file:py-2 file:px-4
                            file:rounded file:border-0
                            file:text-sm file:font-semibold
-                           file:bg-[#eee1c0] file:text-[#B8860B]
+                           file:bg-[#eee1c0] file:text-[#c8a98a]
                            hover:file:bg-[#e6d5b1]"
                 accept="image/*"
               />
@@ -212,7 +212,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
               <button
                 onClick={handleImageSearch}
                 disabled={!selectedFile || isSearchingImage} // Disable if no file or searching
-                className={`bg-[#B8860B] text-white px-4 py-2 rounded hover:bg-[#996F0B] transition-colors self-start ${
+                className={`bg-[#c8a98a] text-white px-4 py-2 rounded hover:bg-[#996F0B] transition-colors self-start ${
                   !selectedFile || isSearchingImage ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >

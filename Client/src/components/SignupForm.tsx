@@ -74,7 +74,7 @@ const SignupForm = () => {
             <input
               type="text"
               placeholder="Enter your full name"
-              className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 outline-none focus:ring-2 focus:ring-[#B8860B] transition"
+              className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 outline-none focus:ring-2 focus:ring-[#c8a98a] transition"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
@@ -86,7 +86,7 @@ const SignupForm = () => {
             <input
               type="email"
               placeholder="Enter your email"
-              className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 outline-none focus:ring-2 focus:ring-[#B8860B] transition"
+              className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 outline-none focus:ring-2 focus:ring-[#c8a98a] transition"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -100,7 +100,7 @@ const SignupForm = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="********"
-                  className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pr-10 outline-none focus:ring-2 focus:ring-[#B8860B] transition"
+                  className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pr-10 outline-none focus:ring-2 focus:ring-[#c8a98a] transition"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -122,7 +122,7 @@ const SignupForm = () => {
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="********"
-                  className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pr-10 outline-none focus:ring-2 focus:ring-[#B8860B] transition"
+                  className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pr-10 outline-none focus:ring-2 focus:ring-[#c8a98a] transition"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
@@ -140,7 +140,7 @@ const SignupForm = () => {
           {/* Signup Button */}
           <button
             type="submit"
-            className="w-full bg-[#B8860B] text-white rounded-lg py-3 font-semibold hover:bg-[#996F0B] transition transform active:scale-95 flex items-center justify-center disabled:opacity-50"
+            className="w-full bg-[#c8a98a] text-white rounded-lg py-3 font-semibold hover:bg-[#996F0B] transition transform active:scale-95 flex items-center justify-center disabled:opacity-50"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -153,7 +153,7 @@ const SignupForm = () => {
           {/* Sign-in Link */}
           <p className="text-center text-sm text-gray-600">
             Have an account?
-            <Link to="/login" className="text-[#B8860B] font-medium hover:underline ml-1">
+            <Link to="/login" className="text-[#c8a98a] font-medium hover:underline ml-1">
               Sign in
             </Link>
           </p>
