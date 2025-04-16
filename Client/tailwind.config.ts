@@ -118,5 +118,6 @@ export default {
     require('tailwindcss-animate'),
     require('@tailwindcss/aspect-ratio'),
     require('@tailwindcss/typography'),
+    require('@tailwindcss/line-clamp'),
   ],
 } satisfies Config
