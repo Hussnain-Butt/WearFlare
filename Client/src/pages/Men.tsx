@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ShoppingCart } from 'lucide-react' // Import ShoppingCart
 import axios from 'axios'
-// Make sure the import path is correct
-import { useCart } from '../context/CartContext' // Adjust path if needed
-import MensComponents from '@/components/MensComponents'
+import { useCart } from '../context/CartContext' // Correct path assumed
 import NewsLetter from '@/components/NewsLetter'
-import arrival_image from '/new_arrival.png'
+import arrival_image from '/new_arrival.png' // Ensure path is correct
 import AnimatedSection from '@/components/AnimatedSection'
-import NewCollection from '@/components/NewCollection'
+import NewCollection from '@/components/NewCollection' // Ensure path is correct
 
-// Interface matching backend structure
 interface Product {
   _id: string
   title: string
@@ -22,179 +19,180 @@ interface Product {
 
 const categories = ['All', 'Pants', 'Sweatshirt', 'Jackets', 'Shirts']
 
-// Define your API base URL (replace with your actual backend URL)
+// Define your API base URL (replace with your actual backend URL if different)
 const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app'
-// For local dev: const API_BASE_URL = 'http://localhost:5000';
 
 const Men: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
-  const [isLoading, setIsLoading] = useState(true) // Loading state
-  const [error, setError] = useState<string | null>(null) // Error state
-  const { addToCart, totalItems } = useCart()
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { addToCart, totalItems } = useCart() // Assuming totalItems is needed for breadcrumb cart link
   const navigate = useNavigate()
 
   useEffect(() => {
     setIsLoading(true)
     setError(null)
     axios
-      // Use the API_BASE_URL constant
       .get(`${API_BASE_URL}/api/products?gender=men`)
       .then((res) => {
         if (Array.isArray(res.data)) {
           setProducts(res.data)
         } else {
-          console.error('Unexpected data format received:', res.data)
-          setError('Failed to load products (invalid data format).')
+          console.error('Unexpected data format:', res.data)
+          setError('Failed to load products.')
           setProducts([])
         }
       })
       .catch((err) => {
         console.error('Error fetching products:', err)
-        setError('Failed to load products. Please try again later.')
-        setProducts([]) // Clear products on error
+        setError('Could not fetch products. Please try again later.')
+        setProducts([])
       })
       .finally(() => {
         setIsLoading(false)
       })
-  }, []) // Empty dependency array means this runs once on mount
+  }, [])
 
   const filteredProducts =
     selectedCategory === 'All'
       ? products
-      : products.filter((product) => product.category === selectedCategory)
+      : products.filter(
+          (product) => product.category.toLowerCase() === selectedCategory.toLowerCase(),
+        )
 
-  // Helper function to format price string for display if needed
+  // Format price for display (example: "5,299 Rs")
   const formatDisplayPrice = (priceStr: string): string => {
-    // Example: return `${priceStr} Rs`; or use Intl.NumberFormat for better formatting
-    // Assuming the price string already contains currency like "PKR 5,299"
-    // or you store it as just "5299" and format here.
-    // For now, just returning it as is, plus "Rs" if not already present
-    if (
-      priceStr &&
-      !priceStr.toUpperCase().includes('RS') &&
-      !priceStr.toUpperCase().includes('PKR')
-    ) {
-      return `${priceStr} Rs`
-    }
-    return priceStr || 'N/A' // Handle null/undefined price
+    const num = parseFloat(String(priceStr).replace(/[^0-9.]/g, ''))
+    if (isNaN(num)) return priceStr // Return original if parsing fails
+    // You can use Intl.NumberFormat for locale-specific formatting
+    return `${num.toLocaleString('en-IN')} Rs` // Example formatting
   }
 
   return (
     <div className="min-h-screen bg-[#eee8e3]">
-      <section className="w-full py-10 px-4 md:px-12 bg-[#D3C5B8]  mb-16 sm:my-32">
-        {/* Use AnimatedSection if available and desired */}
-        {/* <AnimatedSection direction="left"> */}
-        {/* Category Filter Buttons */}
-        <div className="flex flex-wrap justify-center mb-8 gap-2 sm:gap-3">
-          {categories.map((category) => (
-            <button
-              key={category}
-              className={`px-4 py-2 text-sm sm:text-base rounded-full transition-all duration-300 border ${
-                selectedCategory === category
-                  ? 'bg-[#6b5745] text-white border-[#6b5745]'
-                  : 'bg-white text-black border-gray-300 hover:bg-[#f0ebe5] hover:border-gray-400'
-              }`}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
+      {/* Breadcrumb - Use Navbar component for consistency if available */}
+      <div className="w-full py-3 px-4 sm:px-8 bg-[#e5dfd8] flex justify-between items-center sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center space-x-1">
+          <Link to="/" className="text-xs sm:text-sm text-gray-700 hover:underline">
+            HOME
+          </Link>
+          <ChevronRight className="h-4 w-4 text-gray-500" />
+          <span className="text-xs sm:text-sm text-gray-900 font-medium">MEN</span>
         </div>
+        {/* Re-use Navbar's cart icon logic if possible, otherwise: */}
+        <Link to="/cart" className="relative p-2 text-gray-600 hover:text-[#B8860B]">
+          <ShoppingCart className="h-5 w-5 lg:h-6 lg:w-6" />
+          {totalItems > 0 && (
+            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+              {totalItems}
+            </span>
+          )}
+        </Link>
+      </div>
 
-        {/* Loading and Error States */}
-        {isLoading && <div className="text-center py-10">Loading products...</div>}
-        {error && <div className="text-center py-10 text-red-600">{error}</div>}
-
-        {/* Product Grid - Render only if not loading and no error */}
-        {!isLoading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <div
-                  key={product._id}
-                  className="flex flex-col items-center group bg-white rounded-lg shadow overflow-hidden transform transition duration-300 hover:shadow-lg"
-                >
-                  {/* Image Container */}
-                  <div className="relative w-full aspect-square overflow-hidden">
-                    <img
-                      // Use the API_BASE_URL constant for image source
-                      src={`${API_BASE_URL}${product.image}`}
-                      alt={product.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      // Add basic loading/error handling for images
-                      loading="lazy" // Lazy load images below the fold
-                      onError={(e) => {
-                        // Optional: Replace with a placeholder if image fails
-                        e.currentTarget.src = '/placeholder-image.png' // Make sure you have a placeholder
-                        e.currentTarget.alt = 'Image not available'
-                      }}
-                    />
-                  </div>
-                  {/* Product Info */}
-                  <div className="p-4 text-center w-full">
-                    <p
-                      className="text-sm md:text-base text-gray-800 font-medium truncate"
-                      title={product.title}
-                    >
-                      {product.title}
-                    </p>
-                    <p className="text-sm md:text-base font-semibold mt-1 text-[#B8860B]">
-                      {formatDisplayPrice(product.price)}
-                    </p>
-                    {/* Buttons */}
-                    <div className="mt-3 flex flex-col sm:flex-row justify-center gap-2">
-                      <button
-                        className="px-4 py-2 text-sm bg-[#6b5745] text-white rounded-full hover:bg-[#5d4c3b] transition-colors flex items-center justify-center gap-1"
-                        onClick={() => addToCart(product)}
+      {/* Product Section */}
+      <section className="w-full py-10 px-4 md:px-12 lg:px-16 mt-10 mb-16">
+        {' '}
+        {/* Removed bg color, let parent bg show */}
+        <AnimatedSection direction="left">
+          {' '}
+          {/* Or remove if not needed */}
+          {/* Category Filter Buttons */}
+          <div className="flex flex-wrap justify-center mb-8 gap-2 sm:gap-3">
+            {categories.map((category) => (
+              <button
+                key={category}
+                className={`px-4 py-2 text-sm sm:text-base rounded-full transition-all duration-300 border ${
+                  selectedCategory.toLowerCase() === category.toLowerCase()
+                    ? 'bg-[#6b5745] text-white border-[#6b5745]'
+                    : 'bg-white text-black border-gray-300 hover:bg-[#f0ebe5] hover:border-gray-400'
+                }`}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          {/* Loading / Error State */}
+          {isLoading && <div className="text-center py-10 text-gray-700">Loading products...</div>}
+          {error && <div className="text-center py-10 text-red-600">{error}</div>}
+          {/* Product Grid */}
+          {!isLoading && !error && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  // Product Card Structure
+                  <div
+                    key={product._id}
+                    className="flex flex-col items-center group transition-shadow duration-300 hover:shadow-md"
+                  >
+                    {/* Image Container with White Background/Padding */}
+                    <div className="bg-white p-4 w-full aspect-square flex items-center justify-center overflow-hidden rounded-t-md">
+                      {/* Make image clickable to product details page? */}
+                      {/* <Link to={`/product/${product._id}`}> */}
+                      <img
+                        src={`${API_BASE_URL}${product.image}`}
+                        alt={product.title}
+                        className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-image.png'
+                        }} // Add placeholder path
+                      />
+                      {/* </Link> */}
+                    </div>
+                    {/* Info Below Image */}
+                    <div className="w-full pt-3 pb-4 px-4 text-center bg-[#D3C5B8] rounded-b-md">
+                      {' '}
+                      {/* Match section bg or use another */}
+                      <p
+                        className="text-sm md:text-base text-gray-800 font-medium truncate mb-1"
+                        title={product.title}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
+                        {product.title}
+                      </p>
+                      <p className="text-sm md:text-base font-semibold text-[#504235] mb-3">
+                        {' '}
+                        {/* Adjusted price color */}
+                        {formatDisplayPrice(product.price)}
+                      </p>
+                      {/* Buttons */}
+                      <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
+                        <button
+                          className="w-full sm:w-auto px-5 py-2.5 bg-[#7f6a59] text-white rounded-full text-sm font-medium hover:bg-[#6b5745] transition-colors duration-200 flex items-center justify-center gap-1.5"
+                          onClick={() => addToCart(product)}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                          />
-                        </svg>
-                        Add to Cart
-                      </button>
-                      <button
-                        className="px-4 py-2 text-sm bg-[#8B4513] text-white rounded-full hover:bg-[#70421e] transition-colors"
-                        onClick={() => navigate(`/try-on/${product._id}`)} // Navigate to try-on page
-                      >
-                        Try Now
-                      </button>
+                          <ShoppingCart size={16} />
+                          Add to Cart
+                        </button>
+                        <button
+                          className="w-full sm:w-auto px-5 py-2.5 bg-[#B8860B] text-white rounded-full text-sm font-medium hover:bg-[#9e750a] transition-colors duration-200"
+                          onClick={() => navigate(`/try-on/${product._id}`)}
+                        >
+                          Try Now
+                        </button>
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-10 text-gray-600">
+                  No products found
+                  {selectedCategory !== 'All' ? ` in the "${selectedCategory}" category` : ''}.
                 </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10 text-gray-600">
-                No products found{' '}
-                {selectedCategory !== 'All' ? `in the "${selectedCategory}" category` : ''}.
-              </div>
-            )}
-          </div>
-        )}
-        {/* </AnimatedSection> */}
+              )}
+            </div>
+          )}
+        </AnimatedSection>
       </section>
 
-      {/* Only show these sections if 'All' category is selected */}
+      {/* Conditional Sections */}
       {selectedCategory === 'All' && !isLoading && !error && (
         <>
           <div className="my-16 sm:my-24 w-full">
-            {/* Ensure the image path is correct relative to the public folder or imported */}
             <img src={arrival_image} alt="New Arrivals" className="w-full h-auto object-cover" />
           </div>
-
-          {/* Conditional rendering of other components */}
-          {/* <MensComponents /> */}
           <NewCollection />
         </>
       )}

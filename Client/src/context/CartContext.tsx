@@ -1,3 +1,4 @@
+// src/context/CartContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
 // Interface for the product structure as received from the backend/Men.tsx
@@ -12,7 +13,8 @@ interface ProductFromBackend {
 }
 
 // Interface for items specifically within the cart, extending ProductFromBackend
-interface CartItem extends ProductFromBackend {
+export interface CartItem extends ProductFromBackend {
+  // Export CartItem interface
   quantity: number
 }
 
@@ -24,6 +26,8 @@ interface CartContextType {
   clearCart: () => void // Added utility
   totalItems: number
   totalPrice: number
+  // Helper to check if an item is in the cart
+  isInCart: (id: string) => boolean
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -71,7 +75,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           price: product.price,
           image: product.image,
           quantity: 1,
-          // You could add category/gender here too if needed in the cart display
+          category: product.category, // Include category/gender if needed later
+          gender: product.gender,
         }
         return [...prevCart, newCartItem]
       }
@@ -79,11 +84,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   // removeFromCart now completely removes an item line regardless of quantity
-  // If you want decrement, rename this or use updateQuantity
   const removeFromCart = (id: string) => {
     setCart(
       (prevCart) => prevCart.filter((item) => item._id !== id), // Filter out by _id
     )
+    console.log(`Attempting to remove item with _id: ${id}`) // Add console log
   }
 
   // Function to update quantity (can be used for increment, decrement, direct set)
@@ -110,16 +115,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const parsePrice = (priceStr: string): number => {
     if (!priceStr) return 0
     // Remove currency symbols, commas, letters (like Rs, PKR), and whitespace
-    const numericString = priceStr.replace(/[^0-9.]/g, '')
+    const numericString = String(priceStr).replace(/[^0-9.]/g, '') // Ensure it's a string first
     const parsed = parseFloat(numericString)
     return isNaN(parsed) ? 0 : parsed // Return 0 if parsing fails
   }
 
   const totalPrice = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.quantity, 0)
 
+  // Helper function to check if an item is in the cart
+  const isInCart = (id: string): boolean => {
+    return cart.some((item) => item._id === id)
+  }
+
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice }}
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        totalItems,
+        totalPrice,
+        isInCart,
+      }}
     >
       {children}
     </CartContext.Provider>
