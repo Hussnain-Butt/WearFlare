@@ -8,6 +8,7 @@ interface Product {
   price: string
   category: string
   gender: string
+  description: string
   image: string
 }
 
@@ -17,6 +18,7 @@ const Products: React.FC = () => {
   const [category, setCategory] = useState('')
   const [gender, setGender] = useState('')
   const [image, setImage] = useState<File | null>(null)
+  const [description, setDescription] = useState('')
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
@@ -47,7 +49,7 @@ const Products: React.FC = () => {
   }
 
   const validateForm = () => {
-    if (!title || !price || !category || !gender || (!image && !isEditMode)) {
+    if (!title || !price || !category || !description || !gender || (!image && !isEditMode)) {
       toast.error('Please fill all fields and upload an image.')
       return false
     }
@@ -59,6 +61,7 @@ const Products: React.FC = () => {
     setPrice('')
     setCategory('')
     setGender('')
+    setDescription('')
     setImage(null)
     setPreview(null)
     setIsEditMode(false)
@@ -74,6 +77,8 @@ const Products: React.FC = () => {
     formData.append('price', price)
     formData.append('category', category)
     formData.append('gender', gender)
+    formData.append('description', description)
+
     if (image) formData.append('image', image)
 
     setLoading(true)
@@ -110,6 +115,7 @@ const Products: React.FC = () => {
     setPrice(product.price)
     setCategory(product.category)
     setGender(product.gender)
+    setDescription(product.description)
     setPreview(product.image)
     setIsEditMode(true)
     setEditId(product._id)

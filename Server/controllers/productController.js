@@ -35,11 +35,11 @@ exports.getProducts = async (req, res) => {
  */
 exports.createProduct = async (req, res) => {
   try {
-    const { title, price, category, gender } = req.body
+    const { title, price, category, gender, description } = req.body
     // If an image was uploaded
     const image = req.file ? `/uploads/${req.file.filename}` : ''
 
-    const product = new Product({ title, price, category, gender, image })
+    const product = new Product({ title, price, category, gender, image, description })
     await product.save()
     res.status(201).json(product)
   } catch (error) {
@@ -53,8 +53,8 @@ exports.createProduct = async (req, res) => {
  */
 exports.updateProduct = async (req, res) => {
   try {
-    const { title, price, category, gender } = req.body
-    const updatedFields = { title, price, category, gender }
+    const { title, price, category, gender, description } = req.body
+    const updatedFields = { title, price, category, gender, description }
 
     if (req.file) {
       updatedFields.image = `/uploads/${req.file.filename}`
