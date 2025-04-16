@@ -1,25 +1,25 @@
+// Client/src/components/Navbar.tsx
 import React, { useState, useContext } from 'react'
-import { Link, useNavigate } from 'react-router-dom' // ✅ Import useNavigate
-import { Search, ShoppingCart, Menu, X, ChevronDown } from 'lucide-react'
-import AuthContext from '../context/AuthContext' // ✅ Import AuthContext
-import logo from '/logoWeb.png'
-// import logos from "/logo.jpg"
+import { Link, useNavigate } from 'react-router-dom'
+import { Search, ShoppingCart, Menu, X } from 'lucide-react'
+import AuthContext from '../context/AuthContext'
+import SearchOverlay from './SearchOverlay' // import the new SearchOverlay
 
-const Navbar = () => {
+const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [showSearchOverlay, setShowSearchOverlay] = useState(false)
 
   const authContext = useContext(AuthContext)
   if (!authContext) {
     throw new Error('AuthContext is undefined. Make sure AuthProvider is wrapping the App.')
   }
-  const { user, logout } = authContext // ✅ Get user and logout function from AuthContext
+  const { user, logout } = authContext
 
-  const navigate = useNavigate() // ✅ Now use useNavigate() here
+  const navigate = useNavigate()
 
   const handleLogout = () => {
     logout()
-    navigate('/login') // ✅ Redirect to login page after logout
+    navigate('/login')
   }
 
   return (
@@ -27,8 +27,8 @@ const Navbar = () => {
       <div className="max-w-10xl mx-auto px-6 sm:px-10 lg:px-16">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link to="/" className=" mb-3">
-            <img src={logo} className="w-[90px]" alt="" />
+          <Link to="/" className="mb-3">
+            <img src="/logoWeb.png" className="w-[90px]" alt="Site Logo" />
           </Link>
 
           {/* Desktop Menu */}
@@ -45,29 +45,23 @@ const Navbar = () => {
             <Link to="/women" className="font-bold hover:text-[#B8860B] capitalize">
               Women
             </Link>
-
-            {/* <Link to="/tryon" className="font-bold hover:text-[#B8860B] capitalize">
-              Virtual Try On
-            </Link> */}
-            {/* <Link to="/virtual-fitting-room-creation" className="font-bold hover:text-[#B8860B] capitalize">Virtual Fitting Room Creation</Link>
-            <Link to="/virtual-fitting-room" className="font-bold hover:text-[#B8860B] capitalize">Virtual Fitting Room</Link> */}
-
             <Link to="/contact" className="font-bold hover:text-[#B8860B] capitalize">
-              Contact Us{' '}
+              Contact Us
             </Link>
           </div>
 
           {/* Icons & Signup Button */}
           <div className="hidden md:flex gap-6 items-center flex-shrink-0">
-            <Link to="/search">
+            {/* Search icon triggers overlay */}
+            <button onClick={() => setShowSearchOverlay(true)}>
               <Search className="h-6 w-6 hover:text-[#B8860B]" />
-            </Link>
+            </button>
+
             <Link to="/cart">
               <ShoppingCart className="h-6 w-6 hover:text-[#B8860B]" />
             </Link>
 
             {user ? (
-              // 🔴 Logout Button when user is logged in
               <button
                 onClick={handleLogout}
                 className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
@@ -75,7 +69,6 @@ const Navbar = () => {
                 Logout
               </button>
             ) : (
-              // 🟢 Signup Button when user is NOT logged in
               <Link
                 to="/signup"
                 className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-[#996F0B] transition"
@@ -118,16 +111,12 @@ const Navbar = () => {
             >
               Women
             </Link>
-
             <Link
               to="/3d-avatar-customization"
               className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
             >
               3D Avatar Customization
             </Link>
-            {/* <Link to="/virtual-fitting-room-creation" className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all">Virtual Fitting Room Creation</Link>
-            <Link to="/virtual-fitting-room" className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all">Virtual Fitting Room</Link> */}
-
             <Link
               to="/contact"
               className="font-bold hover:text-[#B8860B] capitalize hover:bg-slate-200 w-full py-3 px-5 transition-all"
@@ -137,23 +126,21 @@ const Navbar = () => {
 
             {/* Mobile Icons & Signup */}
             <div className="flex gap-6 mt-4 px-5">
-              <Link to="/search">
+              <button onClick={() => setShowSearchOverlay(true)}>
                 <Search className="h-6 w-6 hover:text-[#B8860B]" />
-              </Link>
+              </button>
               <Link to="/cart">
                 <ShoppingCart className="h-6 w-6 hover:text-[#B8860B]" />
               </Link>
 
               {user ? (
-                // 🔴 Logout Button when user is logged in
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
                 >
                   Logout
                 </button>
               ) : (
-                // 🟢 Signup Button when user is NOT logged in
                 <Link
                   to="/signup"
                   className="bg-[#B8860B] text-white px-4 py-2 rounded-md hover:bg-[#996F0B] transition"
@@ -165,6 +152,9 @@ const Navbar = () => {
           </div>
         )}
       </div>
+
+      {/* Search Overlay Render */}
+      {showSearchOverlay && <SearchOverlay onClose={() => setShowSearchOverlay(false)} />}
     </nav>
   )
 }
