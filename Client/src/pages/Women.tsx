@@ -40,25 +40,6 @@ const Women: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#eee8e3]">
-      {/* Breadcrumb */}
-      <div className="w-full py-3 px-8 bg-[#e5dfd8] flex justify-between">
-        <div className="flex justify-between">
-          <Link to="/" className="text-sm text-gray-700">
-            HOME
-          </Link>
-          <ChevronRight className="h-5" />
-          <Link to="/women" className="text-sm text-gray-700">
-            WOMEN
-          </Link>
-        </div>
-        <Link to="/cart" className="flex gap-3">
-          <span>
-            <ShoppingCart />
-          </span>
-          Cart ({totalItems})
-        </Link>
-      </div>
-
       {/* Product Section */}
       <section className="w-full py-10 px-6 md:px-12 bg-[#D3C5B8] mt-10 my-32">
         <AnimatedSection direction="left">

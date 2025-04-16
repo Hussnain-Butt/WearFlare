@@ -1,78 +1,135 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from 'react'
 
-interface Product {
-  id: number;
-  title: string;
-  price: string;
-  image: string;
+// Interface for the product structure as received from the backend/Men.tsx
+interface ProductFromBackend {
+  _id: string // Use _id from MongoDB
+  title: string
+  price: string // Keep as string if backend sends it this way
+  image: string
+  // Add other potential fields if needed by the cart context itself
+  category?: string
+  gender?: string
 }
 
-interface CartItem extends Product {
-  quantity: number;
+// Interface for items specifically within the cart, extending ProductFromBackend
+interface CartItem extends ProductFromBackend {
+  quantity: number
 }
 
 interface CartContextType {
-  cart: CartItem[];
-  addToCart: (product: Product) => void;
-  removeFromCart: (id: number) => void;
-  totalItems: number;
-  totalPrice: number;
+  cart: CartItem[]
+  addToCart: (product: ProductFromBackend) => void // Expects product with _id
+  removeFromCart: (id: string) => void // Expects the _id string
+  updateQuantity: (id: string, quantity: number) => void // Added for better control
+  clearCart: () => void // Added utility
+  totalItems: number
+  totalPrice: number
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+const CartContext = createContext<CartContextType | undefined>(undefined)
+
+// Helper function to load cart from local storage
+const loadCartFromLocalStorage = (): CartItem[] => {
+  try {
+    const storedCart = localStorage.getItem('shoppingCart')
+    return storedCart ? JSON.parse(storedCart) : []
+  } catch (error) {
+    console.error('Error loading cart from local storage:', error)
+    return []
+  }
+}
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  // Initialize cart state from local storage
+  const [cart, setCart] = useState<CartItem[]>(loadCartFromLocalStorage)
 
-  const addToCart = (product: Product) => {
+  // Effect to save cart to local storage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('shoppingCart', JSON.stringify(cart))
+    } catch (error) {
+      console.error('Error saving cart to local storage:', error)
+    }
+  }, [cart])
+
+  const addToCart = (product: ProductFromBackend) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      // Find item using the correct property: _id
+      const existingItem = prevCart.find((item) => item._id === product._id)
+
       if (existingItem) {
+        // If exists, map and update quantity for the item with matching _id
         return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      } else {
-        return [...prevCart, { ...product, quantity: 1 }];
-      }
-    });
-  };
-
-//   const removeFromCart = (id: number) => {
-//     setCart((prevCart) =>
-//       prevCart.filter((item) => item.id !== id)
-//     );
-//   };
-
-const removeFromCart = (id: number) => {
-    setCart((prevCart) => {
-      return prevCart
-        .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+          item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item,
         )
-        .filter((item) => item.quantity > 0); // Remove item only if quantity becomes 0
-    });
-  };
-  
+      } else {
+        // If new, add the product with quantity 1
+        // Ensure only necessary properties are added to the cart item if needed
+        const newCartItem: CartItem = {
+          _id: product._id,
+          title: product.title,
+          price: product.price,
+          image: product.image,
+          quantity: 1,
+          // You could add category/gender here too if needed in the cart display
+        }
+        return [...prevCart, newCartItem]
+      }
+    })
+  }
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = cart.reduce((sum, item) => sum + parseFloat(item.price.replace(/[^0-9.]/g, "")) * item.quantity, 0);
+  // removeFromCart now completely removes an item line regardless of quantity
+  // If you want decrement, rename this or use updateQuantity
+  const removeFromCart = (id: string) => {
+    setCart(
+      (prevCart) => prevCart.filter((item) => item._id !== id), // Filter out by _id
+    )
+  }
+
+  // Function to update quantity (can be used for increment, decrement, direct set)
+  const updateQuantity = (id: string, quantity: number) => {
+    setCart((prevCart) => {
+      if (quantity <= 0) {
+        // If quantity is 0 or less, remove the item
+        return prevCart.filter((item) => item._id !== id)
+      } else {
+        // Otherwise, update the quantity
+        return prevCart.map((item) => (item._id === id ? { ...item, quantity: quantity } : item))
+      }
+    })
+  }
+
+  // Function to clear the entire cart
+  const clearCart = () => {
+    setCart([])
+  }
+
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+
+  // Improved price parsing robustness (handles potential non-numeric values)
+  const parsePrice = (priceStr: string): number => {
+    if (!priceStr) return 0
+    // Remove currency symbols, commas, letters (like Rs, PKR), and whitespace
+    const numericString = priceStr.replace(/[^0-9.]/g, '')
+    const parsed = parseFloat(numericString)
+    return isNaN(parsed) ? 0 : parsed // Return 0 if parsing fails
+  }
+
+  const totalPrice = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.quantity, 0)
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, totalItems, totalPrice }}>
+    <CartContext.Provider
+      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice }}
+    >
       {children}
     </CartContext.Provider>
-  );
-};
+  )
+}
 
 export const useCart = () => {
-  const context = useContext(CartContext);
+  const context = useContext(CartContext)
   if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
+    throw new Error('useCart must be used within a CartProvider')
   }
-  return context;
-};
-
-
-
-
-
+  return context
+}
