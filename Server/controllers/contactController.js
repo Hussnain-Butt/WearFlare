@@ -24,7 +24,7 @@ exports.handleContactForm = async (req, res) => {
 
     // --- Option 2: Send Email Notification to Admin ---
     // Make sure ADMIN_EMAIL is defined in your .env file
-    const adminEmail = 'bhussnain966@gmail.com'
+    const adminEmail = 'mahnoorrasool1298@gmail.com'
     if (!adminEmail) {
       console.error('ADMIN_EMAIL is not set in environment variables. Cannot send notification.')
       // Decide if this should be an error response or just log internally
