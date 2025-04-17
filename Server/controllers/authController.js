@@ -1,321 +1,139 @@
-const User = require('../models/User')
+// controllers/authController.js
+
+const User = require('../models/User') // Ensure path is correct
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
-const crypto = require('crypto') // Import crypto
-const sendEmail = require('../utils/sendEmail') // Import the email utility
+const crypto = require('crypto')
+const sendEmail = require('../utils/sendEmail') // Ensure path is correct
 const dotenv = require('dotenv')
 
-dotenv.config({ path: './.env' }) // Ensure .env is loaded correctly
+dotenv.config() // Assumes .env is in the project root
 
-// Generate JWT Token
+// --- generateToken, registerUser, loginUser (Keep as they are) ---
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' })
+  /* ... */
 }
-
-// **REGISTER USER**
 const registerUser = async (req, res) => {
-  // ... (your existing registerUser code - unchanged)
-  try {
-    const { fullName, email, password } = req.body
-
-    if (!fullName || !email || !password) {
-      return res.status(400).json({ message: 'Please provide all required fields' })
-    }
-
-    const existingUser = await User.findOne({ email })
-    if (existingUser)
-      return res.status(400).json({ message: 'User already exists with this email' })
-
-    // Password validation (example)
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long' })
-    }
-
-    const user = await User.create({ fullName, email, password })
-
-    // Don't send password back, even hashed
-    user.password = undefined
-
-    res.status(201).json({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      token: generateToken(user._id),
-    })
-  } catch (error) {
-    console.error('Register Error:', error)
-    // Check for Mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((val) => val.message)
-      return res.status(400).json({ message: messages.join('. ') })
-    }
-    res.status(500).json({ message: 'Server Error during registration' })
-  }
+  /* ... */
 }
-
-// **LOGIN USER**
 const loginUser = async (req, res) => {
-  // ... (your existing loginUser code - unchanged)
-  try {
-    const { email, password } = req.body
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' })
-    }
-
-    // Explicitly select the password field as it's hidden by default
-    const user = await User.findOne({ email }).select('+password')
-    if (!user) {
-      // Generic message for security
-      return res.status(401).json({ message: 'Invalid email or password' })
-    }
-
-    // Use the comparePassword method or bcrypt.compare directly
-    const isMatch = await bcrypt.compare(password, user.password) // Direct comparison
-    if (!isMatch) {
-      // Generic message for security
-      return res.status(401).json({ message: 'Invalid email or password' })
-    }
-
-    // Don't send password back
-    user.password = undefined
-
-    res.json({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      token: generateToken(user._id),
-    })
-  } catch (error) {
-    console.error('Login Error:', error)
-    res.status(500).json({ message: 'Server Error during login' })
-  }
+  /* ... */
 }
 
-// **FORGOT PASSWORD**
+// --- FORGOT PASSWORD ---
 const forgotPassword = async (req, res) => {
   try {
-    // 1) Get user based on POSTed email
+    // 1) Get user by email
     const user = await User.findOne({ email: req.body.email })
     if (!user) {
-      console.log(`Forgot password attempt for non-existent email: ${req.body.email}`)
-      // Don't reveal if the user exists or not
+      console.log(`Forgot password attempt - Email not found: ${req.body.email}`)
       return res.status(200).json({
         message: 'If an account with that email exists, a password reset link has been sent.',
       })
     }
 
-    // 2) Generate token
-    const resetToken = crypto.randomBytes(32).toString('hex')
-    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex')
+    // 2) Generate raw token and its hashed version
+    const rawResetToken = crypto.randomBytes(32).toString('hex')
+    const hashedResetToken = crypto.createHash('sha256').update(rawResetToken).digest('hex')
+
+    // 3) Set token and expiry on user document
+    user.resetPasswordToken = hashedResetToken
     user.resetPasswordExpires = Date.now() + 10 * 60 * 1000 // 10 minutes
 
     await user.save({ validateBeforeSave: false })
+    console.log(`Reset token generated and saved for user: ${user.email}`)
 
-    // 3) Create Reset URL
-    // IMPORTANT: Ensure FRONTEND_URL in .env DOES NOT end with a slash
-    const resetURL = `http://localhost:5173/reset-password/${resetToken}`
+    // 4) Construct Reset URL (using the RAW token)
+    const frontendBaseUrl =
+      process.env.FRONTEND_URL || 'https://frontend-production-c902.up.railway.app' // Fallback
+    // --- CRITICAL: Ensure FRONTEND_URL is set correctly in .env ---
+    if (!process.env.FRONTEND_URL) {
+      console.warn(
+        'WARN: FRONTEND_URL is not set in environment variables. Using default localhost.',
+      )
+    }
+    const resetURL = `${frontendBaseUrl}/reset-password/${rawResetToken}`
     const currentYear = new Date().getFullYear()
 
-    // 4) Define HTML Email Content (using template literal)
+    // 5) Prepare Email Content (HTML and Plain Text)
+    // --- VERIFY THIS HTML CONTENT ---
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-      <title>Password Reset</title>
-      <style>
-        body {
-          margin: 0;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background-color: #f7f7f7;
-          color: #333;
-        }
-        .container {
-          max-width: 600px;
-          margin: 40px auto;
-          background: #ffffff;
-          border-radius: 8px;
-          box-shadow: 0 0 10px rgba(0,0,0,0.05);
-          padding: 40px 30px;
-        }
-        .header {
-          text-align: center;
-          padding-bottom: 20px;
-        }
-        .header h1 {
-          color: #c8a98a;
-          margin: 0;
-        }
-        .content {
-          font-size: 16px;
-          line-height: 1.6;
-        }
-        .button {
-          display: inline-block;
-          margin: 30px 0;
-          padding: 12px 30px;
-          background-color: #c8a98a;
-          color: #fff;
-          text-decoration: none;
-          font-weight: bold;
-          border-radius: 5px;
-          transition: background-color 0.3s ease;
-        }
-        .button:hover {
-          background-color: #b08d67;
-        }
-        .footer {
-          text-align: center;
-          font-size: 13px;
-          color: #999;
-          padding-top: 30px;
-          border-top: 1px solid #eee;
-        }
-        .link {
-          word-break: break-all;
-          color: #555;
-          font-size: 14px;
-        }
-      </style>
-    </head>
+    <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0"/> <title>Password Reset - Wearflare</title> <style> body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; color: #333; } .email-wrapper { background-color: #ffffff; max-width: 600px; margin: 40px auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.07); border: 1px solid #eee; } .header { background-color: #c8a98a; /* Primary color */ color: #ffffff; padding: 25px 30px; text-align: center; } .header h1 { margin: 0; font-size: 24px; font-weight: 600; } .content { padding: 30px 35px; font-size: 15px; line-height: 1.7; color: #555; } .content p { margin: 0 0 15px 0; } .button-container { text-align: center; margin: 25px 0; } .button { display: inline-block; padding: 12px 25px; background-color: #6b5745; /* Darker accent */ color: #ffffff !important; /* Important for email clients */ text-decoration: none; font-weight: bold; border-radius: 5px; font-size: 15px; transition: background-color 0.3s ease; } .button:hover { background-color: #5d4c3b; } .link-container { margin-top: 20px; font-size: 13px; word-break: break-all; } .link { color: #4a90e2; text-decoration: none; } .footer { text-align: center; font-size: 12px; color: #999; padding: 20px 30px; border-top: 1px solid #eee; background-color: #f9f9f9; } </style></head>
     <body>
-      <div class="container">
-        <div class="header">
-          <h1>Wearflare</h1>
-        </div>
+      <div class="email-wrapper">
+        <div class="header"> <h1>Wearflare</h1> </div>
         <div class="content">
-          <p>Hello,</p>
-          <p>We received a request to reset the password for your Wearflare account.</p>
-          <p>If you made this request, click the button below to choose a new password:</p>
-          <p style="text-align: center;">
-            <a class="button" href="${resetURL}" target="_blank">Reset Password</a>
-          </p>
-          <p>This link is valid for <strong>10 minutes</strong>.</p>
-          <p>If you didn’t request a password reset, please ignore this email. Your password will remain unchanged.</p>
-          <p>If you’re having trouble, paste this link into your browser:</p>
-          <p class="link">${resetURL}</p>
+          <p>Hello ${user.fullName || 'there'},</p>
+          <p>We received a request to reset the password for your Wearflare account associated with this email address.</p>
+          <p>If you made this request, please click the button below to choose a new password. This link is only valid for the next <strong>10 minutes</strong>.</p>
+          <div class="button-container"> <a class="button" href="${resetURL}" target="_blank" style="color: #ffffff;">Reset Your Password</a> </div>
+          <p>If you didn’t request a password reset, you can safely ignore this email. Your password won't be changed.</p>
+          <div class="link-container"> <p>If the button above doesn't work, copy and paste this link into your browser:</p> <a href="${resetURL}" class="link">${resetURL}</a> </div>
         </div>
-        <div class="footer">
-          &copy; ${currentYear} Wearflare. All rights reserved.
-        </div>
+        <div class="footer"> © ${currentYear} Wearflare. All rights reserved. </div>
       </div>
     </body>
     </html>
     `
+    // --- END HTML CONTENT ---
 
-    // 5) Define Plain Text Fallback Message
+    // --- VERIFY THIS PLAIN TEXT CONTENT ---
     const plainTextMessage = `
-    Hello,
-    
+    Hello ${user.fullName || 'there'},
+
     We received a request to reset the password associated with this email address for your Wearflare account.
-    
+
     If you made this request, please use the following link to set a new password:
     ${resetURL}
-    
+
     This link is valid for 10 minutes.
-    
+
     If you did not request a password reset, please ignore this email. Your password will remain unchanged.
-    
+
     If you're having trouble with the link, please paste it into your web browser.
-    
+
     Thanks,
     The Wearflare Team
+    © ${currentYear} Wearflare. All rights reserved.
     `
+    // --- END PLAIN TEXT CONTENT ---
 
-    // 6) Send Email
+    // 6) Send the Email using BOTH `message` and `html` options
     try {
       await sendEmail({
         email: user.email,
         subject: 'Your Wearflare Password Reset Request (Valid for 10 min)',
-        message: plainTextMessage, // Plain text version
-        html: htmlContent, // HTML version
+        message: plainTextMessage, // Ensure this property name matches your sendEmail utility
+        html: htmlContent, // Ensure this property name matches your sendEmail utility
       })
-
-      res.status(200).json({ message: 'Password reset link sent to your email.' })
-    } catch (err) {
-      // If email sending fails, reset the token fields
+      console.log(`Password reset email successfully sent to: ${user.email}`)
+      res.status(200).json({ message: 'Password reset link sent successfully.' })
+    } catch (emailError) {
       user.resetPasswordToken = undefined
       user.resetPasswordExpires = undefined
       await user.save({ validateBeforeSave: false })
-
-      console.error('EMAIL SENDING ERROR:', err)
-      // Send a generic error to the client
-      return res.status(500).json({
-        message: 'There was an error sending the password reset email. Please try again later.',
-      })
+      console.error(`EMAIL SENDING ERROR for ${user.email}:`, emailError)
+      return res
+        .status(500)
+        .json({ message: 'Error sending password reset email. Please try again later.' })
     }
   } catch (error) {
     console.error('FORGOT PASSWORD CONTROLLER ERROR:', error)
-    // Avoid sending specific error details to the client
-    res
-      .status(500)
-      .json({ message: 'An internal error occurred while processing the forgot password request.' })
+    res.status(500).json({ message: 'An internal error occurred. Please try again later.' })
   }
 }
 
-// **RESET PASSWORD**
+// --- resetPassword (Keep as is, assuming it worked before) ---
 const resetPassword = async (req, res) => {
-  // ... (your existing resetPassword code - unchanged)
-  try {
-    // 1) Get user based on the token (hashed version)
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(req.params.token) // Get token from URL params
-      .digest('hex')
-
-    // Find user by hashed token and ensure token hasn't expired
-    const user = await User.findOne({
-      resetPasswordToken: hashedToken,
-      resetPasswordExpires: { $gt: Date.now() }, // Check if expiry date is greater than now
-    })
-
-    // 2) If token has not expired, and there is user, set the new password
-    if (!user) {
-      return res.status(400).json({ message: 'Token is invalid or has expired.' })
-    }
-
-    // Check if new password is provided
-    if (!req.body.password || req.body.password.length < 6) {
-      return res
-        .status(400)
-        .json({ message: 'Please provide a new password with at least 6 characters.' })
-    }
-    // Optional: Add password confirmation check
-    if (req.body.password !== req.body.passwordConfirm) {
-      return res.status(400).json({ message: 'Passwords do not match.' })
-    }
-
-    // 3) Update password, clear token fields on the user document
-    user.password = req.body.password
-    user.resetPasswordToken = undefined
-    user.resetPasswordExpires = undefined
-    await user.save() // Mongoose 'save' middleware will automatically hash the new password
-
-    // 4) Log the user in, send JWT
-    const loginToken = generateToken(user._id)
-
-    res.status(200).json({
-      message: 'Password reset successful!',
-      token: loginToken, // Optionally log them in immediately
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-    })
-  } catch (error) {
-    console.error('RESET PASSWORD ERROR:', error)
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((val) => val.message)
-      return res.status(400).json({ message: messages.join('. ') })
-    }
-    res.status(500).json({ message: 'An error occurred while resetting the password.' })
-  }
+  /* ... */
 }
 
+// --- Export all controller functions ---
 module.exports = {
   registerUser,
   loginUser,
-  forgotPassword, // Export new function
-  resetPassword, // Export new function
+  forgotPassword,
+  resetPassword,
 }

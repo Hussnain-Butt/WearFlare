@@ -1,153 +1,182 @@
 // src/context/CartContext.tsx
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react'
+import { toast } from 'react-hot-toast' // Import toast if you want add-to-cart confirmation
 
-// Interface for the product structure as received from the backend/Men.tsx
-interface ProductFromBackend {
-  _id: string // Use _id from MongoDB
+// Interface for a single item in the cart
+interface CartItem {
+  _id: string
   title: string
-  price: string // Keep as string if backend sends it this way
+  price: number // Use number for calculations
   image: string
-  // Add other potential fields if needed by the cart context itself
-  category?: string
-  gender?: string
-}
-
-// Interface for items specifically within the cart, extending ProductFromBackend
-export interface CartItem extends ProductFromBackend {
-  // Export CartItem interface
   quantity: number
+  selectedSize: string | null // Include selected attributes
+  selectedColor?: string | null
 }
 
+// Interface for the Cart Context state and functions
 interface CartContextType {
   cart: CartItem[]
-  addToCart: (product: ProductFromBackend) => void // Expects product with _id
-  removeFromCart: (id: string) => void // Expects the _id string
-  updateQuantity: (id: string, quantity: number) => void // Added for better control
-  clearCart: () => void // Added utility
+  addToCart: (item: CartItem) => void // Keep original signature for adding
+  removeFromCart: (itemId: string, size: string | null, color?: string | null) => void
+  updateQuantity: (
+    itemId: string,
+    quantity: number,
+    size: string | null,
+    color?: string | null,
+  ) => void
+  clearCart: () => void
   totalItems: number
   totalPrice: number
-  // Helper to check if an item is in the cart
-  isInCart: (id: string) => boolean
+  lastVisitedUrl: string // *** NEW: URL to return to ***
 }
 
+// Local storage key constants
+const CART_STORAGE_KEY = 'wearflare_cart'
+const LAST_VISITED_URL_KEY = 'wearflare_last_visited_url'
+const DEFAULT_SHOP_URL = '/shop' // Fallback URL
+
+// Create the context
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-// Helper function to load cart from local storage
-const loadCartFromLocalStorage = (): CartItem[] => {
-  try {
-    const storedCart = localStorage.getItem('shoppingCart')
-    return storedCart ? JSON.parse(storedCart) : []
-  } catch (error) {
-    console.error('Error loading cart from local storage:', error)
-    return []
-  }
-}
+// Cart Provider Component
+export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // --- State Initialization ---
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const localData = localStorage.getItem(CART_STORAGE_KEY)
+      return localData ? JSON.parse(localData) : []
+    } catch (error) {
+      console.error('Error reading cart from local storage', error)
+      return []
+    }
+  })
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize cart state from local storage
-  const [cart, setCart] = useState<CartItem[]>(loadCartFromLocalStorage)
+  // *** NEW: State for last visited URL ***
+  const [lastVisitedUrl, setLastVisitedUrl] = useState<string>(() => {
+    try {
+      const localUrl = localStorage.getItem(LAST_VISITED_URL_KEY)
+      return localUrl || DEFAULT_SHOP_URL // Default to shop page if not found
+    } catch (error) {
+      console.error('Error reading last visited URL from local storage', error)
+      return DEFAULT_SHOP_URL
+    }
+  })
+  // --- End State Initialization ---
 
-  // Effect to save cart to local storage whenever it changes
+  // --- Effects ---
+  // Persist cart to local storage
   useEffect(() => {
     try {
-      localStorage.setItem('shoppingCart', JSON.stringify(cart))
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
     } catch (error) {
-      console.error('Error saving cart to local storage:', error)
+      console.error('Error saving cart to local storage', error)
     }
   }, [cart])
 
-  const addToCart = (product: ProductFromBackend) => {
-    setCart((prevCart) => {
-      // Find item using the correct property: _id
-      const existingItem = prevCart.find((item) => item._id === product._id)
+  // *** NEW: Persist last visited URL to local storage ***
+  useEffect(() => {
+    try {
+      // Only save if it's a valid-looking path (starts with /)
+      if (lastVisitedUrl && lastVisitedUrl.startsWith('/')) {
+        localStorage.setItem(LAST_VISITED_URL_KEY, lastVisitedUrl)
+      }
+    } catch (error) {
+      console.error('Error saving last visited URL to local storage', error)
+    }
+  }, [lastVisitedUrl])
+  // --- End Effects ---
 
-      if (existingItem) {
-        // If exists, map and update quantity for the item with matching _id
-        return prevCart.map((item) =>
-          item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item,
-        )
+  // --- Cart Calculations ---
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+  // --- Cart Functions ---
+
+  // *** UPDATED: Add item to cart AND store current URL ***
+  const addToCart = (itemToAdd: CartItem) => {
+    // Capture the current page's pathname *before* updating the cart
+    // Exclude cart and checkout pages themselves
+    const currentPath = window.location.pathname
+    if (!['/cart', '/checkout'].includes(currentPath) && currentPath.startsWith('/')) {
+      setLastVisitedUrl(currentPath) // Update the state
+    }
+
+    setCart((prevCart) => {
+      const existingItemIndex = prevCart.findIndex(
+        (item) =>
+          item._id === itemToAdd._id &&
+          item.selectedSize === itemToAdd.selectedSize &&
+          item.selectedColor === itemToAdd.selectedColor,
+      )
+
+      if (existingItemIndex > -1) {
+        // Item exists, update quantity
+        const updatedCart = [...prevCart]
+        updatedCart[existingItemIndex].quantity += itemToAdd.quantity
+        return updatedCart
       } else {
-        // If new, add the product with quantity 1
-        // Ensure only necessary properties are added to the cart item if needed
-        const newCartItem: CartItem = {
-          _id: product._id,
-          title: product.title,
-          price: product.price,
-          image: product.image,
-          quantity: 1,
-          category: product.category, // Include category/gender if needed later
-          gender: product.gender,
-        }
-        return [...prevCart, newCartItem]
+        // Add new item
+        return [...prevCart, { ...itemToAdd }]
       }
     })
+    // Optional: Show confirmation toast
+    // toast.success(`${itemToAdd.title} added to cart!`);
   }
 
-  // removeFromCart now completely removes an item line regardless of quantity
-  const removeFromCart = (id: string) => {
-    setCart(
-      (prevCart) => prevCart.filter((item) => item._id !== id), // Filter out by _id
+  // Remove item (signature updated if needed for uniqueness)
+  const removeFromCart = (itemId: string, size: string | null, color?: string | null) => {
+    setCart((prevCart) =>
+      prevCart.filter(
+        (item) =>
+          !(item._id === itemId && item.selectedSize === size && item.selectedColor === color),
+      ),
     )
-    console.log(`Attempting to remove item with _id: ${id}`) // Add console log
   }
 
-  // Function to update quantity (can be used for increment, decrement, direct set)
-  const updateQuantity = (id: string, quantity: number) => {
-    setCart((prevCart) => {
-      if (quantity <= 0) {
-        // If quantity is 0 or less, remove the item
-        return prevCart.filter((item) => item._id !== id)
-      } else {
-        // Otherwise, update the quantity
-        return prevCart.map((item) => (item._id === id ? { ...item, quantity: quantity } : item))
-      }
-    })
+  // Update quantity (signature updated if needed for uniqueness)
+  const updateQuantity = (
+    itemId: string,
+    quantity: number,
+    size: string | null,
+    color?: string | null,
+  ) => {
+    const newQuantity = Math.max(1, quantity) // Ensure quantity is at least 1
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item._id === itemId && item.selectedSize === size && item.selectedColor === color
+          ? { ...item, quantity: newQuantity }
+          : item,
+      ),
+    )
   }
 
-  // Function to clear the entire cart
+  // Clear cart
   const clearCart = () => {
     setCart([])
+    // Don't clear lastVisitedUrl here
+    toast.success('Cart cleared!')
+  }
+  // --- End Cart Functions ---
+
+  // Value provided by the context
+  const contextValue: CartContextType = {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    totalItems,
+    totalPrice,
+    lastVisitedUrl, // *** Expose the URL ***
   }
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
-
-  // Improved price parsing robustness (handles potential non-numeric values)
-  const parsePrice = (priceStr: string): number => {
-    if (!priceStr) return 0
-    // Remove currency symbols, commas, letters (like Rs, PKR), and whitespace
-    const numericString = String(priceStr).replace(/[^0-9.]/g, '') // Ensure it's a string first
-    const parsed = parseFloat(numericString)
-    return isNaN(parsed) ? 0 : parsed // Return 0 if parsing fails
-  }
-
-  const totalPrice = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.quantity, 0)
-
-  // Helper function to check if an item is in the cart
-  const isInCart = (id: string): boolean => {
-    return cart.some((item) => item._id === id)
-  }
-
-  return (
-    <CartContext.Provider
-      value={{
-        cart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        totalItems,
-        totalPrice,
-        isInCart,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  )
+  return <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
 }
 
-export const useCart = () => {
+// Custom hook to use the Cart Context
+export const useCart = (): CartContextType => {
   const context = useContext(CartContext)
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useCart must be used within a CartProvider')
   }
   return context

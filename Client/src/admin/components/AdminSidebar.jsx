@@ -10,6 +10,7 @@ import {
   FaMoneyBill,
   FaChartBar,
 } from 'react-icons/fa'
+import { MdBorderColor } from 'react-icons/md'
 import { GiLoveLetter } from 'react-icons/gi'
 import { MdUpcoming } from 'react-icons/md'
 
@@ -94,6 +95,17 @@ const AdminSidebar = () => {
             >
               <FaBook className="text-xl" />
               {!isMobile && isExpanded && <span>Products</span>}
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/admin/dashboard/orders"
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-[#6b5745] 
+                          transition-all duration-300 
+                          ${!isMobile && isExpanded ? 'justify-start' : 'justify-center'}`}
+            >
+              <MdBorderColor className="text-xl" />
+              {!isMobile && isExpanded && <span>Orders</span>}
             </Link>
           </li>
         </ul>

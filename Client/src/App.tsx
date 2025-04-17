@@ -23,6 +23,8 @@ import TryOnPage from './pages/TryOnPage'
 import ProductDetailsPage from './pages/ProductDetailsPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import CheckoutPage from './pages/CheckoutPage'
+import OrdersPage from './admin/pages/OrdersPage'
 const App = () => (
   <Router>
     <NavbarComponent />
@@ -37,6 +39,8 @@ const App = () => (
       <Route path="/cart" element={<Cart />} />
       <Route path="/account" element={<Account />} />
       <Route path="/shop" element={<Shop />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+
       <Route path="/wishlist" element={<WishList />} />
       <Route path="/product/:productId" element={<ProductDetailsPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -49,6 +53,7 @@ const App = () => (
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<Users />} />
         <Route path="products" element={<Products />} />
+        <Route path="orders" element={<OrdersPage />} />
       </Route>
     </Routes>
     <Footer />
