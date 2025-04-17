@@ -19,7 +19,8 @@ interface Product {
 
 // --- API Base URL ---
 // Ensure this matches your backend configuration
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
 
 const NewCollection: React.FC = () => {
   const navigate = useNavigate()
@@ -36,7 +37,11 @@ const NewCollection: React.FC = () => {
     setError(null)
     try {
       // Fetch products marked as 'isNewCollection: true' from the backend
-      const response = await axios.get<Product[]>(`${API_BASE_URL}/api/products/new-collection`)
+      // Assuming you are using the query parameter approach (Option 1 from previous explanation)
+      const response = await axios.get<Product[]>(`${API_BASE_URL}/api/products?newCollection=true`)
+
+      // If you implemented the dedicated route (Option 2), use this instead:
+      // const response = await axios.get<Product[]>(`${API_BASE_URL}/api/products/new-collection`);
 
       // Ensure data is an array and process it
       if (Array.isArray(response.data)) {
@@ -55,8 +60,16 @@ const NewCollection: React.FC = () => {
         setError('Received invalid data format for new collection.') // Set error for user
       }
     } catch (err: any) {
-      console.error('Error fetching new collection:', err.response?.data || err.message)
-      setError('Could not load new collection items. Please try again later.')
+      // Handle 404 specifically if using the dedicated route and it doesn't exist
+      if (axios.isAxiosError(err) && err.response?.status === 404) {
+        console.error(
+          'Error fetching new collection: Endpoint not found (404). Did you define the route?',
+        )
+        setError('Could not find the new collection endpoint.')
+      } else {
+        console.error('Error fetching new collection:', err.response?.data || err.message)
+        setError('Could not load new collection items. Please try again later.')
+      }
       setProducts([]) // Clear products on error
     } finally {
       setLoading(false)
@@ -106,10 +119,6 @@ const NewCollection: React.FC = () => {
     )
   }
 
-  // Show "No items" message if fetch succeeded but returned empty array
-  // This section will now render even if empty, showing the message below
-  // Remove the condition check if you prefer to render nothing when empty
-
   return (
     <div className="bg-[#eee8e3] py-12 md:py-16 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="text-center mb-10 md:mb-12">
@@ -120,10 +129,8 @@ const NewCollection: React.FC = () => {
       {products.length > 0 ? (
         <AnimatedSection direction="left">
           {' '}
-          {/* Apply animation */}
+          {/* Animation for the product grid */}
           <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-            {' '}
-            {/* Adjusted grid for small screens */}
             {products.map((product) => (
               // Product Card
               <div
@@ -139,7 +146,12 @@ const NewCollection: React.FC = () => {
                     <div className="product-badge out-of-stock-badge"> Out of Stock </div>
                   )}
                   <img
-                    src={`${API_BASE_URL}${product.image}`} // Construct full URL
+                    // Prepend API base URL only if image path is relative
+                    src={
+                      product.image.startsWith('http')
+                        ? product.image
+                        : `${API_BASE_URL}${product.image}`
+                    }
                     alt={product.title}
                     className={`product-image ${!product.inStock ? 'out-of-stock-image' : ''}`}
                     onError={(e) => {
@@ -154,9 +166,9 @@ const NewCollection: React.FC = () => {
                     {product.title}
                   </p>
                   <p className="product-card-price">
-                    PKR{' '}
+                    PKR {/* Ensure price is treated as number for formatting */}
                     {Number(product.price).toLocaleString('en-PK', {
-                      minimumFractionDigits: 2,
+                      minimumFractionDigits: 0, // Adjust as needed
                       maximumFractionDigits: 2,
                     })}
                   </p>
@@ -169,16 +181,14 @@ const NewCollection: React.FC = () => {
                           onClick={() => handleViewDetails(product._id)}
                           disabled={!product.inStock}
                         >
-                          {' '}
-                          View Details{' '}
+                          View Details
                         </button>
                         <button
                           className="button-newcollection try-now-button"
                           onClick={() => handleTryNow(product._id)}
                           disabled={!product.inStock}
                         >
-                          {' '}
-                          Try Now{' '}
+                          Try Now
                         </button>
                       </>
                     ) : (
@@ -192,7 +202,8 @@ const NewCollection: React.FC = () => {
         </AnimatedSection>
       ) : (
         // Message when no products are in the new collection
-        <AnimatedSection direction="up">
+        // ✅ FIX APPLIED HERE: Changed direction from "up" to "bottom"
+        <AnimatedSection direction="bottom">
           <p className="text-center text-gray-500 mt-8">
             Check back soon for new collection items!
           </p>
@@ -201,26 +212,26 @@ const NewCollection: React.FC = () => {
 
       {/* Styles */}
       <style jsx>{`
-            /* Styles for product card elements */
-            .product-card-details { padding: 1rem; text-align: center; display: flex; flex-direction: column; flex-grow: 1; }
-            .product-card-title { color: #374151; font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.25rem; }
-            .product-card-price { color: #4b5563; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; }
-            .product-card-buttons { margin-top: auto; display: flex; flex-direction: column; sm:flex-row; gap: 0.5rem; justify-content: center; padding-top: 0.5rem; }
-            .product-image { display: block; width: 100%; height: 20rem; sm:height: 24rem; object-fit: cover; object-position: center; transition: transform 0.3s ease-in-out; }
-            .group:hover .product-image:not(.out-of-stock-image) { transform: scale(1.05); }
-            .product-image.out-of-stock-image { opacity: 0.6; cursor: default; }
-            .product-badge { position: absolute; top: 0.5rem; right: 0.5rem; color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 0.25rem; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-            .out-of-stock-badge { background-color: #ef4444; }
-            .button-newcollection { padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 500; border-radius: 9999px; transition: background-color 0.2s, opacity 0.2s; flex: 1; border: none; cursor: pointer; text-align: center; }
-            .button-newcollection:disabled { opacity: 0.5; cursor: not-allowed; background-color: #b0a8a0 !important; color: #777 !important; }
-            .view-details-button { background-color: #6b5745; color: white; }
-            .view-details-button:hover:not(:disabled) { background-color: #5d4c3b; }
-            .try-now-button { background-color: #c8a98a; color: white; }
-            .try-now-button:hover:not(:disabled) { background-color: #b08d6a; }
-            .out-of-stock-text-newcollection { display: inline-block; margin-top: 0.25rem; padding: 0.5rem 1rem; background-color: #e5e7eb; color: #6b7280; font-size: 0.75rem; font-weight: 600; border-radius: 9999px; width: 100%; sm:width: auto; text-align: center;}
-            .animate-spin { animation: spin 1s linear infinite; }
-            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-       `}</style>
+                /* Styles for product card elements */
+                .product-card-details { padding: 1rem; text-align: center; display: flex; flex-direction: column; flex-grow: 1; }
+                .product-card-title { color: #374151; font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.25rem; }
+                .product-card-price { color: #4b5563; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; }
+                .product-card-buttons { margin-top: auto; display: flex; flex-direction: column; sm:flex-row; gap: 0.5rem; justify-content: center; padding-top: 0.5rem; }
+                .product-image { display: block; width: 100%; height: 20rem; sm:height: 24rem; object-fit: cover; object-position: center; transition: transform 0.3s ease-in-out; }
+                .group:hover .product-image:not(.out-of-stock-image) { transform: scale(1.05); }
+                .product-image.out-of-stock-image { opacity: 0.6; cursor: default; }
+                .product-badge { position: absolute; top: 0.5rem; right: 0.5rem; color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 0.25rem; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+                .out-of-stock-badge { background-color: #ef4444; }
+                .button-newcollection { padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 500; border-radius: 9999px; transition: background-color 0.2s, opacity 0.2s; flex: 1; border: none; cursor: pointer; text-align: center; }
+                .button-newcollection:disabled { opacity: 0.5; cursor: not-allowed; background-color: #b0a8a0 !important; color: #777 !important; }
+                .view-details-button { background-color: #6b5745; color: white; }
+                .view-details-button:hover:not(:disabled) { background-color: #5d4c3b; }
+                .try-now-button { background-color: #c8a98a; color: white; }
+                .try-now-button:hover:not(:disabled) { background-color: #b08d6a; }
+                .out-of-stock-text-newcollection { display: inline-block; margin-top: 0.25rem; padding: 0.5rem 1rem; background-color: #e5e7eb; color: #6b7280; font-size: 0.75rem; font-weight: 600; border-radius: 9999px; width: 100%; sm:width: auto; text-align: center;}
+                .animate-spin { animation: spin 1s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+           `}</style>
     </div>
   )
 }
