@@ -118,7 +118,7 @@ const NewCollection: React.FC = () => {
 
       {/* Check if there are products to display */}
       {products.length > 0 ? (
-        <AnimatedSection direction="up">
+        <AnimatedSection direction="left">
           {' '}
           {/* Apply animation */}
           <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
