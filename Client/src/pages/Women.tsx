@@ -7,6 +7,7 @@ import NewsLetter from '@/components/NewsLetter'
 import Features from '@/components/Features' // This component wasn't used below, but kept the import
 import WomensComponents from '@/components/WomensComponent' // This component wasn't used below, but kept the import
 import AnimatedSection from '@/components/AnimatedSection'
+import NewCollection from '@/components/NewCollection'
 
 interface Product {
   _id: string
@@ -135,6 +136,7 @@ const Women: React.FC = () => {
           <div className="my-16 md:my-24">
             <img src="/women_banner.png" alt="Women Banner" className="w-full" />
           </div>
+          <NewCollection />
           {/* <WomensComponents /> */} {/* If you want to show this */}
           <NewsLetter /> {/* Moved Newsletter inside conditional block */}
         </>
