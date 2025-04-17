@@ -1,5 +1,5 @@
 // controllers/adminController.js
-const Admin = require('../models/adminModel')
+const Admin = require('../models/managerModel')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
