@@ -63,7 +63,7 @@ const App = () => (
       {/* --- Product Manager Routes --- */}
       <Route path="/productmanager" element={<ManagerLogin />} />
       {/* Use a specific Manager Layout */}
-      <Route path="/productmanager/*" element={<ManagerDashboardLayout />}>
+      <Route path="/productmanager/dashboard*" element={<ManagerDashboardLayout />}>
         {/* Make ManagerProducts the index AND specific path */}
         <Route index element={<ManagerProducts />} />
         <Route path="products" element={<ManagerProducts />} />
