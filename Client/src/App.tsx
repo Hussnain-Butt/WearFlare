@@ -27,7 +27,7 @@ import CheckoutPage from './pages/CheckoutPage'
 import OrdersPage from './admin/pages/OrdersPage'
 import ManagerProducts from './ProductManager/pages/ManagerProducts'
 import ManagerLogin from './ProductManager/pages/ManagerLogin.jsx'
-import ManagerDashboardLayout from './ProductManager/layout/ManagerDashboardLayout.tsx'
+import ManagerDashboardLayout from './ProductManager/layout/ManagerDashboardLayout.jsx'
 
 const App = () => (
   <Router>
