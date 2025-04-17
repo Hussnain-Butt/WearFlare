@@ -5,7 +5,7 @@ import bgsignin from '/bg-for-signin.png' // Ensure path is correct
 import { toast, Toaster } from 'react-hot-toast'
 import axios from 'axios' // Import axios
 
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your deployed URL
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Or your deployed URL
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState<string>('')

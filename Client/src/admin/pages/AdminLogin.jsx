@@ -14,7 +14,7 @@ const AdminLogin = () => {
     e.preventDefault()
     try {
       const response = await axios.post(
-        'https://backend-production-c8ff.up.railway.app/api/admin/login',
+        'https://backend-production-c8ff.up.railway.app//api/admin/login',
         {
           username,
           password,

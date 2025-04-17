@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Trash2, Plus, Minus } from 'lucide-react'
 
 // Define API base URL for images
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your deployed URL
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Or your deployed URL
 
 const Cart = () => {
   // Get cart functions and state, including the new URL state

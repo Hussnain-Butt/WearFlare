@@ -27,7 +27,7 @@ const TryOnPage = () => {
   const backendApiUrl =
     process.env.REACT_APP_BACKEND_URL ||
     process.env.VITE_BACKEND_URL ||
-    'https://backend-production-c8ff.up.railway.app'
+    'https://backend-production-c8ff.up.railway.app/'
 
   // --- Stop Polling Function ---
   const stopPolling = useCallback(() => {

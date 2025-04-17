@@ -7,7 +7,7 @@ import { toast, Toaster } from 'react-hot-toast'
 import { Loader2 } from 'lucide-react' // Loading spinner icon
 
 // Define API base URL
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app'
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/'
 
 const CheckoutPage: React.FC = () => {
   const { cart, totalPrice, clearCart, totalItems } = useCart()

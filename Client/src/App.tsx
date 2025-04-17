@@ -25,10 +25,6 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import CheckoutPage from './pages/CheckoutPage'
 import OrdersPage from './admin/pages/OrdersPage'
-import ManagerProducts from './ProductManager/pages/ManagerProducts'
-import ManagerLogin from './ProductManager/pages/ManagerLogin.jsx'
-import ManagerDashboardLayout from './ProductManager/layout/ManagerDashboardLayout.jsx'
-
 const App = () => (
   <Router>
     <NavbarComponent />
@@ -58,16 +54,6 @@ const App = () => (
         <Route path="users" element={<Users />} />
         <Route path="products" element={<Products />} />
         <Route path="orders" element={<OrdersPage />} />
-      </Route>
-
-      {/* --- Product Manager Routes --- */}
-      <Route path="/productmanager" element={<ManagerLogin />} />
-      {/* Use a specific Manager Layout */}
-      <Route path="/productmanager/dashboard*" element={<ManagerDashboardLayout />}>
-        {/* Make ManagerProducts the index AND specific path */}
-        <Route index element={<ManagerProducts />} />
-        <Route path="products" element={<ManagerProducts />} />
-        {/* Add other manager-specific routes here if needed */}
       </Route>
     </Routes>
     <Footer />

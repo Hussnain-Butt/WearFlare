@@ -10,8 +10,6 @@ const fs = require('fs')
 const connectDB = require('./config/db')
 const authRoutes = require('./routes/authRoutes')
 const adminRoutes = require('./routes/adminRoutes')
-const managerRoutes = require('./routes/productManagerRoutes')
-
 const productRoutes = require('./routes/productRoutes')
 const tryonRoutes = require('./routes/tryonRoutes')
 const orderRoutes = require('./routes/orderRoutes')
@@ -64,51 +62,31 @@ app.get('/health', (req, res) => {
 console.log('--- Health check endpoint registered (/health) ---')
 
 // -------------------------------
-// ✅ CORS Middleware Setup (REFINED)
+// ✅ CORS Middleware Setup (UPDATED)
 // -------------------------------
 const allowedOrigins = [
-  'http://localhost:5173', // Development frontend
-  'https://frontend-production-c902.up.railway.app', // Deployed frontend
-  // Add backend URL ONLY if your backend needs to make requests to itself via fetch/axios
-  // 'https://backend-production-c8ff.up.railway.app'
+  'http://localhost:5173',
+  'https://backend-production-c8ff.up.railway.app',
+  'https://frontend-production-c902.up.railway.app',
 ]
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Log the origin the backend is seeing for debugging
-    console.log('--- CORS Check: Request Origin:', origin)
-
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true)
-
-    // Check if the origin is in the allowed list (case-insensitive check is safer)
-    const isAllowed = allowedOrigins.some(
-      (allowedOrigin) =>
-        origin.toLowerCase() === allowedOrigin.toLowerCase() ||
-        origin.toLowerCase() === allowedOrigin.toLowerCase() + '/', // Check with trailing slash too
-    )
-
-    if (isAllowed) {
-      console.log('--- CORS Check: Origin Allowed')
-      callback(null, true) // Allow
-    } else {
-      console.warn('--- CORS Check: Origin REJECTED:', origin)
-      callback(new Error('Not allowed by CORS')) // Disallow
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Ensure OPTIONS is present
-  allowedHeaders: ['Content-Type', 'Authorization'], // IMPORTANT: Allow Authorization header
-  credentials: true, // Allow cookies/authorization headers
-  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
-}
-
-// Handle OPTIONS requests explicitly before other routes
-// This ensures preflight requests are handled correctly, especially for Authorization headers
-app.options('*', cors(corsOptions))
-console.log('--- Explicit OPTIONS preflight handling enabled ---')
-
-// Use the CORS middleware for all subsequent requests
-app.use(cors(corsOptions))
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true)
+      if (
+        allowedOrigins.includes(origin) ||
+        /\.railway\.app$/.test(origin) // allow any Railway app
+      ) {
+        return callback(null, true)
+      }
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.'
+      return callback(new Error(msg), false)
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  }),
+)
 console.log('--- CORS middleware applied ---')
 
 // -------------------------------
@@ -139,7 +117,6 @@ console.log('--- Registering API routes ---')
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/admin', adminRoutes)
-app.use('/api/manager', managerRoutes) // *** MOUNT MANAGER ROUTES HERE ***
 
 app.use('/api/orders', orderRoutes) // *** ADD THIS LINE ***
 app.use('/api/tryon', tryonRoutes) // Uses tryonRoutes.js

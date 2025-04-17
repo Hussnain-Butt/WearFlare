@@ -7,7 +7,7 @@ import { toast, Toaster } from 'react-hot-toast' // Import toast
 
 // --- Backend API Base URL ---
 // Ensure this matches your backend configuration
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Or https://backend-production-c8ff.up.railway.app/
 
 // --- Updated Product Detail Interface ---
 interface ProductDetail {
