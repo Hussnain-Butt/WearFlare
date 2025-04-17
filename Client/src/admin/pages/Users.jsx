@@ -13,7 +13,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('https://backend-production-c8ff.up.railway.app//api/admin/users')
+      const res = await axios.get('https://backend-production-c8ff.up.railway.app/api/admin/users')
       const data = Array.isArray(res.data) ? res.data : res.data.users || []
       setUsers(data)
     } catch (err) {
@@ -24,7 +24,7 @@ const Users = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://backend-production-c8ff.up.railway.app//api/admin/users/${id}`)
+      await axios.delete(`https://backend-production-c8ff.up.railway.app/api/admin/users/${id}`)
       toast.success('User deleted successfully')
       fetchUsers()
     } catch (err) {
@@ -35,7 +35,7 @@ const Users = () => {
   const handleUpdate = async () => {
     try {
       await axios.put(
-        `https://backend-production-c8ff.up.railway.app//api/admin/users/${editingUser}`,
+        `https://backend-production-c8ff.up.railway.app/api/admin/users/${editingUser}`,
         formData,
       )
       toast.success('User updated successfully')

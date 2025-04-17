@@ -29,7 +29,7 @@ const Shop: React.FC = () => {
   // Fetch all products (both men and women)
   useEffect(() => {
     axios
-      .get(`https://backend-production-c8ff.up.railway.app//api/products`)
+      .get(`https://backend-production-c8ff.up.railway.app/api/products`)
       .then((res) => setProducts(res.data))
       .catch((err) => console.error(err))
   }, [])
@@ -98,7 +98,7 @@ const Shop: React.FC = () => {
               <div key={product._id} className="flex flex-col items-center group">
                 <div className="bg-white p-4 w-full overflow-hidden rounded-md shadow-sm hover:shadow-lg transition-shadow duration-300">
                   <img
-                    src={`https://backend-production-c8ff.up.railway.app/${product.image}`}
+                    src={`https://backend-production-c8ff.up.railway.app${product.image}`}
                     alt={product.title}
                     className="w-full h-64 sm:h-72 md:h-80 object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
                     onClick={() => handleViewDetails(product._id)} // Click image goes to details

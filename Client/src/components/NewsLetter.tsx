@@ -5,7 +5,7 @@ import { toast, Toaster } from 'react-hot-toast'
 import { Loader2 } from 'lucide-react'
 
 // --- API Configuration ---
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Or https://backend-production-c8ff.up.railway.app/
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
 const SUBSCRIBE_ENDPOINT = `${API_BASE_URL}/api/newsletter/subscribe`
 // --- / ---
 

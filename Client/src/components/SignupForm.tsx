@@ -34,7 +34,7 @@ const SignupForm = () => {
 
     try {
       const response = await fetch(
-        'https://backend-production-c8ff.up.railway.app//api/auth/signup',
+        'https://backend-production-c8ff.up.railway.app/api/auth/signup',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
