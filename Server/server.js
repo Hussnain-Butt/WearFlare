@@ -119,7 +119,7 @@ console.log('--- Registering API routes ---')
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/admin', adminRoutes)
-app.use('/api/manager', managerRoutes)
+app.use('/api/manager', managerRoutes) // *** MOUNT MANAGER ROUTES HERE ***
 
 app.use('/api/orders', orderRoutes) // *** ADD THIS LINE ***
 app.use('/api/tryon', tryonRoutes) // Uses tryonRoutes.js

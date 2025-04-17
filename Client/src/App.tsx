@@ -59,11 +59,14 @@ const App = () => (
         <Route path="orders" element={<OrdersPage />} />
       </Route>
 
-      {/* Product Manager Dashboard with Layout */}
+      {/* --- Product Manager Routes --- */}
       <Route path="/productmanager" element={<ManagerLogin />} />
-
-      <Route path="/productmanager/products/*" element={<DashboardLayout />}>
+      {/* Use a specific Manager Layout */}
+      <Route path="/productmanager/*" element={<ManagerDashboardLayout />}>
+        {/* Make ManagerProducts the index AND specific path */}
+        <Route index element={<ManagerProducts />} />
         <Route path="products" element={<ManagerProducts />} />
+        {/* Add other manager-specific routes here if needed */}
       </Route>
     </Routes>
     <Footer />
