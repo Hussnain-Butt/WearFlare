@@ -61,30 +61,23 @@ console.log('--- Health check endpoint registered (/health) ---')
 // -------------------------------
 // ✅ CORS Middleware Setup
 // -------------------------------
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  process.env.FRONTEND_URL || 'https://frontend-production-c902.up.railway.app', // Use Env Var
-]
-console.log('--- Configuring CORS with allowed origins:', allowedOrigins)
+const allowedOrigins = ['http://localhost:5173', 'https://backend-production-c8ff.up.railway.app'] // Add your deployed frontend URL!
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      console.error(`CORS Error: Origin ${origin} not allowed.`)
-      callback(new Error(`Origin ${origin} not allowed by CORS policy.`))
-    }
-  },
-  credentials: true, // Allow cookies if needed for auth later
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly define methods
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'], // Define allowed headers
-}
-app.use(cors(corsOptions))
-
-// Handle preflight requests explicitly for all routes
-app.options('*', cors(corsOptions))
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = 'The CORS policy for this site does not allow access from the specified Origin.'
+        return callback(new Error(msg), false)
+      }
+      return callback(null, true)
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Ensure PATCH is listed
+    credentials: true, // If needed for cookies/sessions
+  }),
+)
 
 console.log('--- CORS middleware applied ---')
 

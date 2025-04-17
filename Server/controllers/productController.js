@@ -2,16 +2,27 @@
 
 const path = require('path')
 const Product = require('../models/Product')
-const vision = require('@google-cloud/vision')
+// Comment out Vision client if not used, or ensure it's configured correctly
+// const vision = require('@google-cloud/vision');
+// const client = new vision.ImageAnnotatorClient({
+//   keyFilename: path.join(__dirname, '../config/your_google_keyfile.json'), // Ensure path is correct
+// });
 
-// Instantiate the Vision client with the JSON key file
-const client = new vision.ImageAnnotatorClient({
-  keyFilename: path.join(__dirname, '../config/wearflare.json'),
-})
+// --- Helper function to parse comma-separated sizes string ---
+const parseSizesString = (sizesString) => {
+  if (!sizesString || typeof sizesString !== 'string') {
+    return [] // Return empty array if input is invalid or missing
+  }
+  return sizesString
+    .split(',') // Split the string by commas
+    .map((s) => s.trim().toUpperCase()) // Trim whitespace and convert to uppercase (optional, for consistency)
+    .filter((s) => s) // Remove any empty strings (e.g., from trailing commas like "S, M, , L")
+}
+// --- End Helper Function ---
 
 /**
  * GET /api/products
- * Optional gender filter (req.query.gender)
+ * Retrieves all products or filters by gender. Includes all fields like inStock and sizes.
  */
 exports.getProducts = async (req, res) => {
   try {
@@ -19,124 +30,224 @@ exports.getProducts = async (req, res) => {
     let filter = {}
 
     if (gender) {
-      filter.gender = gender
+      // Case-insensitive gender matching might be useful depending on frontend input
+      filter.gender = { $regex: new RegExp(`^${gender}$`, 'i') }
     }
 
-    const products = await Product.find(filter)
+    // find() returns all fields by default, including sizes and inStock
+    const products = await Product.find(filter).sort({ createdAt: -1 }) // Sort by newest first
     res.json(products)
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Error fetching products:', error)
+    res.status(500).json({ message: `Failed to fetch products: ${error.message}` })
   }
 }
 
 /**
  * POST /api/products
- * Create a new product (expects an image file in the "image" field)
+ * Creates a new product, handling image upload and parsing sizes.
  */
 exports.createProduct = async (req, res) => {
   try {
-    const { title, price, category, gender, description } = req.body
-    // If an image was uploaded
-    const image = req.file ? `/uploads/${req.file.filename}` : ''
+    // Destructure all expected fields from the request body
+    const { title, price, category, gender, description, inStock, sizes } = req.body
 
-    const product = new Product({ title, price, category, gender, image, description })
+    // Check for required fields (adjust based on your schema's requirements)
+    if (!title || !price || !category || !gender) {
+      return res
+        .status(400)
+        .json({ message: 'Missing required fields: title, price, category, gender.' })
+    }
+
+    // Handle image upload (assuming multer middleware added filename to req.file)
+    const imagePath = req.file ? `/uploads/${req.file.filename}` : ''
+    // Optional: Add validation if image is strictly required for new products
+    // if (!imagePath) {
+    //    return res.status(400).json({ message: 'Product image is required.' });
+    // }
+
+    // Parse the comma-separated sizes string into an array
+    const sizesArray = parseSizesString(sizes)
+
+    // Determine inStock status (handle potential string 'true'/'false')
+    const stockStatus = inStock !== undefined ? String(inStock).toLowerCase() === 'true' : true // Default to true
+
+    // Create a new Product instance
+    const product = new Product({
+      title,
+      price, // Consider validating/converting price to Number here or in model pre-save hook
+      category,
+      gender,
+      image: imagePath,
+      description,
+      inStock: stockStatus,
+      sizes: sizesArray, // Assign the parsed sizes array
+      // Add other fields like colors, fit if they exist in req.body and model
+    })
+
+    // Save the new product to the database
     await product.save()
-    res.status(201).json(product)
+    res.status(201).json(product) // Respond with the created product data
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Error creating product:', error)
+    // Handle potential validation errors from Mongoose
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: `Validation Error: ${error.message}` })
+    }
+    res.status(500).json({ message: `Failed to create product: ${error.message}` })
   }
 }
 
 /**
  * PUT /api/products/:id
- * Update an existing product
+ * Updates an existing product. Handles partial updates and image replacement. Parses sizes.
  */
 exports.updateProduct = async (req, res) => {
   try {
-    const { title, price, category, gender, description } = req.body
-    const updatedFields = { title, price, category, gender, description }
+    const { id } = req.params // Get product ID from URL parameters
+    // Destructure all potential update fields from the request body
+    const { title, price, category, gender, description, inStock, sizes } = req.body
 
+    // Build an object with only the fields that are present in the request
+    const updatedFields = {}
+
+    if (title !== undefined) updatedFields.title = title
+    if (price !== undefined) updatedFields.price = price // Add validation/conversion if needed
+    if (category !== undefined) updatedFields.category = category
+    if (gender !== undefined) updatedFields.gender = gender
+    if (description !== undefined) updatedFields.description = description
+    // Handle boolean inStock field (convert string 'true'/'false' if necessary)
+    if (inStock !== undefined) {
+      updatedFields.inStock = String(inStock).toLowerCase() === 'true'
+    }
+    // --- Handle sizes update ---
+    if (sizes !== undefined) {
+      updatedFields.sizes = parseSizesString(sizes) // Parse and update the sizes array
+    }
+    // --- End sizes update ---
+
+    // Handle image replacement if a new file is uploaded
     if (req.file) {
+      // Optional: Delete the old image file from the server here if needed
       updatedFields.image = `/uploads/${req.file.filename}`
     }
 
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updatedFields, {
-      new: true,
-    })
+    // Check if there are any fields to update
+    if (Object.keys(updatedFields).length === 0 && !req.file) {
+      return res.status(400).json({ message: 'No update fields provided.' })
+    }
 
-    if (!updatedProduct) return res.status(404).json({ message: 'Product not found' })
-    res.json(updatedProduct)
+    // Find the product by ID and update it with the specified fields
+    // { new: true } returns the updated document
+    // { runValidators: true } ensures schema validation rules are applied during update
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { $set: updatedFields }, // Use $set for partial updates
+      { new: true, runValidators: true },
+    )
+
+    // If product with the given ID wasn't found
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+
+    res.json(updatedProduct) // Respond with the updated product data
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Error updating product:', error)
+    // Handle potential validation errors from Mongoose
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: `Validation Error: ${error.message}` })
+    }
+    // Handle potential CastError if ID format is invalid
+    if (error.name === 'CastError' && error.kind === 'ObjectId') {
+      return res.status(400).json({ message: 'Invalid Product ID format.' })
+    }
+    res.status(500).json({ message: `Failed to update product: ${error.message}` })
   }
 }
 
 /**
  * DELETE /api/products/:id
- * Delete a product by ID
+ * Deletes a product by its ID.
  */
 exports.deleteProduct = async (req, res) => {
   try {
-    const deletedProduct = await Product.findByIdAndDelete(req.params.id)
-    if (!deletedProduct) return res.status(404).json({ message: 'Product not found' })
+    const { id } = req.params
+    const deletedProduct = await Product.findByIdAndDelete(id)
 
-    res.json({ message: 'Product deleted successfully' })
+    // If no product was found with that ID
+    if (!deletedProduct) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+
+    // Optional: Delete the associated image file from the /uploads folder here
+
+    res.json({ message: 'Product deleted successfully' }) // Confirmation message
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Error deleting product:', error)
+    // Handle potential CastError if ID format is invalid
+    if (error.name === 'CastError' && error.kind === 'ObjectId') {
+      return res.status(400).json({ message: 'Invalid Product ID format.' })
+    }
+    res.status(500).json({ message: `Failed to delete product: ${error.message}` })
   }
 }
 
 /**
  * GET /api/products/:id
- * Get a single product by ID
+ * Retrieves a single product by its ID. Includes all fields.
  */
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
-    if (!product) return res.status(404).json({ message: 'Product not found' })
-    res.json(product)
+    const { id } = req.params
+    // findById automatically includes all fields (title, price, ..., inStock, sizes)
+    const product = await Product.findById(id)
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+    res.json(product) // Respond with the found product data
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Error fetching product by ID:', error)
+    // Handle potential CastError if ID format is invalid
+    if (error.name === 'CastError' && error.kind === 'ObjectId') {
+      return res.status(400).json({ message: 'Invalid Product ID format.' })
+    }
+    res.status(500).json({ message: `Failed to fetch product: ${error.message}` })
   }
 }
 
-/**
- * GET /api/products/search?query=someText
- * Text-based search in product title
- */
+// --- Other controller methods (if any) ---
+
+// Example: Text Search (modify if needed)
 exports.searchProducts = async (req, res) => {
   try {
     const { query } = req.query
     if (!query) {
       return res.status(400).json({ message: 'Query parameter is required' })
     }
-
-    // Regex for partial matching in "title"
+    // Simple regex search on title (case-insensitive)
     const products = await Product.find({
       title: { $regex: query, $options: 'i' },
+      // Add other fields to search if needed, e.g., description, category
     })
-
     res.json(products)
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Error searching products:', error)
+    res.status(500).json({ message: `Failed to search products: ${error.message}` })
   }
 }
 
-/**
- * POST /api/products/search-by-image
- * Image-based search using Google Cloud Vision
- */
+// Example: Image Search (if using Google Vision)
+// exports.searchProductsByImage = async (req, res) => { ... };
+
 exports.searchProductsByImage = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No image uploaded' })
     }
-
-    // Label detection using Cloud Vision
     const [result] = await client.labelDetection(req.file.path)
     const labels = result.labelAnnotations.map((label) => label.description)
-
-    // Example: search products in DB for each detected label
     let products = []
     for (let label of labels) {
       const foundProducts = await Product.find({
@@ -144,13 +255,10 @@ exports.searchProductsByImage = async (req, res) => {
       })
       products = [...products, ...foundProducts]
     }
-
-    // Remove duplicates using Set
     const uniqueIds = new Set(products.map((p) => p._id.toString()))
     const uniqueProducts = Array.from(uniqueIds).map((id) =>
       products.find((p) => p._id.toString() === id),
     )
-
     res.json({
       labels,
       products: uniqueProducts,

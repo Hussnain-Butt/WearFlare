@@ -114,7 +114,7 @@ const forgotPassword = async (req, res) => {
 
     // 3) Create Reset URL
     // IMPORTANT: Ensure FRONTEND_URL in .env DOES NOT end with a slash
-    const resetURL = `https://frontend-production-c902.up.railway.app/reset-password/${resetToken}`
+    const resetURL = `http://localhost:5173/reset-password/${resetToken}`
     const currentYear = new Date().getFullYear()
 
     // 4) Define HTML Email Content (using template literal)
