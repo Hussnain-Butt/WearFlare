@@ -93,7 +93,7 @@ const Men: React.FC = () => {
           </div>
 
           {/* Loading and Error States */}
-          {loading && <p className="text-center text-gray-600 py-8">Loading products...</p>}
+          {loading && <p className="text-center text-gray-600 py-8">Loading products....</p>}
           {error && <p className="text-center text-red-600 py-8">{error}</p>}
 
           {/* Product Grid */}
