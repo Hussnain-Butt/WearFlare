@@ -7,7 +7,7 @@ import bgsignin from '/bg-for-signin.png' // Ensure path is correct
 import axios from 'axios' // Import axios
 import { toast, Toaster } from 'react-hot-toast' // Import toast
 
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Or https://backend-production-c8ff.up.railway.app/
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false)

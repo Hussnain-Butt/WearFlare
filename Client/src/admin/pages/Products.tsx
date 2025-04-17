@@ -7,7 +7,7 @@ import { Loader2, CheckCircle, XCircle, Star, Edit, Trash2 } from 'lucide-react'
 // --- *** END ICON IMPORTS *** ---
 
 // Define API base URL - Make sure this is correct for your environment
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Or https://backend-production-c8ff.up.railway.app/
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
 
 // Product Interface including isNewCollection
 interface Product {

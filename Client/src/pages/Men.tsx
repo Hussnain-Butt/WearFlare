@@ -11,7 +11,7 @@ import AnimatedSection from '@/components/AnimatedSection' // Ensure path is cor
 import NewCollection from '@/components/NewCollection' // Ensure path is correct
 
 // --- Backend API Base URL ---
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Make sure this matches your backend port
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Make sure this matches your backend port
 
 // --- Updated Interface ---
 interface Product {
