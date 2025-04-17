@@ -1,12 +1,12 @@
 // src/pages/ResetPasswordPage.tsx
 import React, { useState, useEffect, FormEvent, useContext } from 'react'
-import { Lock, Eye, EyeOff } from 'lucide-react'
+import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react' // Added Loader2
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import bgsignin from '/bg-for-signin.png' // Ensure path is correct
 import AuthContext from '../context/AuthContext' // Adjust path if needed
-import { toast, Toaster } from 'react-hot-toast' // Use toast for feedback
+import { toast, Toaster } from 'react-hot-toast'
+import axios from 'axios' // Import axios
 
-// Define API base URL
 const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your deployed URL
 
 const ResetPasswordPage: React.FC = () => {
@@ -15,16 +15,14 @@ const ResetPasswordPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  // Removed message/error state in favor of toasts
-  const { token } = useParams<{ token: string }>() // Get token from URL
+  const { token } = useParams<{ token: string }>() // Token from URL
   const navigate = useNavigate()
-  const authContext = useContext(AuthContext) // Optional: for auto-login
+  const authContext = useContext(AuthContext)
 
-  // Validate token presence early
+  // Validate token on mount
   useEffect(() => {
     if (!token) {
-      toast.error('Invalid or missing reset token in URL.')
-      // Redirect to login after a short delay
+      toast.error('Invalid or missing reset token link.')
       setTimeout(() => navigate('/login'), 3000)
     }
   }, [token, navigate])
@@ -32,7 +30,6 @@ const ResetPasswordPage: React.FC = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    // Client-side validation
     if (!password || !passwordConfirm) {
       toast.error('Please fill in both password fields.')
       return
@@ -46,7 +43,7 @@ const ResetPasswordPage: React.FC = () => {
       return
     }
     if (!token) {
-      toast.error('Reset token is missing. Cannot proceed.') // Should be caught by useEffect but good fallback
+      toast.error('Reset token is missing.')
       return
     }
 
@@ -54,52 +51,45 @@ const ResetPasswordPage: React.FC = () => {
     const toastId = toast.loading('Resetting password...')
 
     try {
-      const response = await fetch(
+      // Use axios PATCH request
+      const response = await axios.patch(
         `${API_BASE_URL}/api/auth/reset-password/${token}`, // Send token in URL
-        {
-          method: 'PATCH', // Use PATCH method
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password, passwordConfirm }), // Send passwords in body
-        },
+        { password, passwordConfirm }, // Send passwords in body
       )
 
-      const data = await response.json()
-      toast.dismiss(toastId) // Dismiss loading toast
+      toast.success(response.data.message || 'Password reset successfully!', {
+        id: toastId,
+        duration: 4000,
+      })
 
-      if (response.ok) {
-        toast.success(data.message || 'Password reset successfully!', { duration: 4000 })
-
-        // Optional: Automatically log the user in if token is returned
-        if (data.token && authContext && authContext.setUser) {
-          // Check if setUser exists
-          authContext.setUser({ token: data.token /* add other user details if needed */ })
-          sessionStorage.setItem('token', data.token) // Or localStorage
-          toast.success('Logged in successfully. Redirecting...')
-          setTimeout(() => navigate('/'), 2000) // Redirect to home
-        } else {
-          // Otherwise, redirect to login page
-          toast.success('Redirecting to login...')
-          setTimeout(() => navigate('/login'), 3000)
-        }
+      // Optional: Auto-login
+      if (response.data.token && authContext?.setUser) {
+        authContext.setUser({ token: response.data.token /* other user details */ })
+        sessionStorage.setItem('token', response.data.token) // Use session or local storage
+        sessionStorage.setItem('userEmail', response.data.email)
+        toast.success('Logged in. Redirecting...')
+        setTimeout(() => navigate('/'), 2000) // Redirect home
       } else {
-        // Show specific error from backend or a generic one
-        toast.error(data.message || 'Failed to reset password. Link may be invalid or expired.')
+        toast.success('Redirecting to login...')
+        setTimeout(() => navigate('/login'), 3000) // Redirect login
       }
-    } catch (err) {
+    } catch (error: any) {
       toast.dismiss(toastId)
-      toast.error('Network error. Please check connection and try again.')
-      console.error('Reset Password Fetch Error:', err)
+      console.error('Reset Password Axios Error:', error.response?.data || error.message)
+      const message =
+        error.response?.data?.message || 'Failed to reset password. Link may be invalid or expired.'
+      toast.error(message)
     } finally {
-      setIsLoading(false)
+      setIsLoading(false) // ** Ensure loading state is always reset **
     }
   }
 
-  // Render null or a message if token is definitely missing from the start
+  // Don't render form if token is clearly missing initially
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600">
-        Invalid Request: Reset token is missing. Redirecting...
         <Toaster />
+        Redirecting...
       </div>
     )
   }
@@ -113,32 +103,35 @@ const ResetPasswordPage: React.FC = () => {
         backgroundPosition: 'center',
       }}
     >
-      <Toaster position="top-center" /> {/* Add Toaster */}
+      <Toaster position="top-center" />
       <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-lg backdrop-blur-sm bg-opacity-95">
         <h1 className="text-black text-center text-3xl font-semibold mb-6">Reset Your Password</h1>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           {/* New Password Field */}
           <div>
-            <label className="text-gray-700 text-sm font-medium block mb-1.5">New Password</label>
+            <label htmlFor="reset-password" className="form-label">
+              New Password
+            </label>
             <div className="relative">
               <input
+                id="reset-password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter new password (min. 6 chars)"
-                className="auth-input pl-10 pr-10" // Use consistent class
+                className="auth-input pl-10 pr-10"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
               />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+              <div className="input-icon left-3">
                 <Lock size={20} />
               </div>
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition p-1"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="password-toggle-button"
+                aria-label="Toggle password visibility"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -147,27 +140,28 @@ const ResetPasswordPage: React.FC = () => {
 
           {/* Confirm New Password Field */}
           <div>
-            <label className="text-gray-700 text-sm font-medium block mb-1.5">
+            <label htmlFor="reset-password-confirm" className="form-label">
               Confirm New Password
             </label>
             <div className="relative">
               <input
+                id="reset-password-confirm"
                 type={showPasswordConfirm ? 'text' : 'password'}
                 placeholder="Confirm new password"
-                className="auth-input pl-10 pr-10" // Use consistent class
+                className="auth-input pl-10 pr-10"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 required
                 disabled={isLoading}
               />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+              <div className="input-icon left-3">
                 <Lock size={20} />
               </div>
               <button
                 type="button"
                 onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition p-1"
-                aria-label={showPasswordConfirm ? 'Hide confirm password' : 'Show confirm password'}
+                className="password-toggle-button"
+                aria-label="Toggle confirm password visibility"
               >
                 {showPasswordConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -175,16 +169,8 @@ const ResetPasswordPage: React.FC = () => {
           </div>
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="auth-button w-full mt-6" // Added margin-top
-            disabled={isLoading || !token} // Disable if loading or token missing
-          >
-            {isLoading ? (
-              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-            ) : (
-              'Reset Password'
-            )}
+          <button type="submit" className="auth-button w-full mt-6" disabled={isLoading || !token}>
+            {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Reset Password'}
           </button>
 
           {/* Link back to Login */}
@@ -196,57 +182,84 @@ const ResetPasswordPage: React.FC = () => {
           </p>
         </form>
       </div>
-      {/* Add shared auth styles */}
+      {/* Include shared auth styles if necessary */}
       <style jsx global>{`
+        /* ... paste the styles from LoginForm.tsx if needed ... */
+        .form-label {
+          display: block;
+          margin-bottom: 0.375rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+        }
         .auth-input {
           width: 100%;
-          background-color: #f3f4f6; /* bg-gray-100 */
-          color: #111827; /* text-black */
-          border-radius: 0.5rem; /* rounded-lg */
-          padding-top: 0.75rem; /* py-3 */
+          background-color: #f3f4f6;
+          color: #1f2937;
+          border-radius: 0.5rem;
+          padding-top: 0.75rem;
           padding-bottom: 0.75rem;
-          padding-left: 2.5rem; /* pl-10 */
-          padding-right: 1rem; /* px-4 default */
+          padding-left: 2.5rem;
+          padding-right: 1rem;
           outline: none;
-          border: 1px solid #d1d5db; /* Add border */
+          border: 1px solid #d1d5db;
           transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .auth-input.pr-10 {
+          padding-right: 2.5rem;
         }
         .auth-input:focus {
           border-color: #c8a98a;
           box-shadow: 0 0 0 1px #c8a98a;
         }
-        /* Adjust right padding for password inputs with eye icon */
-        input[type='password'] + button,
-        input[type='text'] + button {
-          right: 0.75rem; /* Adjust icon position */
+        .auth-input:disabled {
+          background-color: #e5e7eb;
+          cursor: not-allowed;
         }
-        input[type='password'].pr-10,
-        input[type='text'].pr-10 {
-          padding-right: 2.5rem; /* pr-10 */
+        .input-icon {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #6b7280;
+          pointer-events: none;
         }
-
+        .password-toggle-button {
+          position: absolute;
+          right: 0.75rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #6b7280;
+          background: none;
+          border: none;
+          padding: 0.25rem;
+          cursor: pointer;
+        }
+        .password-toggle-button:hover {
+          color: #374151;
+        }
         .auth-button {
           background-color: #c8a98a;
           color: white;
-          border-radius: 0.5rem; /* rounded-lg */
-          padding-top: 0.75rem; /* py-3 */
+          border-radius: 0.5rem;
+          padding-top: 0.75rem;
           padding-bottom: 0.75rem;
-          font-weight: 600; /* font-semibold */
+          font-weight: 600;
           transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
           border: none;
           cursor: pointer;
+          width: 100%;
         }
         .auth-button:hover:not(:disabled) {
-          background-color: #b08d6a; /* Darken #c8a98a */
+          background-color: #b08d6a;
         }
         .auth-button:active:not(:disabled) {
           transform: scale(0.98);
         }
         .auth-button:disabled {
-          opacity: 0.5;
+          opacity: 0.6;
           cursor: not-allowed;
         }
         .animate-spin {

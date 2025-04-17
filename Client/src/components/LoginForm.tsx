@@ -1,8 +1,13 @@
+// src/pages/LoginForm.tsx
 import React, { useState, useContext, FormEvent } from 'react'
-import { User, Lock, Eye, EyeOff } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, Loader2 } from 'lucide-react' // Added Loader2
 import { Link, useNavigate } from 'react-router-dom'
-import AuthContext from '../context/AuthContext' // ✅ Import AuthContext
-import bgsignin from '/bg-for-signin.png'
+import AuthContext from '../context/AuthContext' // Ensure path is correct
+import bgsignin from '/bg-for-signin.png' // Ensure path is correct
+import axios from 'axios' // Import axios
+import { toast, Toaster } from 'react-hot-toast' // Import toast
+
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false)
@@ -10,89 +15,112 @@ const LoginForm: React.FC = () => {
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   const authContext = useContext(AuthContext)
+  // Add null check for context for type safety
   if (!authContext) {
-    throw new Error('AuthContext is undefined. Make sure AuthProvider is wrapping the app.')
+    // Handle context not being available, maybe redirect or show error
+    // For now, we can throw or return null, but a proper app should handle this
+    console.error('AuthContext is undefined. Make sure AuthProvider is wrapping the app.')
+    return <div>Error: Auth context not available.</div> // Or throw new Error(...)
   }
   const { setUser } = authContext
   const navigate = useNavigate()
 
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
-  }
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    const trimmedEmail = email.trim()
 
-    if (!email || !password) {
-      showToast('Please fill in all fields', 'error')
+    if (!trimmedEmail || !password) {
+      toast.error('Please enter both email and password.')
       return
     }
 
     setIsLoading(true)
+    const toastId = toast.loading('Signing in...') // Show loading toast
 
     try {
-      const response = await fetch(
-        'https://backend-production-c8ff.up.railway.app/api/auth/login',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), password }),
-        },
+      // Use axios for consistency
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/login`,
+        { email: trimmedEmail, password }, // Send trimmed email
       )
 
-      const data = await response.json()
-      setIsLoading(false)
+      toast.dismiss(toastId) // Dismiss loading toast
 
-      if (response.ok) {
-        showToast('Logged in successfully!', 'success')
-        setUser({ token: data.token })
+      // Axios typically throws for non-2xx, but check data just in case
+      if (response.data && response.data.token) {
+        toast.success('Logged in successfully!')
+        setUser({ token: response.data.token /* include other user data if needed */ }) // Update context
 
-        // ✅ Store token in LocalStorage if Remember Me is checked
+        // Store token based on rememberMe
         if (rememberMe) {
-          localStorage.setItem('token', data.token)
+          localStorage.setItem('token', response.data.token) // Persist longer
+          localStorage.setItem('userEmail', response.data.email) // Optionally store email
         } else {
-          sessionStorage.setItem('token', data.token)
+          sessionStorage.setItem('token', response.data.token) // Session only
+          sessionStorage.setItem('userEmail', response.data.email)
         }
 
-        navigate('/')
+        navigate('/') // Redirect to homepage
       } else {
-        showToast(data.message, 'error')
+        // This case might not be reached often with axios, primarily handled in catch
+        throw new Error(response.data.message || 'Login failed: Invalid response from server.')
       }
-    } catch (error) {
-      setIsLoading(false)
-      showToast('Server error', 'error')
+    } catch (error: any) {
+      toast.dismiss(toastId) // Dismiss loading toast on error too
+      console.error('Login Fetch Error:', error.response?.data || error.message)
+      // Show specific error from backend response if available
+      const message =
+        error.response?.data?.message ||
+        'Login failed. Please check credentials or try again later.'
+      toast.error(message)
+    } finally {
+      setIsLoading(false) // **Ensure loading state is always reset**
     }
   }
 
+  // Prefill email if remembered
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('userEmail')
+    if (rememberedEmail) {
+      setEmail(rememberedEmail)
+      setRememberMe(true)
+    }
+  }, [])
+
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-5"
+      className="min-h-screen w-full flex items-center justify-center bg-gray-100 py-10 px-4 sm:px-6 lg:px-8"
       style={{
         backgroundImage: `url(${bgsignin})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
     >
-      <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-lg">
+      <Toaster position="top-center" /> {/* Add Toaster */}
+      <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-lg backdrop-blur-sm bg-opacity-95">
         <h1 className="text-black text-center text-3xl font-semibold mb-6">Sign in</h1>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           {/* Email Field */}
           <div>
-            <label className="text-gray-700 text-sm font-medium block mb-2">Email</label>
+            <label htmlFor="login-email" className="form-label">
+              Email
+            </label>
             <div className="relative">
               <input
+                id="login-email"
                 type="email"
                 placeholder="Enter your email"
-                className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pl-10 outline-none focus:ring-2 focus:ring-[#c8a98a] transition"
+                autoComplete="email"
+                className="auth-input pl-10"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
               />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              <div className="input-icon left-3">
                 <User size={20} />
               </div>
             </div>
@@ -100,22 +128,29 @@ const LoginForm: React.FC = () => {
 
           {/* Password Field */}
           <div>
-            <label className="text-gray-700 text-sm font-medium block mb-2">Password</label>
+            <label htmlFor="login-password" className="form-label">
+              Password
+            </label>
             <div className="relative">
               <input
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="********"
-                className="w-full bg-gray-100 text-black rounded-lg py-3 px-4 pl-10 pr-10 outline-none focus:ring-2 focus:ring-[#c8a98a] transition"
+                autoComplete="current-password"
+                className="auth-input pl-10 pr-10" // Ensure right padding for icon
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
               />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              <div className="input-icon left-3">
                 <Lock size={20} />
               </div>
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                className="password-toggle-button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -123,33 +158,25 @@ const LoginForm: React.FC = () => {
           </div>
 
           {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between text-sm mt-1">
-            <label className="flex items-center space-x-2 cursor-pointer">
+          <div className="flex items-center justify-between text-sm mt-2">
+            <label className="flex items-center space-x-2 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={rememberMe}
-                onChange={() => setRememberMe(!rememberMe)}
-                className="h-4 w-4 rounded border-gray-300"
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-[#c8a98a] focus:ring-[#c8a98a]"
+                disabled={isLoading}
               />
-              <span className="text-gray-600 text-sm">Remember Me</span>
+              <span className="text-gray-600">Remember Me</span>
             </label>
-
-            <Link to="/forgot-password" className="text-[#7A68A6] text-sm hover:underline">
+            <Link to="/forgot-password" className="text-[#c8a98a] hover:underline">
               Forgot Password?
             </Link>
           </div>
 
           {/* Sign in Button */}
-          <button
-            type="submit"
-            className="w-full bg-[#c8a98a] text-white rounded-lg py-3 font-semibold hover:bg-[#996F0B] transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-            ) : (
-              'Sign in'
-            )}
+          <button type="submit" className="auth-button w-full" disabled={isLoading}>
+            {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Sign in'}
           </button>
 
           {/* Sign-up Link */}
@@ -161,17 +188,97 @@ const LoginForm: React.FC = () => {
           </p>
         </form>
       </div>
-
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className={`fixed bottom-5 right-5 px-4 py-2 rounded-md text-white shadow-lg ${
-            toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
+      {/* Shared Auth Styles (Add if not globally defined) */}
+      <style jsx global>{`
+        .form-label {
+          display: block;
+          margin-bottom: 0.375rem; /* mb-1.5 */
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+        }
+        .auth-input {
+          width: 100%;
+          background-color: #f3f4f6;
+          color: #1f2937;
+          border-radius: 0.5rem;
+          padding-top: 0.75rem;
+          padding-bottom: 0.75rem;
+          padding-left: 2.5rem;
+          padding-right: 1rem; /* default */
+          outline: none;
+          border: 1px solid #d1d5db;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .auth-input.pr-10 {
+          padding-right: 2.5rem;
+        } /* Add padding for password eye */
+        .auth-input:focus {
+          border-color: #c8a98a;
+          box-shadow: 0 0 0 1px #c8a98a;
+        }
+        .auth-input:disabled {
+          background-color: #e5e7eb;
+          cursor: not-allowed;
+        }
+        .input-icon {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #6b7280;
+          pointer-events: none;
+        }
+        .password-toggle-button {
+          position: absolute;
+          right: 0.75rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #6b7280;
+          background: none;
+          border: none;
+          padding: 0.25rem;
+          cursor: pointer;
+        }
+        .password-toggle-button:hover {
+          color: #374151;
+        }
+        .auth-button {
+          background-color: #c8a98a;
+          color: white;
+          border-radius: 0.5rem;
+          padding-top: 0.75rem;
+          padding-bottom: 0.75rem;
+          font-weight: 600;
+          transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          cursor: pointer;
+          width: 100%;
+        }
+        .auth-button:hover:not(:disabled) {
+          background-color: #b08d6a;
+        }
+        .auth-button:active:not(:disabled) {
+          transform: scale(0.98);
+        }
+        .auth-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   )
 }

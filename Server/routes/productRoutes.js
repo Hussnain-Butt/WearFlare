@@ -34,5 +34,6 @@ router.put('/:id', upload.single('image'), productController.updateProduct)
 
 // DELETE a product by id
 router.delete('/:id', productController.deleteProduct)
+router.get('/new-collection', productController.getNewCollectionProducts)
 
 module.exports = router

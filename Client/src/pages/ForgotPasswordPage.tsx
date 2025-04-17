@@ -1,27 +1,21 @@
 // src/pages/ForgotPasswordPage.tsx
 import React, { useState, FormEvent } from 'react'
-import { Mail } from 'lucide-react'
+import { Mail, Loader2 } from 'lucide-react' // Added Loader2
 import bgsignin from '/bg-for-signin.png' // Ensure path is correct
-import { toast, Toaster } from 'react-hot-toast' // Use toast for feedback
+import { toast, Toaster } from 'react-hot-toast'
+import axios from 'axios' // Import axios
 
-// Define API base URL
 const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your deployed URL
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  // Removed message/error state in favor of toasts
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const trimmedEmail = email.trim()
 
-    if (!trimmedEmail) {
-      toast.error('Please enter your email address.')
-      return
-    }
-    // Basic email format validation
-    if (!/.+\@.+\..+/.test(trimmedEmail)) {
+    if (!trimmedEmail || !/.+\@.+\..+/.test(trimmedEmail)) {
       toast.error('Please enter a valid email address.')
       return
     }
@@ -30,31 +24,24 @@ const ForgotPasswordPage: React.FC = () => {
     const toastId = toast.loading('Sending reset link...')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail }),
+      // Use axios POST request
+      const response = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, {
+        email: trimmedEmail,
       })
 
-      const data = await response.json()
-      toast.dismiss(toastId) // Dismiss loading toast
-
-      if (response.ok) {
-        // Always show a generic success message for security
-        toast.success(data.message || 'If an account exists, a reset link has been sent.', {
-          duration: 5000,
-        })
-        setEmail('') // Clear email field
-      } else {
-        // Show backend error or a generic one
-        toast.error(data.message || 'Failed to send reset link. Please try again.')
-      }
-    } catch (err) {
+      toast.success(response.data.message || 'If an account exists, a reset link has been sent.', {
+        id: toastId,
+        duration: 5000,
+      })
+      setEmail('') // Clear email field on success
+    } catch (error: any) {
       toast.dismiss(toastId)
-      toast.error('Network error. Please check your connection and try again.')
-      console.error('Forgot Password Fetch Error:', err)
+      console.error('Forgot Password Axios Error:', error.response?.data || error.message)
+      const message =
+        error.response?.data?.message || 'Failed to send reset link. Please try again later.'
+      toast.error(message)
     } finally {
-      setIsLoading(false)
+      setIsLoading(false) // ** Ensure loading state is always reset **
     }
   }
 
@@ -67,90 +54,118 @@ const ForgotPasswordPage: React.FC = () => {
         backgroundPosition: 'center',
       }}
     >
-      <Toaster position="top-center" /> {/* Add Toaster */}
+      <Toaster position="top-center" />
       <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-lg backdrop-blur-sm bg-opacity-95">
-        {' '}
-        {/* Added slight transparency */}
         <h1 className="text-black text-center text-3xl font-semibold mb-2">Forgot Password</h1>
         <p className="text-center text-gray-600 text-sm mb-6">
-          Enter your email address below. If an account exists, we'll send a link to reset your
-          password.
+          Enter your email. If an account exists, we'll send a reset link.
         </p>
+
         <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* Email Field */}
           <div>
-            <label htmlFor="email" className="text-gray-700 text-sm font-medium block mb-1.5">
+            <label htmlFor="forgot-email" className="form-label">
               Email Address
             </label>
             <div className="relative">
               <input
-                id="email"
+                id="forgot-email"
                 type="email"
                 placeholder="you@example.com"
-                className="auth-input pl-10" // Use consistent class
+                autoComplete="email"
+                className="auth-input pl-10"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
               />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+              <div className="input-icon left-3">
                 <Mail size={20} />
               </div>
             </div>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="auth-button w-full" // Use consistent class
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-            ) : (
-              'Send Reset Link'
-            )}
+          <button type="submit" className="auth-button w-full" disabled={isLoading}>
+            {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Send Reset Link'}
           </button>
         </form>
       </div>
-      {/* Add shared auth styles */}
+      {/* Include shared auth styles if this component is rendered standalone */}
       <style jsx global>{`
+        .form-label {
+          display: block;
+          margin-bottom: 0.375rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+        }
         .auth-input {
           width: 100%;
-          background-color: #f3f4f6; /* bg-gray-100 */
-          color: #111827; /* text-black */
-          border-radius: 0.5rem; /* rounded-lg */
-          padding-top: 0.75rem; /* py-3 */
+          background-color: #f3f4f6;
+          color: #1f2937;
+          border-radius: 0.5rem;
+          padding-top: 0.75rem;
           padding-bottom: 0.75rem;
-          padding-left: 2.5rem; /* pl-10 */
-          padding-right: 1rem; /* px-4 */
+          padding-left: 2.5rem;
+          padding-right: 1rem;
           outline: none;
-          transition: ring 0.2s;
+          border: 1px solid #d1d5db;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .auth-input.pr-10 {
+          padding-right: 2.5rem;
         }
         .auth-input:focus {
-          ring: 2px;
-          ring-color: #c8a98a;
+          border-color: #c8a98a;
+          box-shadow: 0 0 0 1px #c8a98a;
+        }
+        .auth-input:disabled {
+          background-color: #e5e7eb;
+          cursor: not-allowed;
+        }
+        .input-icon {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #6b7280;
+          pointer-events: none;
+        }
+        .password-toggle-button {
+          position: absolute;
+          right: 0.75rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #6b7280;
+          background: none;
+          border: none;
+          padding: 0.25rem;
+          cursor: pointer;
+        }
+        .password-toggle-button:hover {
+          color: #374151;
         }
         .auth-button {
           background-color: #c8a98a;
           color: white;
-          border-radius: 0.5rem; /* rounded-lg */
-          padding-top: 0.75rem; /* py-3 */
+          border-radius: 0.5rem;
+          padding-top: 0.75rem;
           padding-bottom: 0.75rem;
-          font-weight: 600; /* font-semibold */
-          transition: background-color 0.2s, transform 0.1s;
+          font-weight: 600;
+          transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
+          border: none;
+          cursor: pointer;
+          width: 100%;
         }
         .auth-button:hover:not(:disabled) {
-          background-color: #b08d6a; /* Darken #c8a98a */
+          background-color: #b08d6a;
         }
         .auth-button:active:not(:disabled) {
           transform: scale(0.98);
         }
         .auth-button:disabled {
-          opacity: 0.5;
+          opacity: 0.6;
           cursor: not-allowed;
         }
         .animate-spin {

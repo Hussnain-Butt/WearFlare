@@ -203,3 +203,25 @@ exports.searchProductsByImage = async (req, res) => {
     res.status(500).json({ message: `Failed to search by image: ${error.message}` })
   }
 }
+
+exports.getNewCollectionProducts = async (req, res) => {
+  try {
+    // --- FIX HERE: Remove 'as string' ---
+    // parseInt will try to convert the value; handle potential NaN
+    const requestedLimit = parseInt(req.query.limit, 10) // Always provide radix 10
+    const limit = !isNaN(requestedLimit) && requestedLimit > 0 ? requestedLimit : 3 // Use requested limit if valid, else default to 3
+    // --- END FIX ---
+
+    console.log(`[New Collection] Fetching up to ${limit} products.`)
+
+    const newCollection = await Product.find({ isNewCollection: true })
+      .sort({ createdAt: -1 }) // Show newest first
+      .limit(limit)
+
+    console.log(`[New Collection] Found ${newCollection.length} products marked as new.`)
+    res.status(200).json(newCollection)
+  } catch (error) {
+    console.error('Error fetching new collection products:', error)
+    res.status(500).json({ message: 'Failed to fetch new collection products.' })
+  }
+}
