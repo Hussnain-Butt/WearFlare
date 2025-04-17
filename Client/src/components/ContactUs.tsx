@@ -98,7 +98,7 @@ const ContactUs = () => {
 
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-              <Mail className="text-[#8B4513]" size={24} />
+              <Mail className="text-[#c8a98a]" size={24} />
               <div>
                 <h3 className="text-lg font-semibold text-[#6b5745]">Email</h3>
                 <p className="text-gray-800">hello@gmail.com</p>
@@ -106,7 +106,7 @@ const ContactUs = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <Phone className="text-[#8B4513]" size={24} />
+              <Phone className="text-[#c8a98a]" size={24} />
               <div>
                 <h3 className="text-lg font-semibold text-[#6b5745]">Phone</h3>
                 <p className="text-gray-800">032643456</p>
@@ -114,7 +114,7 @@ const ContactUs = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <MapPin className="text-[#8B4513]" size={24} />
+              <MapPin className="text-[#c8a98a]" size={24} />
               <div>
                 <h3 className="text-lg font-semibold text-[#6b5745]">Location</h3>
                 <p className="text-gray-800">123 Anywhere St., Any City</p>
@@ -122,7 +122,7 @@ const ContactUs = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <Globe className="text-[#8B4513]" size={24} />
+              <Globe className="text-[#c8a98a]" size={24} />
               <div>
                 <h3 className="text-lg font-semibold text-[#6b5745]">Website</h3>
                 <p className="text-gray-800">Wearflaresite.com</p>

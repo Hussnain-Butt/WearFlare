@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom' // Link import removed as it wasn't used
 import axios from 'axios'
-import AnimatedSection from './AnimatedSection'
-// Removed useCart import as addToCart is not used directly here
-// import { useCart } from '../context/CartContext';
+import AnimatedSection from './AnimatedSection' // Ensure this path is correct
 
-// Define the Product interface (ensure it matches your actual product data structure)
+// --- Updated Product Interface ---
 interface Product {
   _id: string
   title: string
-  price: string
-  image: string
-  gender: string // Keep if needed for any potential filtering logic later
-  category: string // Keep if needed for any potential filtering logic later
+  price: string // Assuming price is a string from API
+  image: string // Expecting path like /uploads/image.jpg
+  gender: string
+  category: string
+  inStock: boolean // Added inStock field
 }
 
 const PopularSection: React.FC = () => {
@@ -20,38 +19,57 @@ const PopularSection: React.FC = () => {
   const [popularProducts, setPopularProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+  // Ensure this matches your actual backend API URL
+  const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
 
   useEffect(() => {
     setLoading(true)
     setError(null)
 
-    // Try fetching with limit, but be prepared to handle a direct array response
+    // Fetch products
     axios
-      // We won't strictly type the response here to handle different possible structures
-      .get<any>(`https://backend-production-c8ff.up.railway.app/api/products?limit=3`)
+      .get<any>(`${API_BASE_URL}/api/products?limit=3`) // Fetch up to 3
       .then((res) => {
-        let productsData: Product[] = []
+        let rawProductsData: any[] = []
 
-        // Check common structures: { products: [...] } or direct array [...]
+        // Determine the actual array of products from the response
         if (res.data && Array.isArray(res.data.products)) {
-          // Case 1: Response is { products: [...] }
-          productsData = res.data.products
+          rawProductsData = res.data.products
         } else if (Array.isArray(res.data)) {
-          // Case 2: Response is directly [...]
-          productsData = res.data
+          rawProductsData = res.data
         } else {
-          // Case 3: Unexpected response structure
           console.warn('Unexpected API response structure for popular products:', res.data)
           setError('Could not parse popular products data.')
+          setPopularProducts([])
+          return
         }
 
-        // Ensure we only take up to 3 items, even if limit didn't work or structure was just an array
-        setPopularProducts(productsData.slice(0, 3))
+        // Process fetched data
+        const processedProducts: Product[] = rawProductsData
+          .map((p) => {
+            if (!p || typeof p !== 'object' || !p._id) {
+              console.warn('Skipping invalid item in popular products data:', p)
+              return null
+            }
+            return {
+              _id: p._id,
+              title: p.title ?? 'Untitled Product',
+              price: String(p.price ?? '0'),
+              image: p.image ?? '',
+              gender: p.gender ?? 'Unknown',
+              category: p.category ?? 'Uncategorized',
+              inStock: p.inStock ?? true, // Default inStock to true
+            }
+          })
+          .filter((p): p is Product => p !== null)
+
+        // Set state with the processed and limited data (ensure max 3)
+        setPopularProducts(processedProducts.slice(0, 3))
       })
       .catch((err) => {
         console.error('Error fetching popular products:', err)
-        setError('Could not load popular products.')
-        setPopularProducts([]) // Ensure state is empty on error
+        setError('Could not load popular products at the moment.')
+        setPopularProducts([])
       })
       .finally(() => {
         setLoading(false)
@@ -69,88 +87,132 @@ const PopularSection: React.FC = () => {
   // --- End Handlers ---
 
   // --- Conditional Rendering ---
-  // If loading, show a placeholder (optional)
   if (loading) {
     return (
-      <section className="w-full py-12 sm:py-16 px-4 md:px-8 lg:px-12 bg-[#D3C5B8]">
-        <h2 className="text-3xl sm:text-4xl font-medium text-center mb-8 sm:mb-12 text-[#725D45]">
-          Most Popular
-        </h2>
-        {/* Optional: Add skeleton loaders here */}
-        <div className="text-center text-gray-500">Loading popular items...</div>
+      <section className="popular-section-container bg-[#D3C5B8]">
+        <h2 className="section-title">Most Popular</h2>
+        <div className="loading-text">Loading popular items...</div>
       </section>
     )
   }
 
-  // If there was an error fetching OR if fetching succeeded but returned no products
   if (error || popularProducts.length === 0) {
-    // Don't render the section at all if there's an error or no popular items
-    // You could optionally show an error message instead of returning null
-    console.log('PopularSection not rendering due to error or empty data:', {
-      error,
-      popularProducts,
-    })
-    return null
+    if (error) console.error('PopularSection Error:', error)
+    if (!error && popularProducts.length === 0) console.log('No popular products to display.')
+    return null // Render nothing if error or no products
   }
 
   // --- Render Section ---
   return (
-    <section className="w-full py-12 sm:py-16 px-4 md:px-8 lg:px-12 bg-[#D3C5B8]">
-      <h2 className="text-3xl sm:text-4xl font-medium text-center mb-8 sm:mb-12 text-[#725D45]">
-        Most Popular
-      </h2>
+    <section className="popular-section-container bg-[#D3C5B8]">
+      <h2 className="section-title text-[#725D45]">Most Popular</h2>
       <AnimatedSection direction="right">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-10 max-w-6xl mx-auto">
-          {' '}
-          {/* Added max-width and centered */}
+        {/* Apply grid styles directly if not using Tailwind */}
+        <div className="popular-grid">
           {popularProducts.map((product) => (
-            <div
-              key={product._id}
-              className="flex flex-col items-center group bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300"
-            >
-              {' '}
-              {/* Combined card styles */}
-              {/* Image Container */}
-              <div
-                className="w-full overflow-hidden cursor-pointer"
-                onClick={() => handleViewDetails(product._id)}
-              >
+            // Product Card Start
+            <div key={product._id} className="product-card-popular group">
+              {/* Image Wrapper */}
+              <div className="image-wrapper-popular">
+                {/* Out of Stock Badge */}
+                {!product.inStock && <div className="out-of-stock-badge-popular">Out of Stock</div>}
+                {/* Product Image */}
                 <img
-                  src={`https://backend-production-c8ff.up.railway.app${product.image}`}
+                  src={`${API_BASE_URL}${product.image}`}
                   alt={product.title}
-                  className="w-full h-64 sm:h-72 md:h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+                  className={`product-image-popular ${
+                    !product.inStock ? 'out-of-stock-image' : ''
+                  }`}
+                  onClick={() => product.inStock && handleViewDetails(product._id)}
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://via.placeholder.com/400x400?text=No+Image'
+                  }}
                 />
               </div>
-              {/* Details Container */}
-              <div className="p-4 text-center w-full">
-                <p
-                  className="text-sm text-gray-800 font-medium truncate mb-1"
-                  title={product.title}
-                >
+              {/* Details Below Image */}
+              <div className="details-wrapper-popular">
+                <p className="product-title-popular" title={product.title}>
                   {product.title}
                 </p>
-                <p className="text-sm font-semibold text-gray-900 mb-3">PKR {product.price}</p>
-                {/* Buttons Container */}
-                <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                  <button
-                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-[#6b5745] text-white text-[10px] sm:text-xs font-medium rounded-full hover:bg-[#5d4c3b] transition-colors duration-300 flex-1 whitespace-nowrap"
-                    onClick={() => handleViewDetails(product._id)}
-                  >
-                    View Details
-                  </button>
-                  <button
-                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-[#8B4513] text-white text-[10px] sm:text-xs font-medium rounded-full hover:bg-[#70421e] transition-colors duration-300 flex-1 whitespace-nowrap"
-                    onClick={() => handleTryNow(product._id)}
-                  >
-                    Try Now
-                  </button>
+                <p className="product-price-popular"> PKR {product.price}</p>
+                {/* Buttons Container / Out of Stock Message */}
+                <div className="buttons-container-popular">
+                  {product.inStock ? (
+                    // Render buttons only if in stock
+                    <>
+                      <button
+                        className="button-popular view-details-button"
+                        onClick={() => handleViewDetails(product._id)}
+                        disabled={!product.inStock}
+                      >
+                        View Details
+                      </button>
+                      <button
+                        className="button-popular try-now-button"
+                        onClick={() => handleTryNow(product._id)}
+                        disabled={!product.inStock}
+                      >
+                        Try Now
+                      </button>
+                    </>
+                  ) : (
+                    // Show "Out of Stock" text instead of buttons
+                    <span className="out-of-stock-text-popular">Out of Stock</span>
+                  )}
                 </div>
+                {/* End Buttons Container */}
               </div>
             </div>
+            // Product Card End
           ))}
         </div>
       </AnimatedSection>
+
+      {/* Basic Styles - UPDATED grid-template-columns */}
+      <style jsx>{`
+            .popular-section-container { width: 100%; padding: 3rem 1rem; /* py-12 px-4 */ md:padding: 4rem 2rem; lg:padding: 4rem 3rem; }
+            .section-title { font-size: 1.875rem; /* text-3xl */ sm:font-size: 2.25rem; /* sm:text-4xl */ font-weight: 500; /* font-medium */ text-align: center; margin-bottom: 2rem; /* mb-8 */ sm:margin-bottom: 3rem; /* sm:mb-12 */ }
+            .loading-text { text-align: center; color: #6b7280; /* text-gray-500 */ }
+
+            /* --- UPDATED GRID DEFINITION --- */
+            .popular-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr); /* Always 3 columns */
+                gap: 1.5rem; /* gap-x-6 */
+                row-gap: 2.5rem; /* gap-y-10 */
+                max-width: 72rem; /* max-w-6xl */
+                margin-left: auto;
+                margin-right: auto;
+             }
+             /* --- Responsive adjustment for smaller screens (optional, if 3 cols is too crowded) --- */
+             @media (max-width: 767px) { /* Below md breakpoint */
+                .popular-grid {
+                    grid-template-columns: repeat(1, 1fr); /* Switch to 1 column on small screens */
+                    gap: 2rem; /* Adjust gap for single column */
+                }
+             }
+             /* --- END GRID UPDATE --- */
+
+            .product-card-popular { display: flex; flex-direction: column; align-items: center; }
+            .image-wrapper-popular { background-color: white; padding: 1rem; /* p-4 */ width: 100%; overflow: hidden; border-radius: 0.375rem; /* rounded-md */ box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */ transition: box-shadow 0.3s ease-in-out; position: relative; }
+            .product-card-popular:hover .image-wrapper-popular { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* hover:shadow-lg */ }
+            .out-of-stock-badge-popular { position: absolute; top: 0.5rem; right: 0.5rem; background-color: #ef4444; color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 0.25rem; z-index: 10; }
+            .product-image-popular { display: block; width: 100%; height: 16rem; /* h-64 */ sm:height: 18rem; md:height: 20rem; object-fit: cover; transition: transform 0.3s ease-in-out; cursor: pointer; }
+            .product-card-popular:hover .product-image-popular:not(.out-of-stock-image) { transform: scale(1.05); } /* Zoom effect for in-stock items */
+            .product-image-popular.out-of-stock-image { opacity: 0.5; cursor: default; /* No pointer if out of stock */ }
+            .details-wrapper-popular { margin-top: 0.75rem; /* mt-3 */ text-align: center; width: 100%; padding-left: 0.5rem; padding-right: 0.5rem; /* px-2 */ }
+            .product-title-popular { font-size: 0.875rem; /* text-sm */ color: #1f2937; /* text-gray-800 */ font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .product-price-popular { font-size: 0.875rem; font-weight: 600; color: #111827; /* text-gray-900 */ margin-top: 0.25rem; }
+            .buttons-container-popular { margin-top: 0.75rem; display: flex; flex-direction: column; sm:flex-row; gap: 0.5rem; justify-content: center; }
+            .button-popular { padding: 0.5rem 1rem; /* px-4 py-2 */ font-size: 0.75rem; /* text-xs */ font-weight: 500; border-radius: 9999px; /* rounded-full */ transition: background-color 0.3s, opacity 0.3s; flex: 1; /* Make buttons take equal space in row */ border: none; cursor: pointer; }
+            .button-popular:disabled { opacity: 0.5; cursor: not-allowed; }
+            .view-details-button { background-color: #6b5745; color: white; }
+            .view-details-button:hover:not(:disabled) { background-color: #5d4c3b; }
+            .try-now-button { background-color: #c8a98a; /* Lighter brown */ color: white; }
+            .try-now-button:hover:not(:disabled) { background-color: #b08d6a; /* Darken */ }
+            .out-of-stock-text-popular { display: inline-block; margin-top: 0.25rem; padding: 0.5rem 1rem; background-color: #e5e7eb; /* bg-gray-200 */ color: #6b7280; /* text-gray-500 */ font-size: 0.75rem; font-weight: 600; border-radius: 9999px; width: 100%; sm:width: auto; }
+       `}</style>
     </section>
   )
 }

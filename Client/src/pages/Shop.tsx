@@ -120,7 +120,7 @@ const Shop: React.FC = () => {
                       View Details
                     </button>
                     <button
-                      className="px-4 py-2 bg-[#8B4513] text-white text-xs font-medium rounded-full hover:bg-[#70421e] transition-colors duration-300 flex-1" // flex-1 to take available space
+                      className="px-4 py-2 bg-[#c8a98a] text-white text-xs font-medium rounded-full hover:bg-[#70421e] transition-colors duration-300 flex-1" // flex-1 to take available space
                       onClick={() => handleTryNow(product._id)} // Use the navigation function
                     >
                       Try Now

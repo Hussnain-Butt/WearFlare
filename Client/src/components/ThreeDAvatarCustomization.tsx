@@ -154,7 +154,7 @@ const ThreeDAvatarCustomization = () => {
               <div className="mt-8">
                 <h3 className="text-[#c8a98a] font-bold mb-2">HAIR COLOR</h3>
                 <div className="flex justify-between space-x-2 py-2">
-                  {['#000000', '#5a3825', '#8b4513', '#d2b48c', '#f5deb3', '#dcdcdc'].map(
+                  {['#000000', '#5a3825', '#c8a98a', '#d2b48c', '#f5deb3', '#dcdcdc'].map(
                     (color) => (
                       <button
                         key={color}

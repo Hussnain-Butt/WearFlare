@@ -543,7 +543,7 @@ const Products: React.FC = () => {
                       {product.category} • {product.gender}
                     </p>
                     {/* Price */}
-                    <p className="text-[#8B4513] font-medium text-sm">
+                    <p className="text-[#c8a98a] font-medium text-sm">
                       PKR {product.price != null ? product.price : 'N/A'}
                     </p>
                   </div>
