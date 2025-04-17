@@ -4,7 +4,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 
-const AdminLogin = () => {
+const ManagerLogin = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false) // For toggling password visibility
@@ -14,14 +14,14 @@ const AdminLogin = () => {
     e.preventDefault()
     try {
       const response = await axios.post(
-        'https://backend-production-c8ff.up.railway.app//api/admin/login',
+        'https://backend-production-c8ff.up.railway.app//api/manager/login',
         {
           username,
           password,
         },
       )
       localStorage.setItem('adminToken', response.data.token)
-      navigate('/admin/dashboard')
+      navigate('/product/products')
     } catch (error) {
       console.error(error)
       alert('Invalid credentials')
@@ -39,7 +39,9 @@ const AdminLogin = () => {
           - max-w-md se container ki width control hogi. 
           - Agar aapko zyada wide form chahiye to 'max-w-lg' ya 'max-w-xl' use kar sakte hain.
         */}
-        <h2 className="text-2xl font-bold text-center text-[#c8a98a] mb-6">Admin Login</h2>
+        <h2 className="text-2xl font-bold text-center text-[#c8a98a] mb-6">
+          Product Manager Login
+        </h2>
         <form onSubmit={handleLogin}>
           {/* Username Field */}
           <div className="mb-4">
@@ -100,4 +102,4 @@ const AdminLogin = () => {
   )
 }
 
-export default AdminLogin
+export default ManagerLogin

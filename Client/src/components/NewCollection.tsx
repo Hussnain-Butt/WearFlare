@@ -19,7 +19,7 @@ interface Product {
 
 // --- API Base URL ---
 // Ensure this matches your backend configuration
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or http://localhost:5000
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Or https://backend-production-c8ff.up.railway.app/
 
 const NewCollection: React.FC = () => {
   const navigate = useNavigate()

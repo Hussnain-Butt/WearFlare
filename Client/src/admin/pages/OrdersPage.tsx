@@ -5,7 +5,7 @@ import { toast, Toaster } from 'react-hot-toast'
 import { CheckCircle, Clock, Loader2, XCircle, Ban } from 'lucide-react'
 
 // Define API base URL - Make sure this is correct for your environment
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/' // Or https://backend-production-c8ff.up.railway.app/
 
 // --- Interface Definitions ---
 

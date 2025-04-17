@@ -23,7 +23,7 @@ interface Product {
   isNewCollection?: boolean // Added
 }
 
-const Products: React.FC = () => {
+const ManagerProducts: React.FC = () => {
   // --- State Variables (including formIsNewCollection) ---
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
@@ -44,7 +44,7 @@ const Products: React.FC = () => {
   // --- Data Fetching ---
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await axios.get<Product[]>(`${API_BASE_URL}/api/products`)
+      const res = await axios.get<Product[]>(`${API_BASE_URL}/api/manager/products`)
       // Process fetched data with defaults
       const processedProducts = res.data.map((p) => ({
         ...p,
@@ -132,8 +132,8 @@ const Products: React.FC = () => {
     try {
       const apiUrl =
         isEditMode && editId
-          ? `${API_BASE_URL}/api/products/${editId}`
-          : `${API_BASE_URL}/api/products`
+          ? `${API_BASE_URL}/api/manager/products/${editId}`
+          : `${API_BASE_URL}/api/manager/products`
       const method = isEditMode ? 'put' : 'post'
       await axios({
         method,
@@ -183,7 +183,7 @@ const Products: React.FC = () => {
     setActionLoading((prev) => ({ ...prev, [loadingKey]: true }))
     const toastId = toast.loading('Deleting product...')
     try {
-      await axios.delete(`${API_BASE_URL}/api/products/${id}`)
+      await axios.delete(`${API_BASE_URL}/api/manager/products/${id}`)
       toast.success('🗑️ Product deleted', { id: toastId })
       fetchProducts() // Refresh list
       if (isEditMode && editId === id) resetForm() // Reset form if editing deleted item
@@ -226,7 +226,7 @@ const Products: React.FC = () => {
       // const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
       await axios.put(
-        `${API_BASE_URL}/api/products/${productId}`,
+        `${API_BASE_URL}/api/manager/products/${productId}`,
         payload, // Send only the field to update
         // config // Pass config here if using auth
       )
@@ -646,4 +646,4 @@ const Products: React.FC = () => {
   )
 }
 
-export default Products
+export default ManagerProducts

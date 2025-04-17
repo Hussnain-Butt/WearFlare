@@ -25,6 +25,9 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import CheckoutPage from './pages/CheckoutPage'
 import OrdersPage from './admin/pages/OrdersPage'
+import ManagerProducts from './ProductManager/pages/ManagerProducts'
+import ManagerLogin from './ProductManager/pages/ManagerLogin.jsx'
+
 const App = () => (
   <Router>
     <NavbarComponent />
@@ -54,6 +57,13 @@ const App = () => (
         <Route path="users" element={<Users />} />
         <Route path="products" element={<Products />} />
         <Route path="orders" element={<OrdersPage />} />
+      </Route>
+
+      {/* Product Manager Dashboard with Layout */}
+      <Route path="/productmanager" element={<ManagerLogin />} />
+
+      <Route path="/productmanager/products/*" element={<DashboardLayout />}>
+        <Route path="products" element={<ManagerProducts />} />
       </Route>
     </Routes>
     <Footer />

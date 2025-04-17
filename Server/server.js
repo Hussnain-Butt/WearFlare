@@ -10,6 +10,8 @@ const fs = require('fs')
 const connectDB = require('./config/db')
 const authRoutes = require('./routes/authRoutes')
 const adminRoutes = require('./routes/adminRoutes')
+const managerRoutes = require('./routes/productManagerRoutes')
+
 const productRoutes = require('./routes/productRoutes')
 const tryonRoutes = require('./routes/tryonRoutes')
 const orderRoutes = require('./routes/orderRoutes')
@@ -66,7 +68,7 @@ console.log('--- Health check endpoint registered (/health) ---')
 // -------------------------------
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://backend-production-c8ff.up.railway.app',
+  'https://backend-production-c8ff.up.railway.app/',
   'https://frontend-production-c902.up.railway.app',
 ]
 
@@ -117,6 +119,8 @@ console.log('--- Registering API routes ---')
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/manager', managerRoutes)
+
 app.use('/api/orders', orderRoutes) // *** ADD THIS LINE ***
 app.use('/api/tryon', tryonRoutes) // Uses tryonRoutes.js
 app.use('/api/contact', contactRoutes) // *** ADD THIS LINE ***

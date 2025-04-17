@@ -29,7 +29,7 @@ const Women: React.FC = () => {
 
   useEffect(() => {
     axios
-      .get(`https://backend-production-c8ff.up.railway.app/api/products?gender=women`)
+      .get(`https://backend-production-c8ff.up.railway.app//api/products?gender=women`)
       .then((res) => setProducts(res.data))
       .catch((err) => console.error('Error fetching products:', err))
   }, [])
@@ -90,7 +90,7 @@ const Women: React.FC = () => {
                   {' '}
                   {/* Added hover shadow, rounded */}
                   <img
-                    src={`https://backend-production-c8ff.up.railway.app${product.image}`}
+                    src={`https://backend-production-c8ff.up.railway.app/${product.image}`}
                     alt={product.title}
                     className="w-full h-64 sm:h-72 md:h-80 object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer" // Adjusted height, added hover scale and cursor
                     onClick={() => handleViewDetails(product._id)} // Make image clickable
