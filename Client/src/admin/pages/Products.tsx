@@ -196,6 +196,10 @@ const Products: React.FC = () => {
   }
 
   // Combined handler for toggling status fields (inStock, isNewCollection)
+  // Inside Products.tsx
+
+  // --- *** Combined Toggle Handler *** ---
+  // Handles toggling 'inStock' OR 'isNewCollection' status
   const handleToggleStatus = async (
     productId: string,
     field: 'inStock' | 'isNewCollection',
@@ -208,20 +212,49 @@ const Products: React.FC = () => {
     const toastId = toast.loading(`Updating ${fieldNameReadable}...`)
 
     try {
-      await axios.put(`${API_BASE_URL}/api/products/${productId}`, { [field]: newStatus }) // Send only the field to update
+      // *** Verify this payload structure and endpoint ***
+      const payload = { [field]: newStatus } // e.g., { isNewCollection: true } or { inStock: false }
+      console.log(
+        `Attempting to ${
+          field === 'isNewCollection' ? 'set' : 'update'
+        } ${fieldNameReadable} for ${productId} to ${newStatus}`,
+        payload,
+      ) // Log what's being sent
+
+      // TODO: Add Auth Header if needed
+      // const token = sessionStorage.getItem('token'); // Or localStorage
+      // const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+      await axios.put(
+        `${API_BASE_URL}/api/products/${productId}`,
+        payload, // Send only the field to update
+        // config // Pass config here if using auth
+      )
+
       toast.success(`✅ ${fieldNameReadable} updated.`, { id: toastId })
-      // Optimistic UI update
+
+      // Optimistic UI Update
       setProducts((prevProducts) =>
         prevProducts.map((p) => (p._id === productId ? { ...p, [field]: newStatus } : p)),
       )
     } catch (error: any) {
-      console.error(`Failed to update ${field}:`, error.response?.data || error.message)
-      toast.error(`❌ Failed to update ${fieldNameReadable}.`, { id: toastId })
+      // *** MORE DETAILED LOGGING ***
+      const errorData = error.response?.data
+      const errorMessage = errorData?.message || `Failed to update ${fieldNameReadable}.`
+      console.error(
+        `Failed to update ${field} for ${productId}:`,
+        error.response?.status,
+        errorData || error.message,
+      )
+      toast.error(`❌ ${errorMessage}`, { id: toastId })
+      // *** END LOGGING ***
+
+      // Optional: Revert UI on error by refetching
+      // fetchProducts();
     } finally {
       setActionLoading((prev) => ({ ...prev, [loadingKey]: false }))
     }
   }
-
   // Cleanup Effect for Blob URL
   useEffect(() => {
     return () => {

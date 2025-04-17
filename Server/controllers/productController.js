@@ -65,29 +65,70 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params
-    const { title, price, category, gender, description, inStock, sizes } = req.body
+    // Destructure all potential fields, including isNewCollection
+    const { title, price, category, gender, description, inStock, sizes, isNewCollection } =
+      req.body
+
+    console.log(`[UpdateProduct ${id}] Received Body:`, JSON.stringify(req.body)) // Log incoming body
+
     const updatedFields = {}
+
+    // Build updatedFields object conditionally
     if (title !== undefined) updatedFields.title = title
     if (price !== undefined) updatedFields.price = price
     if (category !== undefined) updatedFields.category = category
     if (gender !== undefined) updatedFields.gender = gender
     if (description !== undefined) updatedFields.description = description
-    if (inStock !== undefined) updatedFields.inStock = String(inStock).toLowerCase() === 'true'
-    if (sizes !== undefined) updatedFields.sizes = parseSizesString(sizes)
-    if (req.file) updatedFields.image = `/uploads/${req.file.filename}`
-    if (Object.keys(updatedFields).length === 0 && !req.file)
-      return res.status(400).json({ message: 'No update fields provided.' })
+    if (inStock !== undefined) {
+      updatedFields.inStock = String(inStock).toLowerCase() === 'true'
+      console.log(`[UpdateProduct ${id}] Processing inStock update to:`, updatedFields.inStock)
+    }
+    if (sizes !== undefined) {
+      updatedFields.sizes = parseSizesString(sizes) // Assuming parseSizesString exists
+      console.log(`[UpdateProduct ${id}] Processing sizes update to:`, updatedFields.sizes)
+    }
+    if (isNewCollection !== undefined) {
+      updatedFields.isNewCollection = String(isNewCollection).toLowerCase() === 'true'
+      console.log(
+        `[UpdateProduct ${id}] Processing isNewCollection update to:`,
+        updatedFields.isNewCollection,
+      ) // *** Log this specifically ***
+    }
+
+    // Handle image update
+    if (req.file) {
+      updatedFields.image = `/uploads/${req.file.filename}`
+      console.log(`[UpdateProduct ${id}] Processing image update.`)
+    }
+
+    // Check if anything is being updated
+    if (Object.keys(updatedFields).length === 0) {
+      console.log(`[UpdateProduct ${id}] No fields provided for update.`)
+      // Return early or proceed depending on whether image update alone is allowed
+      if (!req.file) return res.status(400).json({ message: 'No update fields provided.' })
+    }
+
+    console.log(`[UpdateProduct ${id}] Updating fields:`, JSON.stringify(updatedFields)) // Log before DB call
+
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       { $set: updatedFields },
       { new: true, runValidators: true },
     )
-    if (!updatedProduct) return res.status(404).json({ message: 'Product not found' })
-    res.json(updatedProduct)
+
+    if (!updatedProduct) {
+      console.log(`[UpdateProduct ${id}] Product not found.`)
+      return res.status(404).json({ message: 'Product not found' })
+    }
+
+    console.log(`[UpdateProduct ${id}] Update successful.`)
+    res.json(updatedProduct) // Send back updated product
   } catch (error) {
-    console.error('Error updating product:', error)
-    if (error.name === 'ValidationError')
-      return res.status(400).json({ message: `Validation Error: ${error.message}` })
+    console.error(`[UpdateProduct ${req.params?.id}] Error:`, error) // Log error with ID if possible
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((el) => el.message)
+      return res.status(400).json({ message: `Validation Error: ${messages.join('. ')}` })
+    }
     if (error.name === 'CastError')
       return res.status(400).json({ message: 'Invalid Product ID format.' })
     res.status(500).json({ message: `Failed to update product: ${error.message}` })

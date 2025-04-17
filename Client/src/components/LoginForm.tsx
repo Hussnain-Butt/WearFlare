@@ -1,5 +1,5 @@
 // src/pages/LoginForm.tsx
-import React, { useState, useContext, FormEvent } from 'react'
+import React, { useState, useContext, FormEvent, useEffect } from 'react'
 import { User, Lock, Eye, EyeOff, Loader2 } from 'lucide-react' // Added Loader2
 import { Link, useNavigate } from 'react-router-dom'
 import AuthContext from '../context/AuthContext' // Ensure path is correct
