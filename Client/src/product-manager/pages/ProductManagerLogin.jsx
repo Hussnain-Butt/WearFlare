@@ -1,17 +1,17 @@
-// src/admin/pages/AdminLogin.jsx (or .js, ensure consistency with filename)
+// src/product-manager/pages/ProductManagerLogin.jsx
 
 import React, { useState } from 'react'
 // Import the configured Axios instance
-import apiClient from '../../api/axiosConfig' // Adjust the path as necessary
+import apiClient from '../../api/axiosConfig' // Adjust path as necessary
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff } from 'lucide-react' // Or your preferred icon library
+import { Eye, EyeOff } from 'lucide-react' // Or your icon library
 
-const AdminLogin = () => {
+const ProductManagerLogin = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false) // Optional: Add loading state
-  const [error, setError] = useState('') // Optional: Add error state for feedback
+  const [loading, setLoading] = useState(false) // Loading state
+  const [error, setError] = useState('') // Error message state
   const navigate = useNavigate()
 
   const handleLogin = async (e) => {
@@ -20,37 +20,37 @@ const AdminLogin = () => {
     setError('') // Clear previous errors
 
     try {
-      // Use apiClient and relative path '/admin/login'
-      // The baseURL ('https://backend-production-c8ff.up.railway.app/api') is added by apiClient
-      const response = await apiClient.post('/admin/login', {
+      // Use apiClient and relative path '/pm/login'
+      const response = await apiClient.post('/pm/login', {
         username,
         password,
       })
 
-      // Use consistent localStorage keys
+      // Use consistent localStorage keys needed by ProtectedRoute
       localStorage.setItem('authToken', response.data.token)
-      localStorage.setItem('userRole', 'admin') // Explicitly set role for admin
+      localStorage.setItem('userRole', 'productManager') // Explicitly set role
 
       setLoading(false) // Stop loading
-      navigate('/admin/dashboard') // Navigate to admin dashboard
+      navigate('/pm/products') // Navigate to PM dashboard (or '/pm')
     } catch (err) {
-      // Use 'err' consistently for error object
+      // Handle potential errors
       setLoading(false) // Stop loading on error
-      console.error('Admin Login Failed:', err.response?.data || err.message)
+      console.error('Product Manager Login Failed:', err.response?.data || err.message)
       // Set specific error message for user feedback
       const message = err.response?.data?.message || 'Invalid credentials or server error.'
       setError(message) // Store error message in state
-      // Keep the alert or replace with state-based error display
-      // alert(message);
     }
   }
 
+  // Form structure similar to AdminLogin
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
       <div className="w-full max-w-md p-8 bg-white shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-2xl font-bold text-center text-[#c8a98a] mb-6">Admin Login</h2>
+        <h2 className="text-2xl font-bold text-center text-[#c8a98a] mb-6">
+          Product Manager Login
+        </h2>
 
-        {/* Optional: Display error message */}
+        {/* Display error message if present */}
         {error && (
           <p className="mb-4 text-center text-sm text-red-600 bg-red-100 p-2 rounded border border-red-200">
             {error}
@@ -58,43 +58,43 @@ const AdminLogin = () => {
         )}
 
         <form onSubmit={handleLogin}>
-          {/* Username Field */}
+          {/* Username Input */}
           <div className="mb-4">
             <label
-              htmlFor="admin-username"
-              /* Use unique id */ className="block text-sm font-medium text-gray-700"
+              htmlFor="pm-username"
+              /* Unique id */ className="block text-sm font-medium text-gray-700"
             >
               Username
             </label>
             <input
-              id="admin-username"
+              id="pm-username"
               type="text"
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required // Add basic validation
+              required // Basic validation
               className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg
                          focus:outline-none focus:ring-2 focus:ring-[#c8a98a]
                          focus:border-[#c8a98a]"
             />
           </div>
 
-          {/* Password Field */}
+          {/* Password Input */}
           <div className="mb-6">
             <label
-              htmlFor="admin-password"
-              /* Use unique id */ className="block text-sm font-medium text-gray-700"
+              htmlFor="pm-password"
+              /* Unique id */ className="block text-sm font-medium text-gray-700"
             >
               Password
             </label>
             <div className="relative mt-2">
               <input
-                id="admin-password"
+                id="pm-password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required // Add basic validation
+                required // Basic validation
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg
                            focus:outline-none focus:ring-2 focus:ring-[#c8a98a]
                            focus:border-[#c8a98a] pr-10" // Space for icon
@@ -118,9 +118,9 @@ const AdminLogin = () => {
             className={`w-full py-2 px-4 bg-[#c8a98a] text-white font-semibold
                        rounded-lg shadow-md hover:bg-[#a1846b] focus:outline-none
                        focus:ring-2 focus:ring-[#c8a98a] transition-colors
-                       ${loading ? 'opacity-70 cursor-not-allowed' : ''}`} // Style for disabled state
+                       ${loading ? 'opacity-70 cursor-not-allowed' : ''}`} // Disabled styling
           >
-            {loading ? 'Logging in...' : 'Login'} {/* Change button text when loading */}
+            {loading ? 'Logging in...' : 'Login'} {/* Change text when loading */}
           </button>
         </form>
       </div>
@@ -128,4 +128,4 @@ const AdminLogin = () => {
   )
 }
 
-export default AdminLogin
+export default ProductManagerLogin

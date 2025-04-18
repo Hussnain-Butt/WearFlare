@@ -1,75 +1,83 @@
-// src/admin/pages/Products.tsx
+// src/admin/pages/Products.tsx OR src/shared/pages/Products.tsx
+
 import React, { useEffect, useState, useCallback } from 'react'
-import axios from 'axios'
+// Import the configured Axios instance
+import apiClient from '../../api/axiosConfig' // Adjust the path as necessary
 import { toast, Toaster } from 'react-hot-toast'
-// --- *** ADD MISSING ICON IMPORTS *** ---
 import { Loader2, CheckCircle, XCircle, Star, Edit, Trash2 } from 'lucide-react'
-// --- *** END ICON IMPORTS *** ---
 
-// Define API base URL - Make sure this is correct for your environment
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
+// Define the base URL for displaying images fetched from the server
+const IMAGE_SERVER_URL = 'https://backend-production-c8ff.up.railway.app' // Your backend URL
 
-// Product Interface including isNewCollection
+// Product Interface (defines the shape of product data)
 interface Product {
   _id: string
   title: string
   price: string | number
   category: string
   gender: string
-  image: string
+  image: string // Should be the relative path like /uploads/imagename.jpg
   description?: string
   inStock: boolean
   sizes?: string[]
-  isNewCollection?: boolean // Added
+  isNewCollection?: boolean
 }
 
 const Products: React.FC = () => {
-  // --- State Variables (including formIsNewCollection) ---
+  // --- State Variables ---
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState('')
   const [gender, setGender] = useState('')
   const [description, setDescription] = useState('')
-  const [image, setImage] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false) // For main form submit/delete
-  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({}) // For toggles/delete per item
-  const [products, setProducts] = useState<Product[]>([])
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [editId, setEditId] = useState<string | null>(null)
-  const [formInStock, setFormInStock] = useState(true)
-  const [formSizes, setFormSizes] = useState<string>('')
-  const [formIsNewCollection, setFormIsNewCollection] = useState(false) // State for 'New Collection' in form
+  const [image, setImage] = useState<File | null>(null) // For new image upload
+  const [preview, setPreview] = useState<string | null>(null) // For image preview (blob or server URL)
+  const [loading, setLoading] = useState(false) // Loading state for form submission
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({}) // Loading for specific item actions
+  const [products, setProducts] = useState<Product[]>([]) // List of products
+  const [isEditMode, setIsEditMode] = useState(false) // Flag for edit mode
+  const [editId, setEditId] = useState<string | null>(null) // ID of product being edited
+  const [formInStock, setFormInStock] = useState(true) // 'In Stock' state for the form
+  const [formSizes, setFormSizes] = useState<string>('') // 'Sizes' state for the form (comma-separated)
+  const [formIsNewCollection, setFormIsNewCollection] = useState(false) // 'New Collection' state for the form
 
   // --- Data Fetching ---
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await axios.get<Product[]>(`${API_BASE_URL}/api/products`)
-      // Process fetched data with defaults
+      // Use apiClient instance and relative URL ('/products')
+      // Auth token is added automatically by the interceptor
+      const res = await apiClient.get<Product[]>('/products')
+
+      // Process fetched data to ensure defaults
       const processedProducts = res.data.map((p) => ({
         ...p,
-        inStock: p.inStock ?? true,
-        sizes: p.sizes ?? [],
-        isNewCollection: p.isNewCollection ?? false, // Ensure default
+        inStock: p.inStock ?? true, // Default to true if missing
+        sizes: p.sizes ?? [], // Default to empty array
+        isNewCollection: p.isNewCollection ?? false, // Default to false
       }))
       setProducts(processedProducts)
     } catch (error) {
       console.error('Failed to fetch products:', error)
-      toast.error('Failed to load products.')
+      toast.error('Failed to load products. Check console for details.')
     }
-  }, []) // useCallback with empty dependency
+  }, []) // Empty dependency array ensures this useCallback instance doesn't change
 
+  // Fetch products when the component mounts
   useEffect(() => {
     fetchProducts()
-  }, [fetchProducts]) // Run on mount
+  }, [fetchProducts])
 
   // --- Event Handlers ---
+  // Handles selecting a new image file
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (preview && preview.startsWith('blob:')) URL.revokeObjectURL(preview)
+    // Revoke previous blob URL if it exists to prevent memory leaks
+    if (preview && preview.startsWith('blob:')) {
+      URL.revokeObjectURL(preview)
+    }
     if (file) {
-      setImage(file)
-      setPreview(URL.createObjectURL(file))
+      setImage(file) // Store the file object
+      setPreview(URL.createObjectURL(file)) // Create a temporary URL for preview
     } else {
       setImage(null)
       setPreview(null)
@@ -87,6 +95,7 @@ const Products: React.FC = () => {
       toast.error('Please enter a valid non-negative price.')
       return false
     }
+    // Require image only when creating a new product, not when editing
     if (!isEditMode && !image) {
       toast.error('Please upload an image for new products.')
       return false
@@ -94,48 +103,58 @@ const Products: React.FC = () => {
     return true
   }
 
-  // Reset form fields
+  // Reset form fields to default values
   const resetForm = () => {
     setTitle('')
     setPrice('')
     setCategory('')
     setGender('')
     setDescription('')
-    setImage(null)
-    setPreview(null)
+    setImage(null) // Clear selected file
+    if (preview && preview.startsWith('blob:')) {
+      // Clean up preview URL
+      URL.revokeObjectURL(preview)
+    }
+    setPreview(null) // Clear preview display
     setIsEditMode(false)
     setEditId(null)
     setFormInStock(true)
     setFormSizes('')
-    setFormIsNewCollection(false) // Reset new collection flag
+    setFormIsNewCollection(false)
   }
 
-  // Handle form submission (Create or Update)
+  // Handle form submission (Create or Update product)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validateForm()) return
+    if (!validateForm()) return // Stop if validation fails
 
+    // Create FormData to send data (especially the image file)
     const formData = new FormData()
     formData.append('title', title.trim())
     formData.append('price', price.trim())
     formData.append('category', category.trim())
     formData.append('gender', gender)
     formData.append('description', description.trim())
-    formData.append('inStock', String(formInStock))
-    formData.append('sizes', formSizes.trim())
-    formData.append('isNewCollection', String(formIsNewCollection)) // Add new flag
+    formData.append('inStock', String(formInStock)) // Convert boolean to string
+    formData.append('sizes', formSizes.trim().toUpperCase()) // Send sizes as string
+    formData.append('isNewCollection', String(formIsNewCollection)) // Convert boolean to string
 
-    if (image) formData.append('image', image)
+    // Append the image file only if a new one was selected
+    if (image) {
+      formData.append('image', image)
+    }
 
-    setLoading(true)
+    setLoading(true) // Show loading indicator on submit button
     const toastId = toast.loading(isEditMode ? 'Updating product...' : 'Adding product...')
+
     try {
-      const apiUrl =
-        isEditMode && editId
-          ? `${API_BASE_URL}/api/products/${editId}`
-          : `${API_BASE_URL}/api/products`
+      // Determine API URL and method based on edit mode
+      const apiUrl = isEditMode && editId ? `/products/${editId}` : '/products'
       const method = isEditMode ? 'put' : 'post'
-      await axios({
+
+      // Use apiClient for the request. Interceptor adds Auth token.
+      // Header 'Content-Type': 'multipart/form-data' is crucial for file uploads.
+      await apiClient({
         method,
         url: apiUrl,
         data: formData,
@@ -143,21 +162,22 @@ const Products: React.FC = () => {
       })
 
       toast.success(`✅ Product ${isEditMode ? 'updated' : 'added'}!`, { id: toastId })
-      fetchProducts() // Refresh list
-      resetForm() // Clear form
+      fetchProducts() // Refresh the product list
+      resetForm() // Clear the form fields
     } catch (error: any) {
-      console.error('API Error:', error.response?.data || error.message)
+      // Handle potential errors
+      console.error('API Error on Submit:', error.response?.data || error.message)
       const errorMsg =
         error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} product.`
       toast.error(`❌ ${errorMsg}`, { id: toastId })
     } finally {
-      setLoading(false)
+      setLoading(false) // Hide loading indicator
     }
   }
 
-  // Populate form for editing
+  // Populate the form with data of the product to be edited
   const handleEdit = (product: Product) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' }) // Scroll to top to see the form
     setIsEditMode(true)
     setEditId(product._id)
     setTitle(product.title)
@@ -165,80 +185,80 @@ const Products: React.FC = () => {
     setCategory(product.category)
     setGender(product.gender)
     setDescription(product.description || '')
-    setImage(null) // Clear file input
+    setImage(null) // Clear any selected file (user must choose new one to replace)
     setFormInStock(product.inStock ?? true)
-    setFormSizes(product.sizes?.join(', ') || '')
-    setFormIsNewCollection(product.isNewCollection ?? false) // Populate new collection checkbox
+    setFormSizes(product.sizes?.join(', ') || '') // Join array back to string for input
+    setFormIsNewCollection(product.isNewCollection ?? false)
 
-    if (preview && preview.startsWith('blob:')) URL.revokeObjectURL(preview)
-    setPreview(product.image ? `${API_BASE_URL}${product.image}` : null) // Show existing image
-    // toast('Edit mode active.', { icon: '✏️' }); // Optional toast
+    // Clean up previous blob preview if exists
+    if (preview && preview.startsWith('blob:')) {
+      URL.revokeObjectURL(preview)
+    }
+    // Set preview to the existing product image URL (using the image server base URL)
+    setPreview(product.image ? `${IMAGE_SERVER_URL}${product.image}` : null)
   }
 
-  // Handle product deletion
+  // Handle deleting a product
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return
+    // Confirmation dialog
+    if (!window.confirm('Are you sure you want to delete this product? This cannot be undone.'))
+      return
 
-    const loadingKey = `delete-${id}`
-    setActionLoading((prev) => ({ ...prev, [loadingKey]: true }))
+    const loadingKey = `delete-${id}` // Unique key for this delete action
+    setActionLoading((prev) => ({ ...prev, [loadingKey]: true })) // Show loading on specific item
     const toastId = toast.loading('Deleting product...')
+
     try {
-      await axios.delete(`${API_BASE_URL}/api/products/${id}`)
+      // Use apiClient for DELETE request. Interceptor adds Auth token.
+      await apiClient.delete(`/products/${id}`)
+
       toast.success('🗑️ Product deleted', { id: toastId })
-      fetchProducts() // Refresh list
-      if (isEditMode && editId === id) resetForm() // Reset form if editing deleted item
-    } catch (error) {
-      console.error('Delete Error:', error)
-      toast.error('❌ Delete failed.', { id: toastId })
+      fetchProducts() // Refresh the product list
+      // If the currently edited product was deleted, reset the form
+      if (isEditMode && editId === id) {
+        resetForm()
+      }
+    } catch (error: any) {
+      // Handle potential errors
+      console.error('Delete Error:', error.response?.data || error.message)
+      const message = error.response?.data?.message || 'Delete failed.'
+      toast.error(`❌ ${message}`, { id: toastId })
     } finally {
-      setActionLoading((prev) => ({ ...prev, [loadingKey]: false }))
+      setActionLoading((prev) => ({ ...prev, [loadingKey]: false })) // Hide loading
     }
   }
 
-  // Combined handler for toggling status fields (inStock, isNewCollection)
-  // Inside Products.tsx
-
-  // --- *** Combined Toggle Handler *** ---
-  // Handles toggling 'inStock' OR 'isNewCollection' status
+  // Combined handler for toggling 'inStock' or 'isNewCollection' status
   const handleToggleStatus = async (
     productId: string,
-    field: 'inStock' | 'isNewCollection',
-    currentValue: boolean,
+    field: 'inStock' | 'isNewCollection', // Field to update
+    currentValue: boolean, // Current value of the field
   ) => {
-    const newStatus = !currentValue
-    const loadingKey = `${field}-${productId}`
-    setActionLoading((prev) => ({ ...prev, [loadingKey]: true }))
+    const newStatus = !currentValue // Toggle the value
+    const loadingKey = `${field}-${productId}` // Unique key for this toggle action
+    setActionLoading((prev) => ({ ...prev, [loadingKey]: true })) // Show loading
     const fieldNameReadable = field === 'inStock' ? 'Stock status' : 'New Collection status'
     const toastId = toast.loading(`Updating ${fieldNameReadable}...`)
 
     try {
-      // *** Verify this payload structure and endpoint ***
-      const payload = { [field]: newStatus } // e.g., { isNewCollection: true } or { inStock: false }
-      console.log(
-        `Attempting to ${
-          field === 'isNewCollection' ? 'set' : 'update'
-        } ${fieldNameReadable} for ${productId} to ${newStatus}`,
-        payload,
-      ) // Log what's being sent
+      // Payload contains only the field being updated
+      const payload = { [field]: newStatus }
+      console.log(`Attempting to update ${field} for ${productId} to ${newStatus}`, payload)
 
-      // TODO: Add Auth Header if needed
-      // const token = sessionStorage.getItem('token'); // Or localStorage
-      // const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-
-      await axios.put(
-        `${API_BASE_URL}/api/products/${productId}`,
-        payload, // Send only the field to update
-        // config // Pass config here if using auth
-      )
+      // Use apiClient for PUT request. Interceptor adds Auth token.
+      // Send only the specific field to update
+      await apiClient.put(`/products/${productId}`, payload)
 
       toast.success(`✅ ${fieldNameReadable} updated.`, { id: toastId })
 
-      // Optimistic UI Update
+      // Optimistic UI Update: Update the state locally immediately
       setProducts((prevProducts) =>
-        prevProducts.map((p) => (p._id === productId ? { ...p, [field]: newStatus } : p)),
+        prevProducts.map(
+          (p) => (p._id === productId ? { ...p, [field]: newStatus } : p), // Update the specific product
+        ),
       )
     } catch (error: any) {
-      // *** MORE DETAILED LOGGING ***
+      // Handle potential errors
       const errorData = error.response?.data
       const errorMessage = errorData?.message || `Failed to update ${fieldNameReadable}.`
       console.error(
@@ -247,33 +267,37 @@ const Products: React.FC = () => {
         errorData || error.message,
       )
       toast.error(`❌ ${errorMessage}`, { id: toastId })
-      // *** END LOGGING ***
-
-      // Optional: Revert UI on error by refetching
+      // Optionally, refetch products on error to revert optimistic update:
       // fetchProducts();
     } finally {
-      setActionLoading((prev) => ({ ...prev, [loadingKey]: false }))
+      setActionLoading((prev) => ({ ...prev, [loadingKey]: false })) // Hide loading
     }
   }
-  // Cleanup Effect for Blob URL
+
+  // Cleanup Effect for Blob URL when component unmounts or preview changes
   useEffect(() => {
     return () => {
-      if (preview && preview.startsWith('blob:')) URL.revokeObjectURL(preview)
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview)
+      }
     }
-  }, [preview])
+  }, [preview]) // Depend on preview state
 
   // --- Render Component ---
   return (
+    // Main container
     <div className="min-h-screen bg-[#f9f7f3] px-4 py-10 font-sans">
+      {/* Toast notifications container */}
       <Toaster position="top-right" reverseOrder={false} />
 
-      {/* --- Add/Edit Product Form --- */}
+      {/* --- Add/Edit Product Form Section --- */}
       <div className="max-w-xl mx-auto bg-white shadow-lg rounded-lg p-6 sm:p-8 mb-12">
         <h2 className="text-2xl font-semibold text-[#c8a98a] mb-6 text-center">
           {isEditMode ? 'Edit Product Details' : 'Add New Product'}
         </h2>
+        {/* Form Element */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Input Fields */}
+          {/* Product Title Input */}
           <div>
             <label htmlFor="title" className="form-label">
               Product Title
@@ -287,6 +311,7 @@ const Products: React.FC = () => {
               placeholder="e.g., Premium Cotton Shirt"
             />
           </div>
+          {/* Product Price Input */}
           <div>
             <label htmlFor="price" className="form-label">
               Price (PKR)
@@ -301,6 +326,7 @@ const Products: React.FC = () => {
               placeholder="e.g., 3499"
             />
           </div>
+          {/* Product Category Input */}
           <div>
             <label htmlFor="category" className="form-label">
               Category
@@ -314,6 +340,7 @@ const Products: React.FC = () => {
               placeholder="e.g., Shirts, Pants"
             />
           </div>
+          {/* Gender Select Dropdown */}
           <div>
             <label htmlFor="gender" className="form-label">
               Gender
@@ -333,6 +360,7 @@ const Products: React.FC = () => {
               <option value="Unisex">Unisex</option>
             </select>
           </div>
+          {/* Product Description Textarea */}
           <div>
             <label htmlFor="description" className="form-label">
               Description <span className="text-xs text-gray-500">(Optional)</span>
@@ -346,6 +374,7 @@ const Products: React.FC = () => {
               placeholder="Product features, material..."
             />
           </div>
+          {/* Available Sizes Input */}
           <div>
             <label htmlFor="sizes" className="form-label">
               Available Sizes <span className="text-xs text-gray-500">(Comma-separated)</span>
@@ -358,7 +387,7 @@ const Products: React.FC = () => {
               placeholder="e.g., S, M, L, XL"
             />
           </div>
-          {/* Image Input */}
+          {/* Image Upload Input */}
           <div className="w-full">
             <label className="form-label">
               Product Image{' '}
@@ -368,38 +397,41 @@ const Products: React.FC = () => {
             </label>
             <div className="flex items-center space-x-4 mt-1">
               <label className="button-style-alt cursor-pointer">
+                {' '}
+                {/* Styled button */}
                 Choose File
                 <input
                   type="file"
                   className="hidden"
                   onChange={handleImageChange}
                   accept="image/png, image/jpeg, image/webp"
-                />
+                />{' '}
+                {/* Hidden actual input */}
               </label>
+              {/* Display filename if new image selected */}
               {image && (
                 <span className="text-sm text-gray-600 truncate max-w-xs" title={image.name}>
                   {image.name}
                 </span>
               )}
+              {/* Display message if editing and no new file chosen */}
               {!image && isEditMode && preview && (
                 <span className="text-sm text-gray-500 italic">Current image saved</span>
               )}
             </div>
           </div>
-          {/* Image Preview */}
+          {/* Image Preview Section */}
           {preview && (
             <div className="preview-container">
               <p className="text-xs text-gray-500 mb-1">
                 {isEditMode && !image ? 'Current Image:' : 'New Image Preview:'}
               </p>
+              {/* Display either blob URL or server URL */}
               <img src={preview} alt="Preview" className="preview-image" />
             </div>
           )}
-
-          {/* Checkboxes Area */}
+          {/* Checkboxes Section */}
           <div className="flex items-center justify-start pt-2 space-x-6">
-            {' '}
-            {/* Changed justify */}
             {/* In Stock Checkbox */}
             <div className="flex items-center">
               <input
@@ -427,9 +459,9 @@ const Products: React.FC = () => {
               </label>
             </div>
           </div>
-
-          {/* Action Buttons */}
+          {/* Form Action Buttons */}
           <div className="pt-4 flex flex-col sm:flex-row gap-3">
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -438,6 +470,7 @@ const Products: React.FC = () => {
               {loading && <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />}
               {loading ? 'Processing...' : isEditMode ? 'Update Product' : 'Add Product'}
             </button>
+            {/* Cancel Edit Button (visible only in edit mode) */}
             {isEditMode && (
               <button
                 type="button"
@@ -451,48 +484,48 @@ const Products: React.FC = () => {
           </div>
         </form>
       </div>
-      {/* --- End Form --- */}
+      {/* --- End Form Section --- */}
 
-      {/* --- Display Existing Products --- */}
+      {/* --- Display Existing Products Section --- */}
       <div className="max-w-7xl mx-auto mt-16">
         <h3 className="text-xl font-semibold text-[#c8a98a] mb-6 text-center sm:text-left">
           Manage Existing Products ({products.length})
         </h3>
+        {/* Grid container for product cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {' '}
-          {/* Adjusted gap */}
           {products.length > 0 ? (
+            // Map over products array to display each product card
             products.map((product) => {
-              // Loading states for this specific product's actions
+              // Determine loading states for actions on this specific product
               const isStockUpdating = actionLoading[`inStock-${product._id}`]
               const isCollectionUpdating = actionLoading[`isNewCollection-${product._id}`]
               const isDeleting = actionLoading[`delete-${product._id}`]
-              const anyActionLoading = isStockUpdating || isCollectionUpdating || isDeleting // Combined loading check
+              const anyActionLoading = isStockUpdating || isCollectionUpdating || isDeleting // Check if any action is loading
 
               return (
-                // --- Product Card ---
+                // --- Individual Product Card ---
                 <div key={product._id} className="product-card-admin">
-                  {/* New Collection Badge */}
+                  {/* 'NEW' Badge if product is in new collection */}
                   {product.isNewCollection && (
                     <span className="absolute top-1.5 left-1.5 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10 shadow-sm">
                       NEW
                     </span>
                   )}
-                  {/* Product Image */}
+                  {/* Product Image - Use IMAGE_SERVER_URL */}
                   <img
-                    src={`${API_BASE_URL}${product.image}`}
+                    src={`${IMAGE_SERVER_URL}${product.image}`} // Construct full URL
                     alt={product.title}
                     className="product-image-admin"
                     onError={(e) => {
                       e.currentTarget.src = 'https://via.placeholder.com/300x200?text=No+Image'
-                    }}
-                    loading="lazy"
+                    }} // Fallback image
+                    loading="lazy" // Lazy load images
                   />
-
-                  {/* Product Details */}
+                  {/* Product Details Section */}
                   <div className="product-details-admin">
                     <h4 title={product.title}>{product.title}</h4>
                     <p className="text-xs text-gray-500 mb-1">
+                      {/* Truncate description */}
                       {product.description ? (
                         `${product.description.substring(0, 35)}...`
                       ) : (
@@ -507,14 +540,13 @@ const Products: React.FC = () => {
                     </p>
                     <p className="text-[#c8a98a] font-medium text-base mt-auto pt-1">
                       {' '}
-                      {/* Price styling */}
+                      {/* Price */}
                       PKR{' '}
                       {product.price != null
                         ? Number(product.price).toLocaleString('en-PK')
                         : 'N/A'}
                     </p>
                   </div>
-
                   {/* Action Buttons Footer */}
                   <div className="product-actions-admin">
                     {/* Edit Button */}
@@ -526,7 +558,7 @@ const Products: React.FC = () => {
                     >
                       <Edit size={14} />
                     </button>
-                    {/* In Stock Toggle */}
+                    {/* In Stock Toggle Button */}
                     <button
                       onClick={() => handleToggleStatus(product._id, 'inStock', product.inStock)}
                       disabled={loading || anyActionLoading}
@@ -541,7 +573,7 @@ const Products: React.FC = () => {
                         <XCircle size={14} />
                       )}
                     </button>
-                    {/* New Collection Toggle */}
+                    {/* New Collection Toggle Button */}
                     <button
                       onClick={() =>
                         handleToggleStatus(
@@ -582,7 +614,7 @@ const Products: React.FC = () => {
               )
             }) // End map
           ) : (
-            // Message when no products
+            // Message displayed when no products are found
             <p className="no-products-message col-span-full">
               No products found. Add products using the form above.
             </p>
@@ -590,9 +622,9 @@ const Products: React.FC = () => {
         </div>{' '}
         {/* End Grid */}
       </div>
-      {/* --- End Display Products --- */}
+      {/* --- End Display Products Section --- */}
 
-      {/* --- Styles --- */}
+      {/* --- Reusable Styles defined using styled-jsx --- */}
       <style jsx>{`
         /* Form Styles */
         .form-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 500; color: #374151; }
@@ -637,12 +669,12 @@ const Products: React.FC = () => {
         .button-toggle-new.active { background-color: #4f46e5; color: white; }
         .button-toggle-new.active:hover:not(:disabled) { background-color: #4338ca; }
 
-
+        /* Utility Styles */
         .no-products-message { text-align: center; color: #6b7280; padding: 2rem 0; grid-column: 1 / -1; }
         .animate-spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
-    </div>
+    </div> // End Main container
   )
 }
 

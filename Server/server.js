@@ -15,6 +15,7 @@ const tryonRoutes = require('./routes/tryonRoutes')
 const orderRoutes = require('./routes/orderRoutes')
 const contactRoutes = require('./routes/contactRoutes') // *** ADD THIS LINE ***
 const newsletterRoutes = require('./routes/newsletterRoutes') // *** ADD THIS LINE ***
+const productManagerRoutes = require('./routes/productManagerRoutes')
 
 // Initialize App
 const app = express()
@@ -122,6 +123,7 @@ app.use('/api/orders', orderRoutes) // *** ADD THIS LINE ***
 app.use('/api/tryon', tryonRoutes) // Uses tryonRoutes.js
 app.use('/api/contact', contactRoutes) // *** ADD THIS LINE ***
 app.use('/api/newsletter', newsletterRoutes) // *** ADD THIS LINE ***
+app.use('/api/pm', productManagerRoutes)
 console.log('--- API routes registered ---')
 
 // -------------------------------

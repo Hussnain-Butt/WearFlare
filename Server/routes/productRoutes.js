@@ -1,25 +1,25 @@
 // routes/productRoutes.js
 const express = require('express')
 const router = express.Router()
-const multer = require('multer') // Assuming you need multer for uploads
-const path = require('path') // If needed for path joining
+const multer = require('multer')
+const path = require('path')
 const productController = require('../controllers/productController') // Ensure path is correct
-// Assuming you have middleware setup if needed (e.g., for auth)
-// const { protect, restrictTo } = require('../middlewares/authMiddleware');
+const { protect } = require('../middlewares/authMiddleware') // Import the protect middleware
 
-// --- Multer Setup (Keep if used for uploads) ---
+// --- Multer Setup (Handles image uploads) ---
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Ensure 'uploads/' directory exists in your project root or specify correct path
-    cb(null, path.join(__dirname, '..', 'uploads')) // Example: Points to 'uploads' folder in parent directory
+    // Ensure 'uploads/' directory exists relative to the project root
+    // Adjust the path if your 'uploads' folder is located differently
+    cb(null, path.join(__dirname, '..', 'uploads'))
   },
   filename: (req, file, cb) => {
-    // Create a unique filename to avoid conflicts
-    cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`) // Replace spaces in filename
+    // Create a unique filename
+    cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`)
   },
 })
 
-// Optional: Add file filter for security
+// File filter for security (allow only specific image types)
 const fileFilter = (req, file, cb) => {
   if (
     file.mimetype === 'image/jpeg' ||
@@ -35,39 +35,58 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 1024 * 1024 * 5 }, // Optional: Limit file size (e.g., 5MB)
+  limits: { fileSize: 1024 * 1024 * 5 }, // Optional: 5MB file size limit
 })
 // --- End Multer Setup ---
 
-// --- Define Specific Routes FIRST ---
+// ==============================================
+// --- Public Routes (No Authentication Required) ---
+// ==============================================
 
-// GET /api/products - Fetch all products (or filter by gender)
+// GET /api/products - Fetch all products (can include query filters like gender, newCollection, limit)
 router.get('/', productController.getProducts)
 
-// GET /api/products/search?query=... - Search products (by category)
+// GET /api/products/search?query=... - Search products (e.g., by category)
 router.get('/search', productController.searchProducts)
 
 // GET /api/products/new-collection - Fetch products marked as new collection
-router.get('/new-collection', productController.getNewCollectionProducts) // <<< MOVED UP
+router.get('/new-collection', productController.getNewCollectionProducts)
 
-// POST /api/products/search-by-image - Search using an image
-// Ensure 'image' matches the field name used in the frontend FormData
+// POST /api/products/search-by-image - Search using an image (assuming public access)
+// Note: 'image' must match the field name in your frontend form data
 router.post('/search-by-image', upload.single('image'), productController.searchProductsByImage)
 
+// GET /api/products/:id - Fetch a single product by ID (must be AFTER specific GET routes)
+router.get('/:id', productController.getProductById)
+
+// ====================================================================
+// --- Protected Routes (Require 'admin' or 'productManager' role) ---
+// ====================================================================
+
 // POST /api/products - Create a new product
-// Ensure 'image' matches the field name used in the frontend FormData
-router.post('/', upload.single('image'), productController.createProduct)
-
-// --- Define Parameterized Routes (:id) LAST ---
-
-// GET /api/products/:id - Fetch a single product by ID
-router.get('/:id', productController.getProductById) // <<< NOW AFTER specific GETs
+// Middleware order: Authorize -> Handle Upload -> Controller Logic
+router.post(
+  '/',
+  protect(['admin', 'productManager']), // Apply role protection
+  upload.single('image'), // Handle potential image upload
+  productController.createProduct, // Proceed if authorized and upload handled
+)
 
 // PUT /api/products/:id - Update a product by ID
-// Ensure 'image' matches the field name used in the frontend FormData if updating image
-router.put('/:id', upload.single('image'), productController.updateProduct)
+// Middleware order: Authorize -> Handle Upload -> Controller Logic
+router.put(
+  '/:id',
+  protect(['admin', 'productManager']), // Apply role protection
+  upload.single('image'), // Handle potential image upload
+  productController.updateProduct, // Proceed if authorized and upload handled
+)
 
 // DELETE /api/products/:id - Delete a product by ID
-router.delete('/:id', productController.deleteProduct)
+// Middleware order: Authorize -> Controller Logic (no upload needed)
+router.delete(
+  '/:id',
+  protect(['admin', 'productManager']), // Apply role protection
+  productController.deleteProduct, // Proceed if authorized
+)
 
 module.exports = router

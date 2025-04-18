@@ -1,34 +1,45 @@
 // routes/orderRoutes.js
 const express = require('express')
 const orderController = require('../controllers/orderController')
-// const { protect, restrictTo } = require('../middlewares/authMiddleware'); // If using auth
+const { protect } = require('../middlewares/authMiddleware') // Import the protect middleware
 
 const router = express.Router()
 
-// POST /api/orders - Place a new order (Customer)
+// ==============================================
+// --- Public Route (No Authentication Required) ---
+// ==============================================
+
+// POST /api/orders - Place a new order (Customer Checkout)
+// This route should remain public for customers to place orders.
 router.post('/', orderController.createOrder)
 
-// GET /api/orders - Get all orders (Admin)
+// ====================================================================
+// --- Protected Routes (Require 'admin' or 'productManager' role) ---
+// ====================================================================
+// These routes are for managing orders, accessible by both admins and product managers.
+
+// GET /api/orders - Get all orders
 router.get(
   '/',
-  // protect, restrictTo('admin'), // Add Auth if needed
+  protect(['admin', 'productManager']), // Protect: Admin or PM can view all orders
   orderController.getAllOrders,
 )
 
-// PATCH /api/orders/:id/confirm - Confirm an order (Admin)
+// PATCH /api/orders/:id/confirm - Confirm an order
 router.patch(
   '/:id/confirm',
-  // protect, restrictTo('admin'), // Add Auth if needed
+  protect(['admin', 'productManager']), // Protect: Admin or PM can confirm orders
   orderController.confirmOrder,
 )
 
-// --- *** NEW: Cancel Order Route *** ---
-// PATCH /api/orders/:id/cancel - Cancel an order (Admin)
+// PATCH /api/orders/:id/cancel - Cancel an order
 router.patch(
   '/:id/cancel',
-  // protect, restrictTo('admin'), // Add Auth if needed
+  protect(['admin', 'productManager']), // Protect: Admin or PM can cancel orders
   orderController.cancelOrder,
 )
-// --- *** END NEW *** ---
+
+// Optional: Add other order management routes here and protect them similarly
+// Example: router.patch('/:id/status', protect(['admin', 'productManager']), orderController.updateOrderStatus);
 
 module.exports = router
