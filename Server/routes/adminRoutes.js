@@ -1,45 +1,52 @@
-// routes/orderRoutes.js
+// Server/routes/adminRoutes.js
 const express = require('express')
-const orderController = require('../controllers/orderController')
-const { protect } = require('../middlewares/authMiddleware') // Import the protect middleware
+const {
+  adminLogin,
+  getAllUsers,
+  deleteUser,
+  updateUser,
+} = require('../controllers/adminController') // Import controller functions
+
+// Import the protect middleware using the correct path
+const { protect } = require('../middlewares/authMiddleware') // Use singular 'middleware'
 
 const router = express.Router()
 
 // ==============================================
-// --- Public Route (No Authentication Required) ---
+// --- Public Route ---
 // ==============================================
 
-// POST /api/orders - Place a new order (Customer Checkout)
-// This route should remain public for customers to place orders.
-router.post('/', orderController.createOrder)
+// POST /api/admin/login - Admin login endpoint
+// This route does NOT require authentication.
+router.post('/login', adminLogin)
 
-// ====================================================================
-// --- Protected Routes (Require 'admin' or 'productManager' role) ---
-// ====================================================================
-// These routes are for managing orders, accessible by both admins and product managers.
+// ================================================
+// --- Protected Routes (Admin Role Required) ---
+// ================================================
+// These routes require the user to be logged in AND have the 'admin' role.
+// The 'protect' middleware handles this verification.
 
-// GET /api/orders - Get all orders
+// GET /api/admin/users - Fetch all users
 router.get(
-  '/',
-  protect(['admin', 'productManager']), // Protect: Admin or PM can view all orders
-  orderController.getAllOrders,
+  '/users',
+  protect(['admin']), // Apply protection: Only 'admin' role allowed
+  getAllUsers, // Controller function to execute if authorized
 )
 
-// PATCH /api/orders/:id/confirm - Confirm an order
-router.patch(
-  '/:id/confirm',
-  protect(['admin', 'productManager']), // Protect: Admin or PM can confirm orders
-  orderController.confirmOrder,
+// DELETE /api/admin/users/:id - Delete user by ID
+router.delete(
+  '/users/:id',
+  protect(['admin']), // Apply protection: Only 'admin' role allowed
+  deleteUser, // Controller function to execute if authorized
 )
 
-// PATCH /api/orders/:id/cancel - Cancel an order
-router.patch(
-  '/:id/cancel',
-  protect(['admin', 'productManager']), // Protect: Admin or PM can cancel orders
-  orderController.cancelOrder,
+// PUT /api/admin/users/:id - Update user by ID
+router.put(
+  '/users/:id',
+  protect(['admin']), // Apply protection: Only 'admin' role allowed
+  updateUser, // Controller function to execute if authorized
 )
 
-// Optional: Add other order management routes here and protect them similarly
-// Example: router.patch('/:id/status', protect(['admin', 'productManager']), orderController.updateOrderStatus);
+// You can add other admin-only routes here following the same pattern.
 
-module.exports = router
+module.exports = router // Export the configured router
