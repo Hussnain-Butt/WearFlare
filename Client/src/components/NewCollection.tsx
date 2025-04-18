@@ -12,78 +12,94 @@ interface Product {
   title: string // Use 'title' consistently
   price: string | number // Allow both string/number from API
   inStock: boolean // Expect inStock status
-  // Add other fields if needed and returned by API
   category?: string
-  gender?: string
+  gender?: string // Ensure gender is available
+  isNewCollection?: boolean // Keep this if needed for other logic, but filtering happens via API now
 }
 
 // --- API Base URL ---
-// Ensure this matches your backend configuration
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
 
-const NewCollection: React.FC = () => {
+// --- NEW: Props Interface ---
+interface NewCollectionProps {
+  genderFilter?: 'Men' | 'Women' | 'Unisex' // Make gender prop optional but specific
+  limit?: number // Optional limit for how many items to show
+}
+// --- END NEW ---
+
+const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 6 }) => {
+  // Destructure props, provide default limit
   const navigate = useNavigate()
 
-  // --- State for fetched products, loading, and errors ---
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  // --- End State ---
 
   // --- Fetch Data using useEffect ---
   const fetchNewCollection = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      // Fetch products marked as 'isNewCollection: true' from the backend
-      // Assuming you are using the query parameter approach (Option 1 from previous explanation)
-      const response = await axios.get<Product[]>(`${API_BASE_URL}/api/products?newCollection=true`)
+      // --- UPDATED API CALL ---
+      // Use the main /api/products endpoint and add query parameters dynamically
+      const params = new URLSearchParams()
+      params.append('newCollection', 'true') // Always fetch new collection items
 
-      // If you implemented the dedicated route (Option 2), use this instead:
-      // const response = await axios.get<Product[]>(`${API_BASE_URL}/api/products/new-collection`);
+      if (genderFilter) {
+        // Add gender filter ONLY if genderFilter prop is provided
+        params.append('gender', genderFilter)
+      }
+      params.append('limit', String(limit)) // Add limit parameter
 
-      // Ensure data is an array and process it
+      console.log(`[NewCollection] Fetching with params: ${params.toString()}`) // Log parameters
+
+      const response = await axios.get<Product[]>(
+        `${API_BASE_URL}/api/products?${params.toString()}`,
+      )
+      // --- END UPDATED API CALL ---
+
       if (Array.isArray(response.data)) {
         const processedData = response.data.map((p) => ({
-          ...p, // Spread all properties from backend object
+          ...p,
           _id: p._id,
           title: p.title ?? 'Untitled Product',
-          price: String(p.price ?? '0'), // Convert price to string for display consistency
+          price: String(p.price ?? '0'),
           image: p.image ?? '',
-          inStock: p.inStock ?? true, // Default to true if missing
+          inStock: p.inStock ?? true,
+          gender: p.gender, // Make sure gender is included
         }))
         setProducts(processedData)
       } else {
         console.warn('API did not return an array for new collection:', response.data)
-        setProducts([]) // Set empty if data is not an array
-        setError('Received invalid data format for new collection.') // Set error for user
+        setProducts([])
+        setError('Received invalid data format for new collection.')
       }
     } catch (err: any) {
-      // Handle 404 specifically if using the dedicated route and it doesn't exist
+      // Keep existing error handling
       if (axios.isAxiosError(err) && err.response?.status === 404) {
         console.error(
-          'Error fetching new collection: Endpoint not found (404). Did you define the route?',
+          'Error fetching new collection: Endpoint not found (404). Did you define the route and filters?',
         )
-        setError('Could not find the new collection endpoint.')
+        setError('Could not find the new collection items.')
       } else {
         console.error('Error fetching new collection:', err.response?.data || err.message)
         setError('Could not load new collection items. Please try again later.')
       }
-      setProducts([]) // Clear products on error
+      setProducts([])
     } finally {
       setLoading(false)
     }
-  }, []) // useCallback ensures function identity stability
+    // Add genderFilter and limit to useCallback dependencies
+  }, [genderFilter, limit])
 
   useEffect(() => {
-    fetchNewCollection() // Fetch data when component mounts
-  }, [fetchNewCollection]) // Dependency array includes the stable fetch function
-  // --- End Data Fetching ---
+    fetchNewCollection()
+  }, [fetchNewCollection]) // fetchNewCollection will change if genderFilter or limit changes
 
-  // --- Navigation Handlers ---
+  // --- Navigation Handlers (Keep as is) ---
   const handleViewDetails = (productId: string) => {
-    if (!productId) return // Basic check
+    if (!productId) return
     navigate(`/product/${productId}`)
   }
 
@@ -91,15 +107,14 @@ const NewCollection: React.FC = () => {
     if (!productId) return
     navigate(`/try-on/${productId}`)
   }
-  // --- End Handlers ---
 
-  // --- Render Logic ---
+  // --- Render Logic (Keep mostly as is, adjust title maybe) ---
+  const collectionTitle = genderFilter ? `${genderFilter}'s New Collection` : 'New Collection'
 
-  // Show loading state
   if (loading) {
     return (
       <div className="bg-[#eee8e3] py-12 md:py-16 px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl md:text-4xl text-[#6b5745] font-serif mb-8">New Collection</h2>
+        <h2 className="text-3xl md:text-4xl text-[#6b5745] font-serif mb-8">{collectionTitle}</h2>
         <div className="flex justify-center items-center min-h-[200px]">
           <Loader2 className="animate-spin h-10 w-10 text-[#c8a98a]" />
         </div>
@@ -107,11 +122,10 @@ const NewCollection: React.FC = () => {
     )
   }
 
-  // Show error state
   if (error) {
     return (
       <div className="bg-[#eee8e3] py-12 md:py-16 px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl md:text-4xl text-[#6b5745] font-serif mb-8">New Collection</h2>
+        <h2 className="text-3xl md:text-4xl text-[#6b5745] font-serif mb-8">{collectionTitle}</h2>
         <p className="text-red-600 bg-red-100 p-4 rounded border border-red-200 max-w-md mx-auto">
           {error}
         </p>
@@ -119,44 +133,42 @@ const NewCollection: React.FC = () => {
     )
   }
 
+  // No changes needed in the JSX structure below, just the title update
   return (
     <div className="bg-[#eee8e3] py-12 md:py-16 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="text-center mb-10 md:mb-12">
-        <h2 className="text-3xl md:text-4xl text-[#6b5745] font-serif">New Collection</h2>
+        <h2 className="text-3xl md:text-4xl text-[#6b5745] font-serif">{collectionTitle}</h2>
       </div>
 
-      {/* Check if there are products to display */}
       {products.length > 0 ? (
         <AnimatedSection direction="left">
-          {' '}
-          {/* Animation for the product grid */}
           <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
             {products.map((product) => (
-              // Product Card
               <div
                 key={product._id}
                 className="bg-[#d3cac0] rounded-lg shadow-md overflow-hidden flex flex-col group transition-shadow hover:shadow-lg"
               >
                 {/* Image container */}
                 <div
-                  className="relative overflow-hidden cursor-pointer"
+                  className="relative overflow-hidden cursor-pointer h-96" // Set a fixed height for consistency
                   onClick={() => product.inStock && handleViewDetails(product._id)}
                 >
                   {!product.inStock && (
                     <div className="product-badge out-of-stock-badge"> Out of Stock </div>
                   )}
                   <img
-                    // Prepend API base URL only if image path is relative
                     src={
                       product.image.startsWith('http')
                         ? product.image
                         : `${API_BASE_URL}${product.image}`
                     }
                     alt={product.title}
-                    className={`product-image ${!product.inStock ? 'out-of-stock-image' : ''}`}
+                    className={`w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105 ${
+                      !product.inStock ? 'out-of-stock-image' : ''
+                    }`} // Ensure image fills container
                     onError={(e) => {
                       e.currentTarget.src = 'https://via.placeholder.com/400x500?text=No+Image'
-                    }} // Fallback
+                    }}
                     loading="lazy"
                   />
                 </div>
@@ -166,9 +178,9 @@ const NewCollection: React.FC = () => {
                     {product.title}
                   </p>
                   <p className="product-card-price">
-                    PKR {/* Ensure price is treated as number for formatting */}
+                    PKR{' '}
                     {Number(product.price).toLocaleString('en-PK', {
-                      minimumFractionDigits: 0, // Adjust as needed
+                      minimumFractionDigits: 0,
                       maximumFractionDigits: 2,
                     })}
                   </p>
@@ -201,24 +213,22 @@ const NewCollection: React.FC = () => {
           </div>
         </AnimatedSection>
       ) : (
-        // Message when no products are in the new collection
-        // ✅ FIX APPLIED HERE: Changed direction from "up" to "bottom"
         <AnimatedSection direction="bottom">
           <p className="text-center text-gray-500 mt-8">
-            Check back soon for new collection items!
+            Check back soon for new {genderFilter ? `${genderFilter.toLowerCase()} ` : ''}collection
+            items!
           </p>
         </AnimatedSection>
       )}
 
-      {/* Styles */}
+      {/* Styles (No changes needed here) */}
       <style jsx>{`
                 /* Styles for product card elements */
                 .product-card-details { padding: 1rem; text-align: center; display: flex; flex-direction: column; flex-grow: 1; }
                 .product-card-title { color: #374151; font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.25rem; }
                 .product-card-price { color: #4b5563; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; }
                 .product-card-buttons { margin-top: auto; display: flex; flex-direction: column; sm:flex-row; gap: 0.5rem; justify-content: center; padding-top: 0.5rem; }
-                .product-image { display: block; width: 100%; height: 20rem; sm:height: 24rem; object-fit: cover; object-position: center; transition: transform 0.3s ease-in-out; }
-                .group:hover .product-image:not(.out-of-stock-image) { transform: scale(1.05); }
+                /* Removed fixed height from .product-image, handled by container now */
                 .product-image.out-of-stock-image { opacity: 0.6; cursor: default; }
                 .product-badge { position: absolute; top: 0.5rem; right: 0.5rem; color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 0.25rem; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
                 .out-of-stock-badge { background-color: #ef4444; }
@@ -231,6 +241,9 @@ const NewCollection: React.FC = () => {
                 .out-of-stock-text-newcollection { display: inline-block; margin-top: 0.25rem; padding: 0.5rem 1rem; background-color: #e5e7eb; color: #6b7280; font-size: 0.75rem; font-weight: 600; border-radius: 9999px; width: 100%; sm:width: auto; text-align: center;}
                 .animate-spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+                /* Ensure out-of-stock image doesn't scale on hover */
+                .group:hover .product-image.out-of-stock-image { transform: scale(1); }
            `}</style>
     </div>
   )

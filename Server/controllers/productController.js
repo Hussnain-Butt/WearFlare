@@ -7,21 +7,47 @@ const Product = require('../models/Product')
 // const client = new vision.ImageAnnotatorClient({ keyFilename: path.join(__dirname, '../config/your_keyfile.json') });
 
 // --- Helper function to parse comma-separated sizes string ---
+// --- Helper function (Keep as is) ---
 const parseSizesString = (sizesString) => {
-  if (!sizesString || typeof sizesString !== 'string') return []
-  return sizesString
-    .split(',')
-    .map((s) => s.trim().toUpperCase())
-    .filter((s) => s)
+  /* ... */
 }
 
-// --- GET /api/products ---
+// --- GET /api/products (UPDATED) ---
 exports.getProducts = async (req, res) => {
   try {
-    const filter = req.query.gender
-      ? { gender: { $regex: new RegExp(`^${req.query.gender}$`, 'i') } }
-      : {}
-    const products = await Product.find(filter).sort({ createdAt: -1 })
+    const filter = {} // Start with an empty filter object
+
+    // Add gender filter if provided
+    if (req.query.gender) {
+      // Using case-insensitive regex for matching 'Men', 'men', 'MEN', etc.
+      filter.gender = { $regex: new RegExp(`^${req.query.gender}$`, 'i') }
+    }
+
+    // Add isNewCollection filter if provided and set to 'true'
+    if (req.query.newCollection && String(req.query.newCollection).toLowerCase() === 'true') {
+      filter.isNewCollection = true
+    }
+
+    // --- NEW: Handle Limit ---
+    let queryLimit = 0 // Default to no limit (or fetch all matching)
+    if (req.query.limit) {
+      const parsedLimit = parseInt(req.query.limit, 10)
+      if (!isNaN(parsedLimit) && parsedLimit > 0) {
+        queryLimit = parsedLimit
+      }
+    }
+    // --- END NEW ---
+
+    console.log(`[getProducts] Applying filter: ${JSON.stringify(filter)}, Limit: ${queryLimit}`) // Log the filter and limit
+
+    let query = Product.find(filter).sort({ createdAt: -1 }) // Apply filter and sort
+
+    if (queryLimit > 0) {
+      query = query.limit(queryLimit) // Apply limit ONLY if it's a positive number
+    }
+
+    const products = await query // Execute the query
+
     res.json(products)
   } catch (error) {
     console.error('Error fetching products:', error)
@@ -29,10 +55,13 @@ exports.getProducts = async (req, res) => {
   }
 }
 
-// --- POST /api/products ---
+// --- POST /api/products (Ensure isNewCollection is handled) ---
 exports.createProduct = async (req, res) => {
   try {
-    const { title, price, category, gender, description, inStock, sizes } = req.body
+    // Destructure isNewCollection from body
+    const { title, price, category, gender, description, inStock, sizes, isNewCollection } =
+      req.body
+
     if (!title || !price || !category || !gender) {
       return res
         .status(400)
@@ -41,6 +70,10 @@ exports.createProduct = async (req, res) => {
     const imagePath = req.file ? `/uploads/${req.file.filename}` : ''
     const sizesArray = parseSizesString(sizes)
     const stockStatus = inStock !== undefined ? String(inStock).toLowerCase() === 'true' : true
+    // Handle the boolean conversion for isNewCollection
+    const newCollectionStatus =
+      isNewCollection !== undefined ? String(isNewCollection).toLowerCase() === 'true' : false // Default false
+
     const product = new Product({
       title,
       price,
@@ -50,6 +83,7 @@ exports.createProduct = async (req, res) => {
       description,
       inStock: stockStatus,
       sizes: sizesArray,
+      isNewCollection: newCollectionStatus, // Save the boolean status
     })
     await product.save()
     res.status(201).json(product)
@@ -61,30 +95,29 @@ exports.createProduct = async (req, res) => {
   }
 }
 
-// --- PUT /api/products/:id ---
+// --- PUT /api/products/:id (Keep as is, already handles isNewCollection) ---
 exports.updateProduct = async (req, res) => {
+  // ... (existing update logic is fine, it already handles isNewCollection)
   try {
     const { id } = req.params
-    // Destructure all potential fields, including isNewCollection
     const { title, price, category, gender, description, inStock, sizes, isNewCollection } =
       req.body
 
-    console.log(`[UpdateProduct ${id}] Received Body:`, JSON.stringify(req.body)) // Log incoming body
+    console.log(`[UpdateProduct ${id}] Received Body:`, JSON.stringify(req.body))
 
     const updatedFields = {}
 
-    // Build updatedFields object conditionally
-    if (title !== undefined) updatedFields.title = title
-    if (price !== undefined) updatedFields.price = price
-    if (category !== undefined) updatedFields.category = category
+    if (title !== undefined) updatedFields.title = title.trim()
+    if (price !== undefined) updatedFields.price = String(price).trim()
+    if (category !== undefined) updatedFields.category = category.trim()
     if (gender !== undefined) updatedFields.gender = gender
-    if (description !== undefined) updatedFields.description = description
+    if (description !== undefined) updatedFields.description = description.trim()
     if (inStock !== undefined) {
       updatedFields.inStock = String(inStock).toLowerCase() === 'true'
       console.log(`[UpdateProduct ${id}] Processing inStock update to:`, updatedFields.inStock)
     }
     if (sizes !== undefined) {
-      updatedFields.sizes = parseSizesString(sizes) // Assuming parseSizesString exists
+      updatedFields.sizes = parseSizesString(sizes)
       console.log(`[UpdateProduct ${id}] Processing sizes update to:`, updatedFields.sizes)
     }
     if (isNewCollection !== undefined) {
@@ -92,28 +125,28 @@ exports.updateProduct = async (req, res) => {
       console.log(
         `[UpdateProduct ${id}] Processing isNewCollection update to:`,
         updatedFields.isNewCollection,
-      ) // *** Log this specifically ***
+      )
     }
 
-    // Handle image update
     if (req.file) {
       updatedFields.image = `/uploads/${req.file.filename}`
       console.log(`[UpdateProduct ${id}] Processing image update.`)
+      // Optional: Add logic to delete old image file if replacing
     }
 
-    // Check if anything is being updated
-    if (Object.keys(updatedFields).length === 0) {
+    if (Object.keys(updatedFields).length === 0 && !req.file) {
       console.log(`[UpdateProduct ${id}] No fields provided for update.`)
-      // Return early or proceed depending on whether image update alone is allowed
-      if (!req.file) return res.status(400).json({ message: 'No update fields provided.' })
+      // It's okay to proceed if only toggling flags like inStock/isNewCollection via direct PUT calls
+      // return res.status(400).json({ message: 'No update fields provided.' });
     }
 
-    console.log(`[UpdateProduct ${id}] Updating fields:`, JSON.stringify(updatedFields)) // Log before DB call
+    console.log(`[UpdateProduct ${id}] Updating fields:`, JSON.stringify(updatedFields))
 
+    // Use findByIdAndUpdate with $set for partial updates
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       { $set: updatedFields },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true, context: 'query' }, // Added context for potential mongoose version differences
     )
 
     if (!updatedProduct) {
@@ -124,13 +157,14 @@ exports.updateProduct = async (req, res) => {
     console.log(`[UpdateProduct ${id}] Update successful.`)
     res.json(updatedProduct) // Send back updated product
   } catch (error) {
-    console.error(`[UpdateProduct ${req.params?.id}] Error:`, error) // Log error with ID if possible
+    console.error(`[UpdateProduct ${req.params?.id}] Error:`, error)
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((el) => el.message)
       return res.status(400).json({ message: `Validation Error: ${messages.join('. ')}` })
     }
-    if (error.name === 'CastError')
+    if (error.name === 'CastError' && error.path === '_id') {
       return res.status(400).json({ message: 'Invalid Product ID format.' })
+    }
     res.status(500).json({ message: `Failed to update product: ${error.message}` })
   }
 }

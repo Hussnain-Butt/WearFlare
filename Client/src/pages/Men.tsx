@@ -179,7 +179,7 @@ const Men: React.FC = () => {
           <div className="my-16 md:my-24 w-full">
             <img src={arrival_image} alt="New Arrivals" className="w-full" />
           </div>
-          <NewCollection />
+          <NewCollection genderFilter="Men" limit={3} />
         </>
       )}
 

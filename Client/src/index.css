@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
@@ -22,13 +21,13 @@ body {
   min-height: 100vh;
   width: 100%;
   overflow: hidden;
-  background: #17112A;
+  background: #17112a;
 }
 
 .gradient-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom right, #17112A, #321B5A, black);
+  background: linear-gradient(to bottom right, #17112a, #321b5a, black);
   animation: gradientShift 15s ease infinite;
   background-size: 200% 200%;
   z-index: 0;
@@ -66,7 +65,7 @@ body {
   width: 40vw;
   height: 40vw;
   border-radius: 50%;
-  background: #5D4D8A;
+  background: #5d4d8a;
   opacity: 0.2;
   filter: blur(120px);
   animation: pulse 4s ease-in-out infinite;
@@ -94,33 +93,54 @@ body {
 }
 
 .toast-success {
-  background-color: #10B981;
+  background-color: #10b981;
 }
 
 .toast-error {
-  background-color: #EF4444;
+  background-color: #ef4444;
 }
 
 /* Animations */
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.15; }
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.15;
+  }
 }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-fade-in {
@@ -136,7 +156,38 @@ body {
   }
 }
 
-  
+/* --- Global Form Field Style Override --- */
+input[type='text'],
+input[type='password'],
+input[type='number'], /* Add other input types if needed */
+input[type='email'],
+select,          /* Target <select> elements */
+textarea,        /* Target <textarea> elements */
+input {
+  /* Keep the general input rule for others, but be careful */
+  background-color: white !important; /* Force white background */
+  color: #1f2937 !important; /* Force a dark text color (like Tailwind's gray-800) */
+  /* Remove border-radius: 0; if you want Tailwind's rounded-lg to work */
+  /* border-radius: 0; */
+  border: 1px solid #d1d5db !important; /* Ensure a default border (like Tailwind's border-gray-300) */
+}
+
+/* Optional: Style the placeholder text */
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important; /* Lighter gray for placeholder (like Tailwind's gray-400) */
+  opacity: 1; /* Ensure placeholder is visible */
+}
+
+/* Optional: Style the select dropdown arrow (might need browser prefixes) */
+select {
+  appearance: none; /* Remove default system appearance */
+  background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"><path stroke="%236b7280" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4"/></svg>');
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem; /* Make space for the arrow */
+}
 /* Round the slider track */
 .slider-root {
   width: 100%;

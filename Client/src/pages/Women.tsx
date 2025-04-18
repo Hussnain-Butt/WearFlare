@@ -136,7 +136,7 @@ const Women: React.FC = () => {
           <div className="my-16 md:my-24">
             <img src="/women_banner.png" alt="Women Banner" className="w-full" />
           </div>
-          <NewCollection />
+          <NewCollection genderFilter="Women" limit={3} />
           {/* <WomensComponents /> */} {/* If you want to show this */}
           <NewsLetter /> {/* Moved Newsletter inside conditional block */}
         </>
