@@ -14,6 +14,15 @@ interface ToastState {
   type: 'success' | 'error'
 }
 
+// --- Define interface for form errors ---
+interface FormErrors {
+  firstName?: string
+  lastName?: string
+  email?: string
+  message?: string
+  // No general error needed if using toast for general messages
+}
+
 const ContactUs: React.FC = () => {
   // Use React.FC for type safety
   const [firstName, setFirstName] = useState('')
@@ -22,28 +31,80 @@ const ContactUs: React.FC = () => {
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null) // Typed toast state
+  const [errors, setErrors] = useState<FormErrors>({}) // --- State for validation errors ---
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3500) // Slightly longer duration
   }
 
-  // --- UPDATED handleSubmit Function ---
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    // Typed event
-    e.preventDefault()
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !message.trim()) {
-      showToast('Please fill in all fields.', 'error')
-      return
-    }
-    // Optional: Basic email format check on frontend too
-    if (!/.+\@.+\..+/.test(email)) {
-      showToast('Please enter a valid email address.', 'error')
-      return
+  // --- Validation Function ---
+  const validateForm = (): FormErrors => {
+    const newErrors: FormErrors = {}
+    const nameRegex = /^[A-Za-z\s'-]+$/ // Allows letters, space, hyphen, apostrophe
+
+    // Trim values before validation
+    const fName = firstName.trim()
+    const lName = lastName.trim()
+    const mail = email.trim()
+    const msg = message.trim()
+
+    // First Name validation
+    if (!fName) {
+      newErrors.firstName = 'First Name is required.'
+    } else if (!nameRegex.test(fName)) {
+      newErrors.firstName = 'First Name can only contain letters, spaces, hyphens, and apostrophes.'
+    } else if (fName.length < 2) {
+      newErrors.firstName = 'First Name must be at least 2 characters.'
     }
 
-    setIsLoading(true)
+    // Last Name validation
+    if (!lName) {
+      newErrors.lastName = 'Last Name is required.'
+    } else if (!nameRegex.test(lName)) {
+      newErrors.lastName = 'Last Name can only contain letters, spaces, hyphens, and apostrophes.'
+    } else if (lName.length < 2) {
+      newErrors.lastName = 'Last Name must be at least 2 characters.'
+    }
+
+    // Email validation
+    if (!mail) {
+      newErrors.email = 'Email Address is required.'
+    } else if (!/.+@.+\..+/.test(mail)) {
+      // Basic email format check
+      newErrors.email = 'Please enter a valid email address.'
+    }
+
+    // Message validation
+    if (!msg) {
+      newErrors.message = 'Message is required.'
+    } else if (msg.length < 10) {
+      // Example: Minimum 10 characters
+      newErrors.message = 'Message must be at least 10 characters long.'
+    }
+
+    return newErrors
+  }
+  // --- End Validation Function ---
+
+  // --- UPDATED handleSubmit Function ---
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setErrors({}) // Clear previous errors
     setToast(null) // Clear previous toast
+
+    // --- Validate the form ---
+    const validationErrors = validateForm()
+
+    // --- If there are errors, update state and stop submission ---
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      showToast('Please fix the errors in the form.', 'error')
+      return // Stop submission
+    }
+
+    // --- If validation passes, proceed with API call ---
+    setIsLoading(true)
 
     const payload = {
       firstName: firstName.trim(),
@@ -53,31 +114,44 @@ const ContactUs: React.FC = () => {
     }
 
     try {
-      // Make the POST request to the backend
       const response = await axios.post(CONTACT_API_ENDPOINT, payload)
 
       if (response.status === 200) {
         showToast('Message sent successfully! We will get back to you soon.', 'success')
-        // Clear the form on success
+        // Clear the form and errors on success
         setFirstName('')
         setLastName('')
         setEmail('')
         setMessage('')
+        setErrors({}) // Clear errors state
       } else {
-        // Handle unexpected success statuses if backend sends them
         throw new Error(response.data.message || 'Failed to send message.')
       }
     } catch (error: any) {
       console.error('Contact form submission error:', error.response?.data || error.message)
-      // Show specific error from backend if available, otherwise generic
       const errorMessage =
         error.response?.data?.message || 'Could not send message. Please try again later.'
       showToast(errorMessage, 'error')
     } finally {
-      setIsLoading(false) // Stop loading indicator regardless of outcome
+      setIsLoading(false)
     }
   }
   // --- END UPDATED handleSubmit ---
+
+  // --- Helper to clear error for a field on change ---
+  const handleInputChange =
+    (setter: React.Dispatch<React.SetStateAction<string>>, fieldName: keyof FormErrors) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setter(e.target.value)
+      // Clear the specific error when the user starts typing in the field
+      if (errors[fieldName]) {
+        setErrors((prev) => {
+          const updatedErrors = { ...prev }
+          delete updatedErrors[fieldName]
+          return updatedErrors
+        })
+      }
+    }
 
   return (
     <div className="min-h-screen bg-[#F8F6F2] flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
@@ -89,7 +163,9 @@ const ContactUs: React.FC = () => {
         {/* Contact Form */}
         <AnimatedSection direction="left">
           <div>
-            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6" noValidate>
+              {' '}
+              {/* Added noValidate to prevent default HTML5 validation popups */}
               {/* Name Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -100,11 +176,25 @@ const ContactUs: React.FC = () => {
                     id="firstName"
                     type="text"
                     placeholder="First Name"
-                    className="contact-input"
+                    // --- Apply error class dynamically ---
+                    className={`contact-input ${
+                      errors.firstName
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
+                        : 'border-gray-300 focus:border-[#c8a98a] focus:ring-[#c8a98a]/40'
+                    }`}
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required // Add HTML validation
+                    // --- Use helper for onChange ---
+                    onChange={handleInputChange(setFirstName, 'firstName')}
+                    required // Keep for basic browser fallback and semantics
+                    aria-invalid={!!errors.firstName} // Accessibility
+                    aria-describedby={errors.firstName ? 'firstName-error' : undefined} // Accessibility
                   />
+                  {/* --- Display First Name Error --- */}
+                  {errors.firstName && (
+                    <p id="firstName-error" className="mt-1 text-xs text-red-600" role="alert">
+                      {errors.firstName}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="lastName" className="sr-only">
@@ -114,14 +204,27 @@ const ContactUs: React.FC = () => {
                     id="lastName"
                     type="text"
                     placeholder="Last Name"
-                    className="contact-input"
+                    // --- Apply error class dynamically ---
+                    className={`contact-input ${
+                      errors.lastName
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
+                        : 'border-gray-300 focus:border-[#c8a98a] focus:ring-[#c8a98a]/40'
+                    }`}
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    // --- Use helper for onChange ---
+                    onChange={handleInputChange(setLastName, 'lastName')}
                     required
+                    aria-invalid={!!errors.lastName} // Accessibility
+                    aria-describedby={errors.lastName ? 'lastName-error' : undefined} // Accessibility
                   />
+                  {/* --- Display Last Name Error --- */}
+                  {errors.lastName && (
+                    <p id="lastName-error" className="mt-1 text-xs text-red-600" role="alert">
+                      {errors.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
-
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className="sr-only">
@@ -129,15 +232,28 @@ const ContactUs: React.FC = () => {
                 </label>
                 <input
                   id="email"
-                  type="email"
+                  type="email" // Keep type email for mobile keyboards etc.
                   placeholder="Email Address"
-                  className="contact-input"
+                  // --- Apply error class dynamically ---
+                  className={`contact-input ${
+                    errors.email
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
+                      : 'border-gray-300 focus:border-[#c8a98a] focus:ring-[#c8a98a]/40'
+                  }`}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  // --- Use helper for onChange ---
+                  onChange={handleInputChange(setEmail, 'email')}
                   required
+                  aria-invalid={!!errors.email} // Accessibility
+                  aria-describedby={errors.email ? 'email-error' : undefined} // Accessibility
                 />
+                {/* --- Display Email Error --- */}
+                {errors.email && (
+                  <p id="email-error" className="mt-1 text-xs text-red-600" role="alert">
+                    {errors.email}
+                  </p>
+                )}
               </div>
-
               {/* Message Textarea */}
               <div>
                 <label htmlFor="message" className="sr-only">
@@ -147,13 +263,26 @@ const ContactUs: React.FC = () => {
                   id="message"
                   placeholder="Your Message"
                   rows={5}
-                  className="contact-input resize-y" // Allow vertical resize
+                  // --- Apply error class dynamically ---
+                  className={`contact-input resize-y ${
+                    errors.message
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
+                      : 'border-gray-300 focus:border-[#c8a98a] focus:ring-[#c8a98a]/40'
+                  }`}
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  // --- Use helper for onChange ---
+                  onChange={handleInputChange(setMessage, 'message')}
                   required
+                  aria-invalid={!!errors.message} // Accessibility
+                  aria-describedby={errors.message ? 'message-error' : undefined} // Accessibility
                 ></textarea>
+                {/* --- Display Message Error --- */}
+                {errors.message && (
+                  <p id="message-error" className="mt-1 text-xs text-red-600" role="alert">
+                    {errors.message}
+                  </p>
+                )}
               </div>
-
               {/* Submit Button */}
               <button
                 type="submit"
@@ -254,22 +383,31 @@ const ContactUs: React.FC = () => {
           {toast.message}
         </div>
       )}
-      {/* --- REMOVED COMMENT HERE --- */}
+      {/* --- Styles --- */}
       <style jsx>{`
         .contact-input {
           display: block;
           width: 100%;
           padding: 0.75rem; /* p-3 */
-          border: 1px solid #d1d5db; /* border-gray-300 */
+          border: 1px solid #d1d5db; /* default: border-gray-300 */
           border-radius: 0.375rem; /* rounded-md */
           transition: border-color 0.2s, box-shadow 0.2s;
           font-size: 0.875rem; /* text-sm */
         }
+        /* --- Updated Focus Styles --- */
         .contact-input:focus {
           outline: none;
-          border-color: #c8a98a;
-          box-shadow: 0 0 0 2px rgba(200, 169, 138, 0.4); /* focus:ring-2 focus:ring-[#c8a98a] with opacity */
+          /* Dynamic ring/border color is handled by utility classes now */
+          /* border-color: #c8a98a; */
+          /* box-shadow: 0 0 0 2px rgba(200, 169, 138, 0.4); */
         }
+        /* --- Add Specific Error Border Style (optional, can be done with Tailwind class 'border-red-500') --- */
+        /* .contact-input.border-red-500 { border-color: #ef4444; } */
+
+        /* --- Focus styles are now applied conditionally using Tailwind classes --- */
+        /* Example for normal state: focus:border-[#c8a98a] focus:ring-[#c8a98a]/40 */
+        /* Example for error state: focus:border-red-500 focus:ring-red-500/40 */
+
         .animate-spin {
           animation: spin 1s linear infinite;
         }
@@ -281,6 +419,27 @@ const ContactUs: React.FC = () => {
             transform: rotate(360deg);
           }
         }
+        /* --- Style for error text --- */
+        .text-red-600 {
+          color: #dc2626;
+        }
+        .text-xs {
+          font-size: 0.75rem;
+        }
+        .mt-1 {
+          margin-top: 0.25rem;
+        }
+        /* --- Style for error border (applied via className) --- */
+        .border-red-500 {
+          border-color: #ef4444;
+        }
+        /* --- Style for error focus ring (applied via className) --- */
+        .focus\\:border-red-500:focus {
+          border-color: #ef4444;
+        }
+        .focus\\:ring-red-500\\/40:focus {
+          box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4);
+        } /* Tailwind ring color with opacity */
       `}</style>
     </div> // End Page Container
   )

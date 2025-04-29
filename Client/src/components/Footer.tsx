@@ -87,30 +87,6 @@ const Footer = () => {
           <div className="flex flex-col items-start md:items-end">
             <h3 className="text-2xl font-bold mb-4 text-black">WEARFLARE</h3>
 
-            {/* App Store Buttons */}
-            <div className="flex space-x-3 mb-4">
-              <Link
-                to="#"
-                className="border border-gray-300 rounded-md px-3 py-1 flex items-center space-x-1 hover:border-[#c8a98a]"
-              >
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1024px-Google_Play_Store_badge_EN.svg.png"
-                  alt="Google Play"
-                  className="h-5"
-                />
-              </Link>
-              <Link
-                to="#"
-                className="border border-gray-300 rounded-md px-3 py-1 flex items-center space-x-1 hover:border-[#c8a98a]"
-              >
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/1280px-Download_on_the_App_Store_Badge.svg.png"
-                  alt="App Store"
-                  className="h-5"
-                />
-              </Link>
-            </div>
-
             {/* Follow Us */}
             <p className="text-sm mb-2 text-gray-600">Follow us</p>
             <div className="flex space-x-3">
