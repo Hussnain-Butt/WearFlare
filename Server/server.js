@@ -68,7 +68,7 @@ console.log('--- Health check endpoint registered (/health) ---')
 const allowedOrigins = [
   'https://frontend-production-c902.up.railway.app',
   'https://backend-production-c8ff.up.railway.app',
-  'https://frontend-production-c902.up.railway.app',
+  'http://localhost:5173',
 ]
 
 app.use(

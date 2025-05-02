@@ -369,7 +369,13 @@ const ProductDetailsPage: React.FC = () => {
                 </div>
               </div>
             )}
-
+            {/* Product Description Section */}
+            {product.description?.trim() && ( // Only render if description exists and is not just whitespace
+              <div className="description-section">
+                <h3 className="description-title">Description</h3>
+                <p className="description-text">{product.description.trim()}</p>
+              </div>
+            )}
             {/* --- Action Buttons Container --- */}
             <div className="action-buttons-container">
               {/* Add to Cart Button */}
@@ -453,14 +459,6 @@ const ProductDetailsPage: React.FC = () => {
               )}
             </div>
             {/* --- End Action Buttons Container --- */}
-
-            {/* Product Description Section */}
-            {product.description?.trim() && ( // Only render if description exists and is not just whitespace
-              <div className="description-section">
-                <h3 className="description-title">Description</h3>
-                <p className="description-text">{product.description.trim()}</p>
-              </div>
-            )}
           </div>{' '}
           {/* End Info Section */}
         </div>{' '}
