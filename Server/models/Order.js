@@ -1,36 +1,28 @@
 // models/Order.js
 const mongoose = require('mongoose')
+const crypto = require('crypto') // Import crypto for token generation
 
 const orderItemSchema = new mongoose.Schema(
   {
-    productId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product', // Reference to the Product model
-      required: true,
-    },
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     title: { type: String, required: true },
-    price: { type: Number, required: true }, // Store price as number
+    price: { type: Number, required: true },
     quantity: { type: Number, required: true, min: 1 },
-    image: { type: String, required: false }, // Image path for reference
-    selectedSize: { type: String, required: false }, // Store selected size
-    selectedColor: { type: String, required: false }, // Store selected color
+    image: { type: String, required: false },
+    selectedSize: { type: String, required: false },
+    selectedColor: { type: String, required: false },
   },
   { _id: false },
-) // Don't create separate IDs for subdocuments by default
+)
 
 const orderSchema = new mongoose.Schema(
   {
-    customerName: {
-      type: String,
-      required: [true, 'Customer name is required.'],
-      trim: true,
-    },
+    customerName: { type: String, required: [true, 'Customer name is required.'], trim: true },
     customerEmail: {
       type: String,
       required: [true, 'Customer email is required.'],
       trim: true,
       lowercase: true,
-      // Basic email format validation (consider more robust validation)
       match: [/.+\@.+\..+/, 'Please fill a valid email address'],
     },
     customerPhone: {
@@ -47,29 +39,50 @@ const orderSchema = new mongoose.Schema(
         required: [true, 'Country is required.'],
         trim: true,
         default: 'Pakistan',
-      }, // Default country if applicable
+      },
     },
-    orderItems: [orderItemSchema], // Array of items in the order
-    totalPrice: {
-      type: Number,
-      required: true,
-    },
+    orderItems: [orderItemSchema],
+    totalPrice: { type: Number, required: true },
     status: {
       type: String,
       required: true,
-      enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'], // Possible order statuses
-      default: 'Pending', // Default status when created
+      // Add 'Awaiting User Confirmation' and make it the default
+      enum: [
+        'Awaiting User Confirmation',
+        'Pending',
+        'Confirmed',
+        'Shipped',
+        'Delivered',
+        'Cancelled',
+      ],
+      default: 'Awaiting User Confirmation', // <<< New Default
     },
-    // Optional: Add fields like shipping cost, payment method (COD)
-    paymentMethod: {
-      type: String,
-      required: true,
-      default: 'Cash on Delivery',
-    },
+    paymentMethod: { type: String, required: true, default: 'Cash on Delivery' },
+    // --- New fields for email confirmation ---
+    confirmationToken: String,
+    confirmationTokenExpires: Date,
+    // --- End new fields ---
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt timestamps
+    timestamps: true,
   },
 )
+
+// --- Method to generate confirmation token ---
+orderSchema.methods.createConfirmationToken = function () {
+  // Create a random token
+  const confirmationToken = crypto.randomBytes(32).toString('hex')
+
+  // Hash the token before saving to DB for security (optional but recommended)
+  // We will store the hashed version and compare later
+  this.confirmationToken = crypto.createHash('sha256').update(confirmationToken).digest('hex')
+
+  // Set expiry time (e.g., 24 hours from now)
+  this.confirmationTokenExpires = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+
+  // Return the *unhashed* token to be sent via email
+  return confirmationToken
+}
+// --- End method ---
 
 module.exports = mongoose.model('Order', orderSchema)

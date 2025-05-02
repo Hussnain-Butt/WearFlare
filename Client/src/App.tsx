@@ -47,6 +47,7 @@ import OrdersPage from './admin/pages/OrdersPage'
 
 // --- Other Pages ---
 import { Account } from './pages/Account' // Customer Account
+import OrderConfirmationStatusPage from './pages/OrderConfirmationStatusPage.js'
 // --- End Other Pages ---
 
 const App = () => (
@@ -63,8 +64,9 @@ const App = () => (
       <Route path="/try-on/:productId" element={<TryOnPage />} />
       <Route path="/men" element={<Men />} />
       <Route path="/women" element={<Women />} />
+      <Route path="/order-confirmation-status" element={<OrderConfirmationStatusPage />} />
       <Route path="/cart" element={<Cart />} />
-      <Route path="/shop" element={<Shop />} />
+      {/* <Route path="/shop" element={<Shop />} /> */}
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/wishlist" element={<WishList />} />
       <Route path="/product/:productId" element={<ProductDetailsPage />} />

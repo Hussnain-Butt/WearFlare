@@ -55,12 +55,12 @@ const Navbar: React.FC = () => {
             >
               Home
             </Link>
-            <Link
+            {/* <Link
               to="/shop"
               className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
             >
               Shop
-            </Link>
+            </Link> */}
             <Link
               to="/men"
               className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
@@ -166,13 +166,13 @@ const Navbar: React.FC = () => {
             >
               Home
             </Link>
-            <Link
+            {/* <Link
               to="/shop"
               onClick={closeMobileMenu}
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
             >
               Shop
-            </Link>
+            </Link> */}
             <Link
               to="/men"
               onClick={closeMobileMenu}

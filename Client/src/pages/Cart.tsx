@@ -1,14 +1,14 @@
 // src/Cart.tsx
 import React from 'react'
-import { useCart } from '../context/CartContext'
+import { useCart } from '../context/CartContext' // Make sure path is correct
 import { Link, useNavigate } from 'react-router-dom'
 import { Trash2, Plus, Minus } from 'lucide-react'
 
 // Define API base URL for images
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your deployed URL
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Your deployed URL or https://backend-production-c8ff.up.railway.app for local dev
 
 const Cart = () => {
-  // Get cart functions and state, including the new URL state
+  // Get cart functions and state, including the NEW specific product origin state
   const {
     cart,
     removeFromCart,
@@ -16,11 +16,14 @@ const Cart = () => {
     totalItems,
     totalPrice,
     clearCart,
-    lastVisitedUrl, // *** Get the URL from context ***
-  } = useCart()
+    // --- Get ALL needed origin state from context ---
+    lastProductListUrl,
+    lastViewedProductId,
+    lastSelectedCategory,
+  } = useCart() // Ensure useCart provides all these values from the updated context
   const navigate = useNavigate()
 
-  // Format price for display
+  // Format price for display (Keep this function as is)
   const formatDisplayPrice = (price: number): string => {
     return `PKR ${price.toLocaleString('en-PK', {
       minimumFractionDigits: 2,
@@ -28,7 +31,7 @@ const Cart = () => {
     })}`
   }
 
-  // Format total price
+  // Format total price (Keep this function as is)
   const formatTotalPrice = (price: number): string => {
     return `PKR ${price.toLocaleString('en-PK', {
       minimumFractionDigits: 2,
@@ -36,7 +39,7 @@ const Cart = () => {
     })}`
   }
 
-  // Handle Checkout Navigation
+  // Handle Checkout Navigation (Keep this function as is)
   const handleProceedToCheckout = () => {
     if (cart.length > 0) {
       navigate('/checkout')
@@ -45,12 +48,18 @@ const Cart = () => {
     }
   }
 
-  // Determine the fallback URL for "Continue Shopping"
-  const continueShoppingUrl =
-    lastVisitedUrl && lastVisitedUrl !== '/cart' && lastVisitedUrl !== '/checkout'
-      ? lastVisitedUrl
-      : '/shop' // Default to /shop
+  // --- LOGIC CHANGE: Determine the "Continue Shopping" target object (URL + Hash) ---
+  const continueShoppingTarget = {
+    pathname: lastProductListUrl || '/', // Use last tracked URL or fallback to homepage
+    hash: lastViewedProductId ? `#product-${lastViewedProductId}` : '', // Add hash for scrolling
+  }
 
+  // --- LOGIC CHANGE: Determine the state object to pass (for category filter) ---
+  const continueShoppingState = lastSelectedCategory
+    ? { category: lastSelectedCategory }
+    : undefined
+
+  // --- Component Render (Layout/Design EXACTLY as your original) ---
   return (
     <div className="min-h-screen bg-[#F8F6F2] pt-10 pb-20 font-sans">
       {' '}
@@ -60,24 +69,24 @@ const Cart = () => {
           Shopping Cart
         </h2>
         {cart.length === 0 ? (
-          // Empty Cart Message
+          // Empty Cart Message (Layout as original, link points to '/')
           <div className="text-center bg-white p-10 rounded-lg shadow">
             <p className="text-xl text-gray-500 mb-6">Your cart is currently empty.</p>
             <Link
-              to="/shop" // Always link to main shop page when cart is empty
+              to="/" // Fallback to homepage
               className="inline-block px-6 py-3 bg-[#c8a98a] text-white text-lg font-medium rounded-full hover:bg-[#b08d6a] transition duration-300 shadow-md"
             >
               Start Shopping
             </Link>
           </div>
         ) : (
-          // Cart Content Grid
+          // Cart Content Grid (Layout as original)
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items List (Left Column) */}
+            {/* Cart Items List (Left Column - Layout as original) */}
             <div className="lg:col-span-2 bg-white shadow-lg rounded-lg p-6">
               <div className="flex justify-between items-center mb-6 border-b pb-3">
                 <h3 className="text-xl font-medium text-gray-800">Cart Items ({totalItems})</h3>
-                {/* Clear Cart Button */}
+                {/* Clear Cart Button (As original) */}
                 <button
                   onClick={clearCart}
                   className="text-sm text-red-600 hover:text-red-800 hover:underline focus:outline-none transition-colors"
@@ -86,13 +95,13 @@ const Cart = () => {
                 </button>
               </div>
               <div className="space-y-6">
-                {/* Map Through Cart Items */}
+                {/* Map Through Cart Items (Layout as original) */}
                 {cart.map((item) => (
                   <div
                     key={`${item._id}-${item.selectedSize}-${item.selectedColor}`} // Unique key
                     className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-100 pb-6 last:border-b-0"
                   >
-                    {/* Image & Details */}
+                    {/* Image & Details (Layout as original) */}
                     <div className="flex items-center gap-4 flex-grow w-full sm:w-auto">
                       <img
                         src={`${API_BASE_URL}${item.image}`}
@@ -118,7 +127,7 @@ const Cart = () => {
                       </div>
                     </div>
 
-                    {/* Quantity Controls */}
+                    {/* Quantity Controls (Layout as original) */}
                     <div className="flex items-center gap-2 border border-gray-300 rounded-full px-2 py-1 flex-shrink-0 my-2 sm:my-0">
                       <button
                         onClick={() =>
@@ -156,12 +165,12 @@ const Cart = () => {
                       </button>
                     </div>
 
-                    {/* Item Total Price */}
+                    {/* Item Total Price (Layout as original) */}
                     <div className="text-right flex-shrink-0 w-24 font-semibold text-gray-800 text-sm md:text-base">
                       {formatTotalPrice(item.price * item.quantity)}
                     </div>
 
-                    {/* Remove Button */}
+                    {/* Remove Button (Layout as original) */}
                     <div className="flex-shrink-0">
                       <button
                         className="p-2 text-gray-500 hover:text-red-600 transition rounded-full hover:bg-red-50"
@@ -179,7 +188,7 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Order Summary (Right Column) */}
+            {/* Order Summary (Right Column - Layout as original) */}
             <div className="lg:col-span-1 bg-white shadow-lg rounded-lg p-6 h-fit sticky top-28">
               <h3 className="text-xl font-medium text-gray-800 mb-6 border-b pb-3">
                 Order Summary
@@ -201,23 +210,26 @@ const Cart = () => {
                   <span>{formatTotalPrice(totalPrice)}</span>
                 </div>
               </div>
-              {/* Checkout Button */}
+              {/* Checkout Button (Layout as original) */}
               <button
                 onClick={handleProceedToCheckout}
                 className="w-full px-6 py-3 bg-[#c8a98a] text-white text-lg font-medium rounded-full hover:bg-[#b08d6a] transition duration-300 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c8a98a]"
+                disabled={cart.length === 0}
               >
                 Proceed to Checkout
               </button>
-              {/* Continue Shopping Link */}
+              {/* Continue Shopping Link (Layout as original, FUNCTIONALITY updated) */}
               <div className="text-center mt-4">
-                {/* --- *** UPDATED LINK *** --- */}
+                {/* --- FUNCTIONALITY CHANGE IS HERE in the 'to' and 'state' props --- */}
                 <Link
-                  to={continueShoppingUrl} // Use the URL from context or fallback
+                  to={continueShoppingTarget} // Use the target object with URL/Hash
+                  state={continueShoppingState} // Pass the category state
                   className="text-sm text-gray-600 hover:text-[#c8a98a] underline transition duration-300"
+                  // --- The className is EXACTLY as in your original code ---
                 >
                   Continue Shopping
                 </Link>
-                {/* --- *** END UPDATE *** --- */}
+                {/* --- END FUNCTIONALITY CHANGE --- */}
               </div>
             </div>
           </div>

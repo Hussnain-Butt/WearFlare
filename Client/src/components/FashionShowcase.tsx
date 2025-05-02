@@ -150,12 +150,12 @@ const FashionShowcase: React.FC = () => {
                           className="w-full h-64 sm:h-80 md:h-96 lg:h-[30rem] object-cover transition-transform duration-300 hover:scale-105"
                         />
                       </div>
-                      <Link
+                      {/* <Link
                         to="/shop"
                         className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white text-black hover:bg-gray-100 rounded-full px-5 py-2 shadow-md text-xs font-medium tracking-wide"
                       >
                         NEW COLLECTION
-                      </Link>
+                      </Link> */}
                     </div>
                   )}
 

@@ -18,7 +18,7 @@ const sendEmail = async (options) => {
     to: options.email,
     subject: options.subject,
     text: options.message, // Plain text version
-    // html: options.html // You can add an HTML version too
+    html: options.html, // You can add an HTML version too
   }
 
   // 3) Actually send the email

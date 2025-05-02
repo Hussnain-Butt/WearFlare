@@ -39,12 +39,7 @@ const Footer = () => {
             <h3 className="text-xl font-semibold mb-4 text-black">Company</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
+                <Link to="/contact" className="hover:text-[#c8a98a]">
                   Contact
                 </Link>
               </li>
@@ -66,18 +61,13 @@ const Footer = () => {
             <h3 className="text-xl font-semibold mb-4 text-black">Shop</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
-                  Products
+                <Link to="/men" className="hover:text-[#c8a98a]">
+                  Men
                 </Link>
               </li>
               <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
-                  Overview
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
-                  Pricing
+                <Link to="/women" className="hover:text-[#c8a98a]">
+                  Women
                 </Link>
               </li>
             </ul>

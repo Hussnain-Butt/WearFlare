@@ -1,26 +1,28 @@
-// src/admin/pages/Products.tsx OR src/shared/pages/Products.tsx
+// src/admin/pages/Products.tsx
 
 import React, { useEffect, useState, useCallback } from 'react'
-// Import the configured Axios instance
-import apiClient from '../../api/axiosConfig' // Adjust the path as necessary
+import apiClient from '../../api/axiosConfig' // Adjust path as necessary
 import { toast, Toaster } from 'react-hot-toast'
-import { Loader2, CheckCircle, XCircle, Star, Edit, Trash2 } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle, Star, Edit, Trash2 } from 'lucide-react' // Keep icons
 
-// Define the base URL for displaying images fetched from the server
+// Define the base URL for displaying images
 const IMAGE_SERVER_URL = 'https://backend-production-c8ff.up.railway.app' // Your backend URL
 
-// Product Interface (defines the shape of product data)
+// --- Updated Product Interface (Matches Backend Response) ---
 interface Product {
   _id: string
   title: string
-  price: string | number
+  price: string | number // Keep flexible for now
   category: string
   gender: string
-  image: string // Should be the relative path like /uploads/imagename.jpg
+  image: string // Relative path like /uploads/imagename.jpg
   description?: string
-  inStock: boolean
-  sizes?: string[]
+  isInStock?: boolean // Virtual property from backend
+  sizes?: string[] // Array of available sizes (e.g., ['S', 'M'])
+  stockDetails?: Record<string, number> // Object like { 'S': 10, 'M': 5 }
   isNewCollection?: boolean
+  createdAt?: string // Optional: For sorting or display
+  updatedAt?: string // Optional
 }
 
 const Products: React.FC = () => {
@@ -30,72 +32,81 @@ const Products: React.FC = () => {
   const [category, setCategory] = useState('')
   const [gender, setGender] = useState('')
   const [description, setDescription] = useState('')
-  const [image, setImage] = useState<File | null>(null) // For new image upload
-  const [preview, setPreview] = useState<string | null>(null) // For image preview (blob or server URL)
-  const [loading, setLoading] = useState(false) // Loading state for form submission
-  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({}) // Loading for specific item actions
-  const [products, setProducts] = useState<Product[]>([]) // List of products
-  const [isEditMode, setIsEditMode] = useState(false) // Flag for edit mode
-  const [editId, setEditId] = useState<string | null>(null) // ID of product being edited
-  const [formInStock, setFormInStock] = useState(true) // 'In Stock' state for the form
-  const [formSizes, setFormSizes] = useState<string>('') // 'Sizes' state for the form (comma-separated)
-  const [formIsNewCollection, setFormIsNewCollection] = useState(false) // 'New Collection' state for the form
+  const [image, setImage] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [formSizes, setFormSizes] = useState<string>('') // For available sizes input "S,M,L"
+  const [formStockDetailsString, setFormStockDetailsString] = useState<string>('') // NEW: For stock input "S:10,M:15"
+  const [formIsNewCollection, setFormIsNewCollection] = useState(false)
+  const [loading, setLoading] = useState(false) // Form submission loading
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({}) // Item-specific action loading
+  const [products, setProducts] = useState<Product[]>([])
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
 
   // --- Data Fetching ---
   const fetchProducts = useCallback(async () => {
     try {
-      // Use apiClient instance and relative URL ('/products')
-      // Auth token is added automatically by the interceptor
+      // Fetch products - backend now includes virtuals and stockDetails
       const res = await apiClient.get<Product[]>('/products')
-
-      // Process fetched data to ensure defaults
       const processedProducts = res.data.map((p) => ({
         ...p,
-        inStock: p.inStock ?? true, // Default to true if missing
-        sizes: p.sizes ?? [], // Default to empty array
-        isNewCollection: p.isNewCollection ?? false, // Default to false
+        sizes: p.sizes ?? [], // Ensure array default
+        stockDetails: p.stockDetails ?? {}, // Ensure object default
+        isNewCollection: p.isNewCollection ?? false,
+        isInStock: p.isInStock ?? false, // Ensure boolean default
       }))
       setProducts(processedProducts)
     } catch (error) {
       console.error('Failed to fetch products:', error)
-      toast.error('Failed to load products. Check console for details.')
+      toast.error('Failed to load products.')
     }
-  }, []) // Empty dependency array ensures this useCallback instance doesn't change
+  }, [])
 
-  // Fetch products when the component mounts
   useEffect(() => {
     fetchProducts()
   }, [fetchProducts])
 
   // --- Event Handlers ---
-  // Handles selecting a new image file
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    // Revoke previous blob URL if it exists to prevent memory leaks
     if (preview && preview.startsWith('blob:')) {
       URL.revokeObjectURL(preview)
     }
     if (file) {
-      setImage(file) // Store the file object
-      setPreview(URL.createObjectURL(file)) // Create a temporary URL for preview
+      setImage(file)
+      setPreview(URL.createObjectURL(file))
     } else {
       setImage(null)
       setPreview(null)
     }
   }
 
-  // Simple form validation
+  // --- Form Validation (Basic - Backend has more robust validation) ---
   const validateForm = () => {
     if (!title.trim() || !price.trim() || !category.trim() || !gender) {
       toast.error('Please fill Title, Price, Category, and Gender.')
       return false
     }
     const numericPrice = parseFloat(price)
-    if (isNaN(numericPrice) || numericPrice < 0) {
-      toast.error('Please enter a valid non-negative price.')
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      // Price should be positive
+      toast.error('Please enter a valid positive price.')
       return false
     }
-    // Require image only when creating a new product, not when editing
+    if (!formSizes.trim()) {
+      toast.error('Please enter available sizes (e.g., S, M, L).')
+      return false
+    }
+    if (!formStockDetailsString.trim()) {
+      toast.error('Please enter stock details (e.g., S:10, M:5).')
+      return false
+    }
+    // Basic format check for stock string (more checks on backend)
+    if (!/^[a-zA-Z0-9]+:\d+(,\s*[a-zA-Z0-9]+:\d+)*$/.test(formStockDetailsString.trim())) {
+      // toast.error('Stock details format seems incorrect. Use SIZE:QTY,SIZE:QTY (e.g., S:10, M:5).');
+      // Allow flexibility here, backend validation is primary
+    }
+
     if (!isEditMode && !image) {
       toast.error('Please upload an image for new products.')
       return false
@@ -103,81 +114,75 @@ const Products: React.FC = () => {
     return true
   }
 
-  // Reset form fields to default values
+  // --- Reset Form ---
   const resetForm = () => {
     setTitle('')
     setPrice('')
     setCategory('')
     setGender('')
     setDescription('')
-    setImage(null) // Clear selected file
+    setImage(null)
     if (preview && preview.startsWith('blob:')) {
-      // Clean up preview URL
       URL.revokeObjectURL(preview)
     }
-    setPreview(null) // Clear preview display
+    setPreview(null)
+    setFormSizes('') // Reset sizes string
+    setFormStockDetailsString('') // Reset stock details string
+    setFormIsNewCollection(false)
     setIsEditMode(false)
     setEditId(null)
-    setFormInStock(true)
-    setFormSizes('')
-    setFormIsNewCollection(false)
   }
 
-  // Handle form submission (Create or Update product)
+  // --- Handle Submit (Create/Update) ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validateForm()) return // Stop if validation fails
+    if (!validateForm()) return
 
-    // Create FormData to send data (especially the image file)
     const formData = new FormData()
     formData.append('title', title.trim())
     formData.append('price', price.trim())
     formData.append('category', category.trim())
     formData.append('gender', gender)
     formData.append('description', description.trim())
-    formData.append('inStock', String(formInStock)) // Convert boolean to string
-    formData.append('sizes', formSizes.trim().toUpperCase()) // Send sizes as string
-    formData.append('isNewCollection', String(formIsNewCollection)) // Convert boolean to string
+    formData.append('sizes', formSizes.trim().toUpperCase()) // Send sizes string (uppercase)
+    formData.append('stockDetailsString', formStockDetailsString.trim()) // Send stock string
+    formData.append('isNewCollection', String(formIsNewCollection))
 
-    // Append the image file only if a new one was selected
     if (image) {
       formData.append('image', image)
     }
 
-    setLoading(true) // Show loading indicator on submit button
+    setLoading(true)
     const toastId = toast.loading(isEditMode ? 'Updating product...' : 'Adding product...')
 
     try {
-      // Determine API URL and method based on edit mode
       const apiUrl = isEditMode && editId ? `/products/${editId}` : '/products'
       const method = isEditMode ? 'put' : 'post'
 
-      // Use apiClient for the request. Interceptor adds Auth token.
-      // Header 'Content-Type': 'multipart/form-data' is crucial for file uploads.
+      // Use apiClient for the request
       await apiClient({
         method,
         url: apiUrl,
         data: formData,
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data' }, // Essential for file uploads
       })
 
       toast.success(`✅ Product ${isEditMode ? 'updated' : 'added'}!`, { id: toastId })
-      fetchProducts() // Refresh the product list
-      resetForm() // Clear the form fields
+      fetchProducts() // Refresh list
+      resetForm() // Clear form
     } catch (error: any) {
-      // Handle potential errors
       console.error('API Error on Submit:', error.response?.data || error.message)
       const errorMsg =
         error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} product.`
       toast.error(`❌ ${errorMsg}`, { id: toastId })
     } finally {
-      setLoading(false) // Hide loading indicator
+      setLoading(false)
     }
   }
 
-  // Populate the form with data of the product to be edited
+  // --- Handle Edit ---
   const handleEdit = (product: Product) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' }) // Scroll to top to see the form
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     setIsEditMode(true)
     setEditId(product._id)
     setTitle(product.title)
@@ -185,109 +190,90 @@ const Products: React.FC = () => {
     setCategory(product.category)
     setGender(product.gender)
     setDescription(product.description || '')
-    setImage(null) // Clear any selected file (user must choose new one to replace)
-    setFormInStock(product.inStock ?? true)
-    setFormSizes(product.sizes?.join(', ') || '') // Join array back to string for input
+    setImage(null) // Clear selected file for edit
+    setFormSizes(product.sizes?.join(', ') || '') // Convert sizes array back to string
+
+    // Convert stockDetails object back to string "S:10, M:5" for the input field
+    const stockString = Object.entries(product.stockDetails || {})
+      .map(([size, qty]) => `${size}:${qty}`)
+      .join(', ')
+    setFormStockDetailsString(stockString) // Set the stock string
+
     setFormIsNewCollection(product.isNewCollection ?? false)
 
     // Clean up previous blob preview if exists
     if (preview && preview.startsWith('blob:')) {
       URL.revokeObjectURL(preview)
     }
-    // Set preview to the existing product image URL (using the image server base URL)
-    setPreview(product.image ? `${IMAGE_SERVER_URL}${product.image}` : null)
+    setPreview(product.image ? `${IMAGE_SERVER_URL}${product.image}` : null) // Show current image
   }
 
-  // Handle deleting a product
+  // --- Handle Delete ---
   const handleDelete = async (id: string) => {
-    // Confirmation dialog
     if (!window.confirm('Are you sure you want to delete this product? This cannot be undone.'))
       return
 
-    const loadingKey = `delete-${id}` // Unique key for this delete action
-    setActionLoading((prev) => ({ ...prev, [loadingKey]: true })) // Show loading on specific item
+    const loadingKey = `delete-${id}`
+    setActionLoading((prev) => ({ ...prev, [loadingKey]: true }))
     const toastId = toast.loading('Deleting product...')
 
     try {
-      // Use apiClient for DELETE request. Interceptor adds Auth token.
       await apiClient.delete(`/products/${id}`)
-
       toast.success('🗑️ Product deleted', { id: toastId })
-      fetchProducts() // Refresh the product list
-      // If the currently edited product was deleted, reset the form
+      fetchProducts() // Refresh list
       if (isEditMode && editId === id) {
-        resetForm()
+        resetForm() // Reset form if deleted item was being edited
       }
     } catch (error: any) {
-      // Handle potential errors
       console.error('Delete Error:', error.response?.data || error.message)
       const message = error.response?.data?.message || 'Delete failed.'
       toast.error(`❌ ${message}`, { id: toastId })
     } finally {
-      setActionLoading((prev) => ({ ...prev, [loadingKey]: false })) // Hide loading
+      setActionLoading((prev) => ({ ...prev, [loadingKey]: false }))
     }
   }
 
-  // Combined handler for toggling 'inStock' or 'isNewCollection' status
-  const handleToggleStatus = async (
-    productId: string,
-    field: 'inStock' | 'isNewCollection', // Field to update
-    currentValue: boolean, // Current value of the field
-  ) => {
-    const newStatus = !currentValue // Toggle the value
-    const loadingKey = `${field}-${productId}` // Unique key for this toggle action
-    setActionLoading((prev) => ({ ...prev, [loadingKey]: true })) // Show loading
-    const fieldNameReadable = field === 'inStock' ? 'Stock status' : 'New Collection status'
-    const toastId = toast.loading(`Updating ${fieldNameReadable}...`)
+  // --- Handle Toggle New Collection Status ---
+  const handleToggleNewCollection = async (productId: string, currentValue: boolean) => {
+    const newStatus = !currentValue
+    const loadingKey = `isNewCollection-${productId}`
+    setActionLoading((prev) => ({ ...prev, [loadingKey]: true }))
+    const toastId = toast.loading(`Updating New Collection status...`)
 
     try {
-      // Payload contains only the field being updated
-      const payload = { [field]: newStatus }
-      console.log(`Attempting to update ${field} for ${productId} to ${newStatus}`, payload)
+      // Send only the field being updated
+      await apiClient.put(`/products/${productId}`, { isNewCollection: newStatus })
+      toast.success(`✅ New Collection status updated.`, { id: toastId })
 
-      // Use apiClient for PUT request. Interceptor adds Auth token.
-      // Send only the specific field to update
-      await apiClient.put(`/products/${productId}`, payload)
-
-      toast.success(`✅ ${fieldNameReadable} updated.`, { id: toastId })
-
-      // Optimistic UI Update: Update the state locally immediately
+      // Optimistic UI Update
       setProducts((prevProducts) =>
-        prevProducts.map(
-          (p) => (p._id === productId ? { ...p, [field]: newStatus } : p), // Update the specific product
-        ),
+        prevProducts.map((p) => (p._id === productId ? { ...p, isNewCollection: newStatus } : p)),
       )
     } catch (error: any) {
-      // Handle potential errors
-      const errorData = error.response?.data
-      const errorMessage = errorData?.message || `Failed to update ${fieldNameReadable}.`
+      const errorMsg = error.response?.data?.message || 'Failed to update status.'
       console.error(
-        `Failed to update ${field} for ${productId}:`,
-        error.response?.status,
-        errorData || error.message,
+        `Failed to update New Collection status for ${productId}:`,
+        error.response?.data || error.message,
       )
-      toast.error(`❌ ${errorMessage}`, { id: toastId })
-      // Optionally, refetch products on error to revert optimistic update:
-      // fetchProducts();
+      toast.error(`❌ ${errorMsg}`, { id: toastId })
+      // fetchProducts(); // Optional: Refetch on error to ensure consistency
     } finally {
-      setActionLoading((prev) => ({ ...prev, [loadingKey]: false })) // Hide loading
+      setActionLoading((prev) => ({ ...prev, [loadingKey]: false }))
     }
   }
 
-  // Cleanup Effect for Blob URL when component unmounts or preview changes
+  // --- Cleanup Effect for Image Preview Blob URL ---
   useEffect(() => {
     return () => {
       if (preview && preview.startsWith('blob:')) {
         URL.revokeObjectURL(preview)
       }
     }
-  }, [preview]) // Depend on preview state
+  }, [preview])
 
   // --- Render Component ---
   return (
-    // Main container
     <div className="min-h-screen bg-[#f9f7f3] px-4 py-10 font-sans">
-      {/* Toast notifications container */}
       <Toaster position="top-right" reverseOrder={false} />
 
       {/* --- Add/Edit Product Form Section --- */}
@@ -295,9 +281,8 @@ const Products: React.FC = () => {
         <h2 className="text-2xl font-semibold text-[#c8a98a] mb-6 text-center">
           {isEditMode ? 'Edit Product Details' : 'Add New Product'}
         </h2>
-        {/* Form Element */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Product Title Input */}
+          {/* Product Title */}
           <div>
             <label htmlFor="title" className="form-label">
               Product Title
@@ -311,7 +296,7 @@ const Products: React.FC = () => {
               placeholder="e.g., Premium Cotton Shirt"
             />
           </div>
-          {/* Product Price Input */}
+          {/* Product Price */}
           <div>
             <label htmlFor="price" className="form-label">
               Price (PKR)
@@ -324,9 +309,11 @@ const Products: React.FC = () => {
               className="input-style"
               required
               placeholder="e.g., 3499"
+              min="0"
+              step="any"
             />
           </div>
-          {/* Product Category Input */}
+          {/* Product Category */}
           <div>
             <label htmlFor="category" className="form-label">
               Category
@@ -340,7 +327,7 @@ const Products: React.FC = () => {
               placeholder="e.g., Shirts, Pants"
             />
           </div>
-          {/* Gender Select Dropdown */}
+          {/* Gender Select */}
           <div>
             <label htmlFor="gender" className="form-label">
               Gender
@@ -357,10 +344,9 @@ const Products: React.FC = () => {
               </option>
               <option value="Men">Men</option>
               <option value="Women">Women</option>
-              <option value="Unisex">Unisex</option>
             </select>
           </div>
-          {/* Product Description Textarea */}
+          {/* Product Description */}
           <div>
             <label htmlFor="description" className="form-label">
               Description <span className="text-xs text-gray-500">(Optional)</span>
@@ -374,19 +360,42 @@ const Products: React.FC = () => {
               placeholder="Product features, material..."
             />
           </div>
+
           {/* Available Sizes Input */}
           <div>
             <label htmlFor="sizes" className="form-label">
-              Available Sizes <span className="text-xs text-gray-500">(Comma-separated)</span>
+              Available Sizes{' '}
+              <span className="text-xs text-gray-500">(Comma-separated, e.g., S, M, L)</span>
             </label>
             <input
               id="sizes"
               value={formSizes}
-              onChange={(e) => setFormSizes(e.target.value.toUpperCase())}
+              onChange={(e) => setFormSizes(e.target.value.toUpperCase())} // Standardize input
               className="input-style"
               placeholder="e.g., S, M, L, XL"
+              required
             />
           </div>
+
+          {/* Stock Quantity per Size Input */}
+          <div>
+            <label htmlFor="stockDetails" className="form-label">
+              Stock Quantity per Size{' '}
+              <span className="text-xs text-gray-500">(Format: SIZE:QTY,SIZE:QTY)</span>
+            </label>
+            <input
+              id="stockDetails"
+              value={formStockDetailsString}
+              onChange={(e) => setFormStockDetailsString(e.target.value)}
+              className="input-style"
+              placeholder="e.g., S:10, M:15, L:0, XL:5"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Ensure sizes here match 'Available Sizes'. Use 0 for out-of-stock sizes.
+            </p>
+          </div>
+
           {/* Image Upload Input */}
           <div className="w-full">
             <label className="form-label">
@@ -397,54 +406,38 @@ const Products: React.FC = () => {
             </label>
             <div className="flex items-center space-x-4 mt-1">
               <label className="button-style-alt cursor-pointer">
-                {' '}
-                {/* Styled button */}
                 Choose File
                 <input
                   type="file"
                   className="hidden"
                   onChange={handleImageChange}
                   accept="image/png, image/jpeg, image/webp"
-                />{' '}
-                {/* Hidden actual input */}
+                />
               </label>
-              {/* Display filename if new image selected */}
               {image && (
                 <span className="text-sm text-gray-600 truncate max-w-xs" title={image.name}>
                   {image.name}
                 </span>
               )}
-              {/* Display message if editing and no new file chosen */}
               {!image && isEditMode && preview && (
                 <span className="text-sm text-gray-500 italic">Current image saved</span>
               )}
             </div>
           </div>
-          {/* Image Preview Section */}
+
+          {/* Image Preview */}
           {preview && (
             <div className="preview-container">
               <p className="text-xs text-gray-500 mb-1">
                 {isEditMode && !image ? 'Current Image:' : 'New Image Preview:'}
               </p>
-              {/* Display either blob URL or server URL */}
               <img src={preview} alt="Preview" className="preview-image" />
             </div>
           )}
+
           {/* Checkboxes Section */}
           <div className="flex items-center justify-start pt-2 space-x-6">
-            {/* In Stock Checkbox */}
-            <div className="flex items-center">
-              <input
-                id="formInStock"
-                type="checkbox"
-                checked={formInStock}
-                onChange={(e) => setFormInStock(e.target.checked)}
-                className="checkbox-style"
-              />
-              <label htmlFor="formInStock" className="ml-2 form-label cursor-pointer">
-                In Stock
-              </label>
-            </div>
+            {/* REMOVED 'In Stock' Checkbox */}
             {/* New Collection Checkbox */}
             <div className="flex items-center">
               <input
@@ -452,16 +445,16 @@ const Products: React.FC = () => {
                 type="checkbox"
                 checked={formIsNewCollection}
                 onChange={(e) => setFormIsNewCollection(e.target.checked)}
-                className="checkbox-style text-blue-600 focus:ring-blue-500"
+                className="checkbox-style text-blue-600 focus:ring-blue-500" // Keep styling
               />
               <label htmlFor="formIsNewCollection" className="ml-2 form-label cursor-pointer">
-                New Collection
+                Mark as New Collection
               </label>
             </div>
           </div>
+
           {/* Form Action Buttons */}
           <div className="pt-4 flex flex-col sm:flex-row gap-3">
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -470,7 +463,6 @@ const Products: React.FC = () => {
               {loading && <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />}
               {loading ? 'Processing...' : isEditMode ? 'Update Product' : 'Add Product'}
             </button>
-            {/* Cancel Edit Button (visible only in edit mode) */}
             {isEditMode && (
               <button
                 type="button"
@@ -491,56 +483,75 @@ const Products: React.FC = () => {
         <h3 className="text-xl font-semibold text-[#c8a98a] mb-6 text-center sm:text-left">
           Manage Existing Products ({products.length})
         </h3>
-        {/* Grid container for product cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {products.length > 0 ? (
-            // Map over products array to display each product card
             products.map((product) => {
-              // Determine loading states for actions on this specific product
-              const isStockUpdating = actionLoading[`inStock-${product._id}`]
+              // Determine loading states for actions
               const isCollectionUpdating = actionLoading[`isNewCollection-${product._id}`]
               const isDeleting = actionLoading[`delete-${product._id}`]
-              const anyActionLoading = isStockUpdating || isCollectionUpdating || isDeleting // Check if any action is loading
+              const anyActionLoading = isCollectionUpdating || isDeleting
+
+              // Generate a display string for stock details
+              const stockDisplay =
+                product.sizes && product.sizes.length > 0 ? (
+                  product.sizes
+                    .map((size) => `${size}: ${product.stockDetails?.[size] ?? 0}`) // Show qty per size
+                    .join(' | ')
+                ) : (
+                  <span className="italic text-gray-500">No size/stock info</span>
+                ) // Handle case with no sizes
 
               return (
                 // --- Individual Product Card ---
                 <div key={product._id} className="product-card-admin">
-                  {/* 'NEW' Badge if product is in new collection */}
+                  {/* 'NEW' Badge */}
                   {product.isNewCollection && (
                     <span className="absolute top-1.5 left-1.5 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10 shadow-sm">
                       NEW
                     </span>
                   )}
-                  {/* Product Image - Use IMAGE_SERVER_URL */}
+                  {/* Overall Stock Status Badge */}
+                  <span
+                    className={`absolute top-1.5 right-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10 shadow-sm ${
+                      product.isInStock
+                        ? 'bg-green-100 text-green-800 ring-1 ring-inset ring-green-600/20'
+                        : 'bg-red-100 text-red-800 ring-1 ring-inset ring-red-600/10'
+                    }`}
+                  >
+                    {product.isInStock ? 'In Stock' : 'Out of Stock'}
+                  </span>
+
+                  {/* Product Image */}
                   <img
-                    src={`${IMAGE_SERVER_URL}${product.image}`} // Construct full URL
+                    src={`${IMAGE_SERVER_URL}${product.image}`}
                     alt={product.title}
                     className="product-image-admin"
                     onError={(e) => {
                       e.currentTarget.src = 'https://via.placeholder.com/300x200?text=No+Image'
-                    }} // Fallback image
-                    loading="lazy" // Lazy load images
+                    }}
+                    loading="lazy"
                   />
-                  {/* Product Details Section */}
+                  {/* Product Details */}
                   <div className="product-details-admin">
                     <h4 title={product.title}>{product.title}</h4>
                     <p className="text-xs text-gray-500 mb-1">
-                      {/* Truncate description */}
                       {product.description ? (
                         `${product.description.substring(0, 35)}...`
                       ) : (
                         <span className="italic">No description</span>
                       )}
                     </p>
-                    <p className="text-xs text-gray-500 mb-1">
-                      Sizes: {product.sizes?.join(', ') || <span className="italic">None</span>}
+                    {/* Display Detailed Stock Info */}
+                    <p
+                      className="text-xs text-gray-600 font-medium my-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 overflow-hidden text-ellipsis whitespace-nowrap"
+                      title={typeof stockDisplay === 'string' ? stockDisplay : 'Stock details'}
+                    >
+                      Stock: {stockDisplay}
                     </p>
-                    <p className="text-xs text-gray-500 capitalize mb-2">
+                    <p className="text-xs text-gray-500 capitalize mt-1 mb-2">
                       {product.category} • {product.gender}
                     </p>
                     <p className="text-[#c8a98a] font-medium text-base mt-auto pt-1">
-                      {' '}
-                      {/* Price */}
                       PKR{' '}
                       {product.price != null
                         ? Number(product.price).toLocaleString('en-PK')
@@ -558,29 +569,11 @@ const Products: React.FC = () => {
                     >
                       <Edit size={14} />
                     </button>
-                    {/* In Stock Toggle Button */}
-                    <button
-                      onClick={() => handleToggleStatus(product._id, 'inStock', product.inStock)}
-                      disabled={loading || anyActionLoading}
-                      className={`button-stock ${product.inStock ? 'in' : 'out'}`}
-                      title={product.inStock ? 'Mark Out of Stock' : 'Mark In Stock'}
-                    >
-                      {isStockUpdating ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : product.inStock ? (
-                        <CheckCircle size={14} />
-                      ) : (
-                        <XCircle size={14} />
-                      )}
-                    </button>
+                    {/* REMOVED In Stock Toggle Button */}
                     {/* New Collection Toggle Button */}
                     <button
                       onClick={() =>
-                        handleToggleStatus(
-                          product._id,
-                          'isNewCollection',
-                          !!product.isNewCollection,
-                        )
+                        handleToggleNewCollection(product._id, !!product.isNewCollection)
                       }
                       disabled={loading || anyActionLoading}
                       className={`button-toggle-new ${product.isNewCollection ? 'active' : ''}`}
@@ -614,7 +607,6 @@ const Products: React.FC = () => {
               )
             }) // End map
           ) : (
-            // Message displayed when no products are found
             <p className="no-products-message col-span-full">
               No products found. Add products using the form above.
             </p>
@@ -624,7 +616,7 @@ const Products: React.FC = () => {
       </div>
       {/* --- End Display Products Section --- */}
 
-      {/* --- Reusable Styles defined using styled-jsx --- */}
+      {/* --- Reusable Styles --- */}
       <style jsx>{`
         /* Form Styles */
         .form-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 500; color: #374151; }
@@ -633,35 +625,33 @@ const Products: React.FC = () => {
         .select-style { background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"><path stroke="%236b7280" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4"/></svg>'); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; appearance: none; }
         .textarea-style { min-height: 7rem; resize: vertical; }
         .checkbox-style { height: 1rem; width: 1rem; border-radius: 0.25rem; border: 1px solid #d1d5db; color: #c8a98a; focus:ring-offset-0 focus:ring-1 focus:ring-[#c8a98a]; cursor: pointer; }
-        .button-style { display: inline-flex; justify-content: center; align-items: center; padding: 0.625rem 1.25rem; border-radius: 0.375rem; font-weight: 600; transition: background-color 0.2s, opacity 0.2s; white-space: nowrap; border: 1px solid transparent; cursor: pointer; }
+        .button-style { display: inline-flex; justify-content: center; align-items: center; padding: 0.625rem 1.25rem; border-radius: 0.375rem; font-weight: 600; transition: background-color 0.2s, opacity 0.2s; white-space: nowrap; border: 1px solid transparent; cursor: pointer; font-size: 0.875rem; }
         .button-style.primary { background-color: #c8a98a; color: white; }
         .button-style.primary:hover:not(:disabled) { background-color: #b08d6a; }
         .button-style.secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; }
         .button-style.secondary:hover:not(:disabled) { background-color: #d1d5db; }
         .button-style:disabled { opacity: 0.7; cursor: not-allowed; }
-        .button-style-alt { display: inline-block; cursor: pointer; background-color: #c8a98a; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 0.2s; }
-        .button-style-alt:hover { background-color: #b08d6a; }
+        .button-style-alt { display: inline-block; cursor: pointer; background-color: #f3f4f6; color: #374151; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 0.2s; border: 1px solid #d1d5db;}
+        .button-style-alt:hover { background-color: #e5e7eb; }
         .preview-container { margin-top: 1rem; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.5rem; background-color: #f9fafb; }
         .preview-image { display: block; width: 100%; height: auto; max-height: 15rem; object-fit: cover; border-radius: 0.375rem; }
 
         /* Admin Product Card Styles */
         .product-card-admin { background-color: white; border-radius: 0.5rem; overflow: hidden; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); display: flex; flex-direction: column; transition: box-shadow 0.2s; position: relative; }
         .product-card-admin:hover { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .product-image-admin { height: 12rem; width: 100%; object-fit: cover; background-color: #f3f4f6; } /* Added bg color */
+        .product-image-admin { height: 12rem; width: 100%; object-fit: cover; background-color: #f3f4f6; display: block; }
         .product-details-admin { padding: 0.75rem; flex-grow: 1; display: flex; flex-direction: column; }
         .product-details-admin h4 { font-weight: 600; color: #1f2937; font-size: 0.9rem; margin-bottom: 0.25rem; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .product-actions-admin { display: flex; justify-content: space-around; align-items: center; padding: 0.5rem; background-color: #f9fafb; border-top: 1px solid #f3f4f6; gap: 0.3rem; }
+        .product-actions-admin { display: flex; justify-content: space-around; align-items: center; padding: 0.5rem 0.75rem; background-color: #f9fafb; border-top: 1px solid #f3f4f6; gap: 0.5rem; } /* Increased gap slightly */
 
         /* Action Buttons Base */
-        .button-edit, .button-stock, .button-delete, .button-toggle-new { padding: 0.4rem; border-radius: 0.25rem; transition: background-color 0.2s, color 0.2s, opacity 0.2s, border-color 0.2s; border: 1px solid transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;}
-        .button-edit:disabled, .button-stock:disabled, .button-delete:disabled, .button-toggle-new:disabled { opacity: 0.5; cursor: not-allowed; }
+        .button-edit, .button-delete, .button-toggle-new { padding: 0.4rem; border-radius: 0.25rem; transition: background-color 0.2s, color 0.2s, opacity 0.2s, border-color 0.2s; border: 1px solid transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; line-height: 1; }
+        .button-edit:disabled, .button-delete:disabled, .button-toggle-new:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Specific Action Button Styles */
         .button-edit { background-color: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
         .button-edit:hover:not(:disabled) { background-color: #e5e7eb; }
-        .button-stock { min-width: 32px; height: 32px; text-align: center; }
-        .button-stock.in { background-color: #d1fae5; color: #065f46; } .button-stock.in:hover:not(:disabled) { background-color: #a7f3d0; }
-        .button-stock.out { background-color: #fee2e2; color: #991b1b; } .button-stock.out:hover:not(:disabled) { background-color: #fecaca; }
+        /* Removed .button-stock styles */
         .button-delete { background-color: #fee2e2; color: #dc2626; }
         .button-delete:hover:not(:disabled) { background-color: #ef4444; color: white; }
         .button-toggle-new { min-width: 32px; height: 32px; background-color: #e0e7ff; color: #4f46e5; border-color: #c7d2fe; }
