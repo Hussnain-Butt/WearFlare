@@ -211,7 +211,7 @@ exports.confirmOrderByUserEmail = async (req, res) => {
     if (!order) {
       console.warn(`Invalid or expired confirmation token attempt: ${token.slice(0, 10)}...`)
       const failureRedirectUrl = `${
-        process.env.FRONTEND_URL || 'http://localhost:5173'
+        process.env.FRONTEND_URL || 'https://frontend-production-c902.up.railway.app'
       }/order-confirmation-status?status=failed&message=Invalid or expired confirmation link.`
       return res.redirect(failureRedirectUrl)
     }
@@ -266,13 +266,13 @@ exports.confirmOrderByUserEmail = async (req, res) => {
 
     // --- Redirect user to frontend success page ---
     const successRedirectUrl = `${
-      process.env.FRONTEND_URL || 'http://localhost:5173'
+      process.env.FRONTEND_URL || 'https://frontend-production-c902.up.railway.app'
     }/order-confirmation-status?status=success&orderId=${order._id.toString().slice(-6)}`
     res.redirect(successRedirectUrl)
   } catch (error) {
     console.error('Error confirming order via email:', error)
     const errorRedirectUrl = `${
-      process.env.FRONTEND_URL || 'http://localhost:5173'
+      process.env.FRONTEND_URL || 'https://frontend-production-c902.up.railway.app'
     }/order-confirmation-status?status=error&message=Order confirmation failed due to a server error.`
     res.redirect(errorRedirectUrl)
   }
