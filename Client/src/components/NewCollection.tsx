@@ -1,6 +1,6 @@
 // src/components/NewCollection.tsx
 import React, { useState, useEffect, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import AnimatedSection from './AnimatedSection' // Ensure path is correct
 import { Loader2 } from 'lucide-react' // For loading indicator
@@ -218,13 +218,13 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 6 }
                           View Details
                         </button>
                         {/* Optional Try Now Button - Uncomment if needed
-                                         <button
-                                           className="w-full mt-2 px-4 py-2.5 bg-[#c8a98a] text-[#6b5745] text-sm font-medium rounded-md hover:bg-[#b08d6a] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#c8a98a] focus:ring-offset-2"
-                                           onClick={() => handleTryNow(product._id)}
-                                         >
-                                           Try Now
-                                         </button>
-                                          */}
+                                        <button
+                                          className="w-full mt-2 px-4 py-2.5 bg-[#c8a98a] text-[#6b5745] text-sm font-medium rounded-md hover:bg-[#b08d6a] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#c8a98a] focus:ring-offset-2"
+                                          onClick={() => handleTryNow(product._id)}
+                                        >
+                                          Try Now
+                                        </button>
+                                         */}
                       </>
                     ) : (
                       // Out of Stock Button (Disabled look): Consistent styling
@@ -238,7 +238,7 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 6 }
                   </div>
                   {/* --- End Buttons Container --- */}
                 </div>
-              </div>
+              </div> // End Product Card
             ))}
           </div>
         </AnimatedSection>
