@@ -195,13 +195,13 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 6 }
                         >
                           View Details
                         </button>
-                        <button
+                        {/* <button
                           className="button-newcollection try-now-button"
                           onClick={() => handleTryNow(product._id)}
                           disabled={!product.inStock}
                         >
                           Try Now
-                        </button>
+                        </button> */}
                       </>
                     ) : (
                       <span className="out-of-stock-text-newcollection"> Out of Stock </span>

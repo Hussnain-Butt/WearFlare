@@ -12,22 +12,12 @@ const Footer = () => {
             <h3 className="text-xl font-semibold mb-4 text-black">Help</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
-                  Shipping & Return Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
+                <Link to="/terms" className="hover:text-[#c8a98a]">
                   Terms & Conditions
                 </Link>
               </li>
               <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
+                <Link to="/privacy" className="hover:text-[#c8a98a]">
                   Privacy Policy
                 </Link>
               </li>
@@ -41,16 +31,6 @@ const Footer = () => {
               <li>
                 <Link to="/contact" className="hover:text-[#c8a98a]">
                   Contact
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
-                  News
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="hover:text-[#c8a98a]">
-                  Reports
                 </Link>
               </li>
             </ul>

@@ -48,6 +48,8 @@ import OrdersPage from './admin/pages/OrdersPage'
 // --- Other Pages ---
 import { Account } from './pages/Account' // Customer Account
 import OrderConfirmationStatusPage from './pages/OrderConfirmationStatusPage.js'
+import TermsAndConditionsPage from './pages/TermsAndConditionsPage.js'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage.js'
 // --- End Other Pages ---
 
 const App = () => (
@@ -72,6 +74,8 @@ const App = () => (
       <Route path="/product/:productId" element={<ProductDetailsPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/terms" element={<TermsAndConditionsPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
       {/* --- Customer Account Route (Example Protection) --- */}
       <Route
@@ -84,8 +88,8 @@ const App = () => (
       />
 
       {/* --- Role-Specific Login Routes --- */}
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/pm/login" element={<ProductManagerLogin />} />
+      <Route path="/admin" element={<AdminLogin />} />
+      {/* <Route path="/pm/login" element={<ProductManagerLogin />} /> */}
 
       {/* --- Admin Protected Routes --- */}
       <Route

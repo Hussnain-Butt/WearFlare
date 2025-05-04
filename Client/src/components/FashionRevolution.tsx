@@ -22,7 +22,7 @@ const FashionRevolution = () => {
               express yourself like never before. Let's make fashion fun again!
             </p>
             <Link to="/avatar-creation">
-              <Button className="bg-[#8D7253]  text-2xl hover:bg-[#7d654a] text-white rounded-full p-3 px-9">
+              <Button className="bg-[#8D7253]  text-xl hover:bg-[#7d654a] text-white rounded-full p-3 px-9">
                 Create Now
               </Button>
             </Link>
@@ -71,11 +71,6 @@ const FashionRevolution = () => {
               Dive into a world of style with our latest collection! Shop now and redefine your
               wardrobe narrative!
             </p>
-            <Link to="/shop">
-              <Button className="bg-[#8D7253] hover:bg-[#7d654a] text-white uppercase rounded-full px-8">
-                Shop Now
-              </Button>
-            </Link>
           </div>
         </div>
       </AnimatedSection>

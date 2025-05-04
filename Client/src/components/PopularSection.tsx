@@ -148,13 +148,13 @@ const PopularSection: React.FC = () => {
                       >
                         View Details
                       </button>
-                      <button
+                      {/* <button
                         className="button-popular try-now-button"
                         onClick={() => handleTryNow(product._id)}
                         disabled={!product.inStock}
                       >
                         Try Now
-                      </button>
+                      </button> */}
                     </>
                   ) : (
                     // Show "Out of Stock" text instead of buttons
