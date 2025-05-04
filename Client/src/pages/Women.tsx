@@ -9,7 +9,7 @@ import NewsLetter from '@/components/NewsLetter'
 import AnimatedSection from '@/components/AnimatedSection'
 import NewCollection from '@/components/NewCollection'
 
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app'
+const API_BASE_URL = 'http://localhost:5000'
 
 interface Product {
   /* ... Interface remains the same ... */ _id: string
@@ -133,26 +133,26 @@ const Women: React.FC = () => {
                     <div
                       key={product._id}
                       id={`product-row-${product._id}`}
-                      className="flex flex-col items-center group text-center"
+                      // Unified card styling: white background, rounded corners, subtle shadow, hover effect
+                      className="group flex flex-col bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
                     >
-                      {/* Image Container */}
-                      {/* Use updated handleViewDetails on click */}
+                      {/* Image Container: Make it clickable if in stock */}
                       <div
-                        className="bg-white p-3 w-full overflow-hidden rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 relative cursor-pointer"
+                        className="relative overflow-hidden cursor-pointer"
                         onClick={() => product.isInStock && handleViewDetails(product._id)}
                       >
-                        {/* Out of Stock Badge (Keep as is) */}
+                        {/* Out of Stock Badge (Positioned top-right) */}
                         {!product.isInStock && (
-                          <div className="absolute top-2 right-2 bg-red-100 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded-full z-10 ring-1 ring-inset ring-red-600/20">
+                          <div className="absolute top-3 right-3 bg-red-100 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded-full z-10 ring-1 ring-inset ring-red-600/20">
                             Out of Stock
                           </div>
                         )}
-                        {/* Product Image (Keep as is) */}
+                        {/* Product Image: Adjusted height, added scale transition on hover */}
                         <img
                           src={`${API_BASE_URL}${product.image}`}
                           alt={product.title}
-                          className={`w-full h-64 sm:h-72 md:h-80 object-cover group-hover:scale-105 transition-transform duration-300 rounded-md ${
-                            !product.isInStock ? 'opacity-50' : ''
+                          className={`w-full h-72 sm:h-80 md:h-[350px] object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 ${
+                            !product.isInStock ? 'opacity-50 grayscale-[50%]' : '' // Added subtle grayscale for out of stock
                           }`}
                           loading="lazy"
                           onError={(e) => {
@@ -160,17 +160,20 @@ const Women: React.FC = () => {
                           }} // Fallback
                         />
                       </div>
-                      {/* Product Info & Actions */}
-                      <div className="mt-3 w-full px-1">
-                        {/* Title (Keep as is, or make it clickable with handleViewDetails) */}
-                        <p
-                          className="text-sm font-medium text-gray-800 truncate"
+
+                      {/* Product Info & Actions: Added padding, adjusted text alignment and spacing */}
+                      <div className="p-4 flex flex-col flex-grow">
+                        {' '}
+                        {/* flex-grow makes this section fill remaining space */}
+                        {/* Title: Slightly larger, bold, left-aligned, margin-bottom */}
+                        <h3
+                          className="text-base font-semibold text-gray-800 truncate mb-1 text-left"
                           title={product.title}
                         >
-                          {/* Optional: Make title clickable too */}
+                          {/* Make title clickable */}
                           {product.isInStock ? (
                             <Link
-                              to="#"
+                              to="#" // Use Link for semantics, prevent default handles navigation
                               onClick={(e) => {
                                 e.preventDefault()
                                 handleViewDetails(product._id)
@@ -180,36 +183,43 @@ const Women: React.FC = () => {
                               {product.title}
                             </Link>
                           ) : (
+                            // Non-clickable title when out of stock
                             <span>{product.title}</span>
                           )}
-                        </p>
-                        {/* Price (Keep as is) */}
-                        <p className="text-sm font-semibold text-[#6b5745] mt-1">
+                        </h3>
+                        {/* Price: Left-aligned, margin-bottom */}
+                        <p className="text-sm font-semibold text-[#6b5745] mb-3 text-left">
                           PKR {Number(product.price).toLocaleString('en-PK')}
                         </p>
                         {/* --- Buttons Container / Out of Stock Message --- */}
-                        <div className="mt-3 flex flex-col sm:flex-row gap-2 justify-center items-center">
+                        {/* Use mt-auto to push buttons to the bottom if card heights vary */}
+                        <div className="mt-auto pt-2">
                           {product.isInStock ? (
                             <>
-                              {/* Use updated handleViewDetails */}
+                              {/* View Details Button: Refined styling */}
                               <button
-                                className="w-full sm:w-auto px-4 py-2 bg-[#6b5745] text-white text-xs font-medium rounded-full hover:bg-[#5d4c3b] transition-colors duration-300 flex-1 whitespace-nowrap"
+                                className="w-full px-4 py-2.5 bg-[#6b5745] text-white text-sm font-medium rounded-md hover:bg-[#5d4c3b] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#6b5745] focus:ring-offset-2"
                                 onClick={() => handleViewDetails(product._id)}
                               >
                                 View Details
                               </button>
-                              {/* <button
-                                className="w-full sm:w-auto px-4 py-2 bg-[#c8a98a] text-white text-xs font-medium rounded-full hover:bg-[#b08d6a] transition-colors duration-300 flex-1 whitespace-nowrap"
-                                onClick={() => handleTryNow(product._id)}
-                              >
-                                Try Now
-                              </button> */}
+                              {/* Optional Try Now Button - Uncomment if needed
+                                              <button
+                                                className="w-full mt-2 px-4 py-2.5 bg-[#c8a98a] text-[#6b5745] text-sm font-medium rounded-md hover:bg-[#b08d6a] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#c8a98a] focus:ring-offset-2"
+                                                onClick={() => handleTryNow(product._id)}
+                                              >
+                                                Try Now
+                                              </button>
+                                               */}
                             </>
                           ) : (
-                            // Out of Stock text (Keep as is)
-                            <span className="inline-block mt-1 px-5 py-2 bg-gray-200 text-gray-500 text-xs font-semibold rounded-full w-full sm:w-auto cursor-default">
+                            // Out of Stock Button (Disabled look): Consistent styling
+                            <button
+                              className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 text-sm font-medium rounded-md cursor-not-allowed"
+                              disabled // Make it a disabled button
+                            >
                               Out of Stock
-                            </span>
+                            </button>
                           )}
                         </div>
                         {/* --- End Buttons Container --- */}

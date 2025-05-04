@@ -7,7 +7,7 @@ import AuthContext from '../context/AuthContext' // Adjust path if needed
 import { toast, Toaster } from 'react-hot-toast'
 import axios from 'axios' // Import axios
 
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your deployed URL
+const API_BASE_URL = 'http://localhost:5000' // Or your deployed URL
 
 const ResetPasswordPage: React.FC = () => {
   const [password, setPassword] = useState<string>('')

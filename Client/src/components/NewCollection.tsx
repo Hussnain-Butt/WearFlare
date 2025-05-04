@@ -18,8 +18,7 @@ interface Product {
 }
 
 // --- API Base URL ---
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 // --- NEW: Props Interface ---
 interface NewCollectionProps {
@@ -146,67 +145,97 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 6 }
             {products.map((product) => (
               <div
                 key={product._id}
-                className="bg-[#d3cac0] rounded-lg shadow-md overflow-hidden flex flex-col group transition-shadow hover:shadow-lg"
+                id={`product-row-${product._id}`}
+                // Unified card styling: white background, rounded corners, subtle shadow, hover effect
+                className="group flex flex-col bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
               >
-                {/* Image container */}
+                {/* Image Container: Make it clickable if in stock */}
                 <div
-                  className="relative overflow-hidden cursor-pointer h-96" // Set a fixed height for consistency
-                  onClick={() => product.inStock && handleViewDetails(product._id)}
+                  className="relative overflow-hidden cursor-pointer"
+                  onClick={() => product.isInStock && handleViewDetails(product._id)}
                 >
-                  {!product.inStock && (
-                    <div className="product-badge out-of-stock-badge"> Out of Stock </div>
+                  {/* Out of Stock Badge (Positioned top-right) */}
+                  {!product.isInStock && (
+                    <div className="absolute top-3 right-3 bg-red-100 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded-full z-10 ring-1 ring-inset ring-red-600/20">
+                      Out of Stock
+                    </div>
                   )}
+                  {/* Product Image: Adjusted height, added scale transition on hover */}
                   <img
-                    src={
-                      product.image.startsWith('http')
-                        ? product.image
-                        : `${API_BASE_URL}${product.image}`
-                    }
+                    src={`${API_BASE_URL}${product.image}`}
                     alt={product.title}
-                    className={`w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105 ${
-                      !product.inStock ? 'out-of-stock-image' : ''
-                    }`} // Ensure image fills container
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/400x500?text=No+Image'
-                    }}
+                    className={`w-full h-72 sm:h-80 md:h-[350px] object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 ${
+                      !product.isInStock ? 'opacity-50 grayscale-[50%]' : '' // Added subtle grayscale for out of stock
+                    }`}
                     loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://via.placeholder.com/300?text=No+Image'
+                    }} // Fallback
                   />
                 </div>
-                {/* Details Below Image */}
-                <div className="product-card-details">
-                  <p className="product-card-title" title={product.title}>
-                    {product.title}
+
+                {/* Product Info & Actions: Added padding, adjusted text alignment and spacing */}
+                <div className="p-4 flex flex-col flex-grow">
+                  {' '}
+                  {/* flex-grow makes this section fill remaining space */}
+                  {/* Title: Slightly larger, bold, left-aligned, margin-bottom */}
+                  <h3
+                    className="text-base font-semibold text-gray-800 truncate mb-1 text-left"
+                    title={product.title}
+                  >
+                    {/* Make title clickable */}
+                    {product.isInStock ? (
+                      <Link
+                        to="#" // Use Link for semantics, prevent default handles navigation
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleViewDetails(product._id)
+                        }}
+                        className="hover:text-[#6b5745] transition-colors"
+                      >
+                        {product.title}
+                      </Link>
+                    ) : (
+                      // Non-clickable title when out of stock
+                      <span>{product.title}</span>
+                    )}
+                  </h3>
+                  {/* Price: Left-aligned, margin-bottom */}
+                  <p className="text-sm font-semibold text-[#6b5745] mb-3 text-left">
+                    PKR {Number(product.price).toLocaleString('en-PK')}
                   </p>
-                  <p className="product-card-price">
-                    PKR{' '}
-                    {Number(product.price).toLocaleString('en-PK', {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 2,
-                    })}
-                  </p>
-                  {/* Buttons Area */}
-                  <div className="product-card-buttons">
-                    {product.inStock ? (
+                  {/* --- Buttons Container / Out of Stock Message --- */}
+                  {/* Use mt-auto to push buttons to the bottom if card heights vary */}
+                  <div className="mt-auto pt-2">
+                    {product.isInStock ? (
                       <>
+                        {/* View Details Button: Refined styling */}
                         <button
-                          className="button-newcollection view-details-button"
+                          className="w-full px-4 py-2.5 bg-[#6b5745] text-white text-sm font-medium rounded-md hover:bg-[#5d4c3b] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#6b5745] focus:ring-offset-2"
                           onClick={() => handleViewDetails(product._id)}
-                          disabled={!product.inStock}
                         >
                           View Details
                         </button>
-                        {/* <button
-                          className="button-newcollection try-now-button"
-                          onClick={() => handleTryNow(product._id)}
-                          disabled={!product.inStock}
-                        >
-                          Try Now
-                        </button> */}
+                        {/* Optional Try Now Button - Uncomment if needed
+                                         <button
+                                           className="w-full mt-2 px-4 py-2.5 bg-[#c8a98a] text-[#6b5745] text-sm font-medium rounded-md hover:bg-[#b08d6a] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#c8a98a] focus:ring-offset-2"
+                                           onClick={() => handleTryNow(product._id)}
+                                         >
+                                           Try Now
+                                         </button>
+                                          */}
                       </>
                     ) : (
-                      <span className="out-of-stock-text-newcollection"> Out of Stock </span>
+                      // Out of Stock Button (Disabled look): Consistent styling
+                      <button
+                        className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 text-sm font-medium rounded-md cursor-not-allowed"
+                        disabled // Make it a disabled button
+                      >
+                        Out of Stock
+                      </button>
                     )}
                   </div>
+                  {/* --- End Buttons Container --- */}
                 </div>
               </div>
             ))}

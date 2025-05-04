@@ -19,7 +19,7 @@ interface SearchOverlayProps {
 }
 
 // --- Backend Base URL ---
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your local URL
+const API_BASE_URL = 'http://localhost:5000' // Or your local URL
 // --- / ---
 
 const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {

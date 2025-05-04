@@ -137,8 +137,7 @@ exports.createOrder = async (req, res) => {
 
     // --- Send Professional HTML Confirmation Email ---
     try {
-      const backendApiUrl =
-        process.env.API_BASE_URL || 'https://backend-production-c8ff.up.railway.app'
+      const backendApiUrl = process.env.API_BASE_URL || 'http://localhost:5000'
       const confirmURL = `${backendApiUrl}/api/orders/confirm/${confirmationToken}`
       const emailSubject = `Please Confirm Your WearFlare Order`
 

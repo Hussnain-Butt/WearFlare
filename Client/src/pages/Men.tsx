@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 // *** Import useLocation and useCart ***
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react' // Keep if used elsewhere
+// import { ChevronRight } from 'lucide-react'; // Keep if used elsewhere (Not used in this snippet)
 import axios from 'axios'
 import { useCart } from '../context/CartContext' // *** Import useCart ***
 
@@ -13,8 +13,7 @@ import AnimatedSection from '@/components/AnimatedSection'
 import NewCollection from '@/components/NewCollection'
 
 // --- Backend API Base URL ---
-// Make sure this matches your Cart.tsx and context if using localhost
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or 'https://backend-production-c8ff.up.railway.app'
+const API_BASE_URL = 'http://localhost:5000' // Or your local URL
 
 // --- Product Interface (Keep as is) ---
 interface Product {
@@ -24,7 +23,7 @@ interface Product {
   category: string
   gender: string
   image: string
-  isInStock?: boolean
+  isInStock?: boolean // Keep optional or ensure backend always provides it
 }
 
 // --- Define categories ---
@@ -39,7 +38,7 @@ const Men: React.FC = () => {
   const { setLastProductOrigin } = useCart() // *** Get the function from context ***
 
   // *** Initialize category state using location.state passed from Cart ***
-  const initialCategory = location.state?.category || 'All' // Default to 'All' if no state provided
+  const initialCategory = location.state?.category || 'All' // Default to 'All'
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory)
 
   // --- Fetch Products based on Gender (Keep as is) ---
@@ -49,9 +48,10 @@ const Men: React.FC = () => {
     axios
       .get<Product[]>(`${API_BASE_URL}/api/products?gender=Men`)
       .then((res) => {
+        // Ensure isInStock has a default value if missing from API
         const processedProducts = res.data.map((p) => ({
           ...p,
-          isInStock: p.isInStock ?? false,
+          isInStock: p.isInStock ?? true, // Default to true if undefined/null
         }))
         setProducts(processedProducts)
       })
@@ -64,29 +64,23 @@ const Men: React.FC = () => {
       })
   }, []) // Runs once on component mount
 
-  // --- Scroll Effect (Handles scrolling when navigating back with hash) ---
+  // --- Scroll Effect (Keep as is) ---
   useEffect(() => {
-    // Only run if loading is done, products exist, and there's a hash
     if (!loading && products.length > 0 && location.hash && location.hash.startsWith('#product-')) {
       const productIdToScroll = location.hash.substring('#product-'.length)
       if (productIdToScroll) {
-        // Use a small delay to ensure the element is rendered
         const timer = setTimeout(() => {
           const element = document.getElementById(`product-row-${productIdToScroll}`)
           if (element) {
             console.log(`Scrolling to element: product-row-${productIdToScroll}`)
             element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            // Optional: remove hash after scrolling to clean up URL
-            // navigate(location.pathname, { state: location.state, replace: true });
           } else {
             console.warn(`Element not found for scrolling: product-row-${productIdToScroll}`)
           }
-        }, 100) // 100ms delay, adjust if needed
-
-        return () => clearTimeout(timer) // Cleanup timer on component unmount or re-run
+        }, 100)
+        return () => clearTimeout(timer)
       }
     }
-    // Dependencies ensure this runs when loading finishes or hash changes
   }, [loading, products, location.hash, location.state, navigate])
 
   // --- Filter Products by Selected Category (Keep as is) ---
@@ -97,36 +91,38 @@ const Men: React.FC = () => {
           (product) => product.category.toLowerCase() === selectedCategory.toLowerCase(),
         )
 
-  // --- UPDATED Navigation Handlers ---
+  // --- UPDATED Navigation Handlers (Keep as is) ---
   const handleViewDetails = (productId: string) => {
-    // *** Record the origin (URL, Product ID, Category) BEFORE navigating ***
     setLastProductOrigin(location.pathname, productId, selectedCategory)
-    navigate(`/product/${productId}`) // Navigate to product detail page
+    navigate(`/product/${productId}`)
   }
 
-  const handleTryNow = (productId: string) => {
-    // Optionally record origin here too if it leads to adding to cart
-    // setLastProductOrigin(location.pathname, productId, selectedCategory);
-    navigate(`/try-on/${productId}`) // Navigate to virtual try-on page
-  }
+  // Optional: Keep if needed, otherwise remove
+  // const handleTryNow = (productId: string) => {
+  //   navigate(`/try-on/${productId}`);
+  // };
 
   // --- Render Component ---
   return (
     <div className="min-h-screen bg-[#eee8e3]">
+      {' '}
+      {/* Light beige background for the whole page */}
       {/* Product Listing Section */}
       <section className="w-full py-10 px-4 sm:px-6 md:px-12 bg-[#D3C5B8] mb-12 md:mb-16">
+        {' '}
+        {/* Slightly darker beige for this section */}
         <AnimatedSection direction="left">
-          {/* Category Filter Buttons */}
+          {/* Category Filter Buttons (Keep as is) */}
           <div className="flex flex-wrap justify-center mb-8 gap-2 md:gap-3">
             {categories.map((category) => (
               <button
                 key={category}
                 className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#6b5745] focus:ring-offset-1 ${
-                  selectedCategory === category // Style based on state
+                  selectedCategory === category
                     ? 'bg-[#6b5745] text-white shadow-md'
                     : 'bg-white text-black hover:bg-gray-200 border border-gray-300'
                 }`}
-                onClick={() => setSelectedCategory(category)} // Update state on click
+                onClick={() => setSelectedCategory(category)}
               >
                 {category}
               </button>
@@ -136,7 +132,6 @@ const Men: React.FC = () => {
           {/* Loading State (Keep as is) */}
           {loading && (
             <div className="text-center py-12">
-              {/* Spinner */}
               <div
                 className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#6b5745] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
                 role="status"
@@ -153,34 +148,36 @@ const Men: React.FC = () => {
 
           {/* Product Grid */}
           {!loading && !error && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 md:gap-x-6 gap-y-8 md:gap-y-10">
+            // Adjusted gap for slightly more space
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 md:gap-x-8 gap-y-8 md:gap-y-12">
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((product) => (
+                  // --- [PROFESSIONAL DESIGN UPDATE START] ---
                   // --- Individual Product Card ---
-                  // *** ADD UNIQUE ID to the wrapper div ***
+                  // Added unique ID for scrolling target
                   <div
                     key={product._id}
                     id={`product-row-${product._id}`}
-                    className="flex flex-col items-center group text-center"
+                    // Unified card styling: white background, rounded corners, subtle shadow, hover effect
+                    className="group flex flex-col bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
                   >
-                    {/* Image Container */}
-                    {/* Use updated handleViewDetails on click */}
+                    {/* Image Container: Make it clickable if in stock */}
                     <div
-                      className="bg-white p-3 w-full overflow-hidden rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 relative cursor-pointer"
+                      className="relative overflow-hidden cursor-pointer"
                       onClick={() => product.isInStock && handleViewDetails(product._id)}
                     >
-                      {/* Out of Stock Badge (Keep as is) */}
+                      {/* Out of Stock Badge (Positioned top-right) */}
                       {!product.isInStock && (
-                        <div className="absolute top-2 right-2 bg-red-100 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded-full z-10 ring-1 ring-inset ring-red-600/20">
+                        <div className="absolute top-3 right-3 bg-red-100 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded-full z-10 ring-1 ring-inset ring-red-600/20">
                           Out of Stock
                         </div>
                       )}
-                      {/* Product Image (Keep as is) */}
+                      {/* Product Image: Adjusted height, added scale transition on hover */}
                       <img
                         src={`${API_BASE_URL}${product.image}`}
                         alt={product.title}
-                        className={`w-full h-64 sm:h-72 md:h-80 object-cover group-hover:scale-105 transition-transform duration-300 rounded-md ${
-                          !product.isInStock ? 'opacity-50' : ''
+                        className={`w-full h-72 sm:h-80 md:h-[350px] object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 ${
+                          !product.isInStock ? 'opacity-50 grayscale-[50%]' : '' // Added subtle grayscale for out of stock
                         }`}
                         loading="lazy"
                         onError={(e) => {
@@ -188,17 +185,20 @@ const Men: React.FC = () => {
                         }} // Fallback
                       />
                     </div>
-                    {/* Product Info & Actions */}
-                    <div className="mt-3 w-full px-1">
-                      {/* Title (Keep as is, or make it clickable with handleViewDetails) */}
-                      <p
-                        className="text-sm font-medium text-gray-800 truncate"
+
+                    {/* Product Info & Actions: Added padding, adjusted text alignment and spacing */}
+                    <div className="p-4 flex flex-col flex-grow">
+                      {' '}
+                      {/* flex-grow makes this section fill remaining space */}
+                      {/* Title: Slightly larger, bold, left-aligned, margin-bottom */}
+                      <h3
+                        className="text-base font-semibold text-gray-800 truncate mb-1 text-left"
                         title={product.title}
                       >
-                        {/* Optional: Make title clickable too */}
+                        {/* Make title clickable */}
                         {product.isInStock ? (
                           <Link
-                            to="#"
+                            to="#" // Use Link for semantics, prevent default handles navigation
                             onClick={(e) => {
                               e.preventDefault()
                               handleViewDetails(product._id)
@@ -208,41 +208,49 @@ const Men: React.FC = () => {
                             {product.title}
                           </Link>
                         ) : (
+                          // Non-clickable title when out of stock
                           <span>{product.title}</span>
                         )}
-                      </p>
-                      {/* Price (Keep as is) */}
-                      <p className="text-sm font-semibold text-[#6b5745] mt-1">
+                      </h3>
+                      {/* Price: Left-aligned, margin-bottom */}
+                      <p className="text-sm font-semibold text-[#6b5745] mb-3 text-left">
                         PKR {Number(product.price).toLocaleString('en-PK')}
                       </p>
                       {/* --- Buttons Container / Out of Stock Message --- */}
-                      <div className="mt-3 flex flex-col sm:flex-row gap-2 justify-center items-center">
+                      {/* Use mt-auto to push buttons to the bottom if card heights vary */}
+                      <div className="mt-auto pt-2">
                         {product.isInStock ? (
                           <>
-                            {/* Use updated handleViewDetails */}
+                            {/* View Details Button: Refined styling */}
                             <button
-                              className="w-full sm:w-auto px-4 py-2 bg-[#6b5745] text-white text-xs font-medium rounded-full hover:bg-[#5d4c3b] transition-colors duration-300 flex-1 whitespace-nowrap"
+                              className="w-full px-4 py-2.5 bg-[#6b5745] text-white text-sm font-medium rounded-md hover:bg-[#5d4c3b] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#6b5745] focus:ring-offset-2"
                               onClick={() => handleViewDetails(product._id)}
                             >
                               View Details
                             </button>
-                            {/* <button
-                              className="w-full sm:w-auto px-4 py-2 bg-[#c8a98a] text-white text-xs font-medium rounded-full hover:bg-[#b08d6a] transition-colors duration-300 flex-1 whitespace-nowrap"
+                            {/* Optional Try Now Button - Uncomment if needed
+                            <button
+                              className="w-full mt-2 px-4 py-2.5 bg-[#c8a98a] text-[#6b5745] text-sm font-medium rounded-md hover:bg-[#b08d6a] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#c8a98a] focus:ring-offset-2"
                               onClick={() => handleTryNow(product._id)}
                             >
                               Try Now
-                            </button> */}
+                            </button>
+                             */}
                           </>
                         ) : (
-                          // Out of Stock text (Keep as is)
-                          <span className="inline-block mt-1 px-5 py-2 bg-gray-200 text-gray-500 text-xs font-semibold rounded-full w-full sm:w-auto cursor-default">
+                          // Out of Stock Button (Disabled look): Consistent styling
+                          <button
+                            className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 text-sm font-medium rounded-md cursor-not-allowed"
+                            disabled // Make it a disabled button
+                          >
                             Out of Stock
-                          </span>
+                          </button>
                         )}
                       </div>
                       {/* --- End Buttons Container --- */}
                     </div>
                   </div> // End Product Card
+                  // --- [PROFESSIONAL DESIGN UPDATE END] ---
                 )) // End map
               ) : (
                 // Message when no products match the filter (Keep as is)
@@ -255,9 +263,7 @@ const Men: React.FC = () => {
           )}
         </AnimatedSection>
       </section>
-
-      {/* --- Other Sections (Conditional or Static) --- */}
-      {/* Logic for showing banner/new collection based on 'All' category (Keep as is) */}
+      {/* --- Other Sections (Conditional or Static - Keep as is) --- */}
       {selectedCategory === 'All' && !loading && !error && (
         <>
           <div className="my-12 md:my-16 w-full px-4 sm:px-0">
@@ -270,7 +276,6 @@ const Men: React.FC = () => {
           <NewCollection genderFilter="Men" limit={4} />
         </>
       )}
-
       {/* Newsletter Section (Keep as is) */}
       {!loading && !error && <NewsLetter />}
     </div> // End Page Container

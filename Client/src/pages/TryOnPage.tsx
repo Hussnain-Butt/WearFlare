@@ -25,9 +25,7 @@ const TryOnPage = () => {
 
   // Use REACT_APP_ prefix for create-react-app or VITE_ prefix for Vite
   const backendApiUrl =
-    process.env.REACT_APP_BACKEND_URL ||
-    process.env.VITE_BACKEND_URL ||
-    'https://backend-production-c8ff.up.railway.app'
+    process.env.REACT_APP_BACKEND_URL || process.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
   // --- Stop Polling Function ---
   const stopPolling = useCallback(() => {

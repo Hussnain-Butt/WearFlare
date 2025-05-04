@@ -7,11 +7,11 @@ import AnimatedSection from './AnimatedSection' // Ensure this path is correct
 interface Product {
   _id: string
   title: string
-  price: string // Assuming price is a string from API
-  image: string // Expecting path like /uploads/image.jpg
-  gender: string
+  price: string
   category: string
-  inStock: boolean // Added inStock field
+  gender: string
+  image: string
+  isInStock?: boolean // Keep optional or ensure backend always provides it
 }
 
 const PopularSection: React.FC = () => {
@@ -20,7 +20,7 @@ const PopularSection: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   // Ensure this matches your actual backend API URL
-  const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
+  const API_BASE_URL = 'http://localhost:5000' // Or http://localhost:5000
 
   useEffect(() => {
     setLoading(true)
@@ -111,57 +111,99 @@ const PopularSection: React.FC = () => {
         <div className="popular-grid">
           {popularProducts.map((product) => (
             // Product Card Start
-            <div key={product._id} className="product-card-popular group">
-              {/* Image Wrapper */}
-              <div className="image-wrapper-popular">
-                {/* Out of Stock Badge */}
-                {!product.inStock && <div className="out-of-stock-badge-popular">Out of Stock</div>}
-                {/* Product Image */}
+            <div
+              key={product._id}
+              id={`product-row-${product._id}`}
+              // Unified card styling: white background, rounded corners, subtle shadow, hover effect
+              className="group flex flex-col bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+            >
+              {/* Image Container: Make it clickable if in stock */}
+              <div
+                className="relative overflow-hidden cursor-pointer"
+                onClick={() => product.isInStock && handleViewDetails(product._id)}
+              >
+                {/* Out of Stock Badge (Positioned top-right) */}
+                {!product.isInStock && (
+                  <div className="absolute top-3 right-3 bg-red-100 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded-full z-10 ring-1 ring-inset ring-red-600/20">
+                    Out of Stock
+                  </div>
+                )}
+                {/* Product Image: Adjusted height, added scale transition on hover */}
                 <img
                   src={`${API_BASE_URL}${product.image}`}
                   alt={product.title}
-                  className={`product-image-popular ${
-                    !product.inStock ? 'out-of-stock-image' : ''
+                  className={`w-full h-72 sm:h-80 md:h-[350px] object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 ${
+                    !product.isInStock ? 'opacity-50 grayscale-[50%]' : '' // Added subtle grayscale for out of stock
                   }`}
-                  onClick={() => product.inStock && handleViewDetails(product._id)}
                   loading="lazy"
                   onError={(e) => {
-                    e.currentTarget.src = 'https://via.placeholder.com/400x400?text=No+Image'
-                  }}
+                    e.currentTarget.src = 'https://via.placeholder.com/300?text=No+Image'
+                  }} // Fallback
                 />
               </div>
-              {/* Details Below Image */}
-              <div className="details-wrapper-popular">
-                <p className="product-title-popular" title={product.title}>
-                  {product.title}
+
+              {/* Product Info & Actions: Added padding, adjusted text alignment and spacing */}
+              <div className="p-4 flex flex-col flex-grow">
+                {' '}
+                {/* flex-grow makes this section fill remaining space */}
+                {/* Title: Slightly larger, bold, left-aligned, margin-bottom */}
+                <h3
+                  className="text-base font-semibold text-gray-800 truncate mb-1 text-left"
+                  title={product.title}
+                >
+                  {/* Make title clickable */}
+                  {product.isInStock ? (
+                    <Link
+                      to="#" // Use Link for semantics, prevent default handles navigation
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handleViewDetails(product._id)
+                      }}
+                      className="hover:text-[#6b5745] transition-colors"
+                    >
+                      {product.title}
+                    </Link>
+                  ) : (
+                    // Non-clickable title when out of stock
+                    <span>{product.title}</span>
+                  )}
+                </h3>
+                {/* Price: Left-aligned, margin-bottom */}
+                <p className="text-sm font-semibold text-[#6b5745] mb-3 text-left">
+                  PKR {Number(product.price).toLocaleString('en-PK')}
                 </p>
-                <p className="product-price-popular"> PKR {product.price}</p>
-                {/* Buttons Container / Out of Stock Message */}
-                <div className="buttons-container-popular">
-                  {product.inStock ? (
-                    // Render buttons only if in stock
+                {/* --- Buttons Container / Out of Stock Message --- */}
+                {/* Use mt-auto to push buttons to the bottom if card heights vary */}
+                <div className="mt-auto pt-2">
+                  {product.isInStock ? (
                     <>
+                      {/* View Details Button: Refined styling */}
                       <button
-                        className="button-popular view-details-button"
+                        className="w-full px-4 py-2.5 bg-[#6b5745] text-white text-sm font-medium rounded-md hover:bg-[#5d4c3b] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#6b5745] focus:ring-offset-2"
                         onClick={() => handleViewDetails(product._id)}
-                        disabled={!product.inStock}
                       >
                         View Details
                       </button>
-                      {/* <button
-                        className="button-popular try-now-button"
-                        onClick={() => handleTryNow(product._id)}
-                        disabled={!product.inStock}
-                      >
-                        Try Now
-                      </button> */}
+                      {/* Optional Try Now Button - Uncomment if needed
+                                      <button
+                                        className="w-full mt-2 px-4 py-2.5 bg-[#c8a98a] text-[#6b5745] text-sm font-medium rounded-md hover:bg-[#b08d6a] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#c8a98a] focus:ring-offset-2"
+                                        onClick={() => handleTryNow(product._id)}
+                                      >
+                                        Try Now
+                                      </button>
+                                       */}
                     </>
                   ) : (
-                    // Show "Out of Stock" text instead of buttons
-                    <span className="out-of-stock-text-popular">Out of Stock</span>
+                    // Out of Stock Button (Disabled look): Consistent styling
+                    <button
+                      className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 text-sm font-medium rounded-md cursor-not-allowed"
+                      disabled // Make it a disabled button
+                    >
+                      Out of Stock
+                    </button>
                   )}
                 </div>
-                {/* End Buttons Container */}
+                {/* --- End Buttons Container --- */}
               </div>
             </div>
             // Product Card End

@@ -76,15 +76,12 @@ const SignupForm = () => {
     setIsLoading(true)
 
     try {
-      const response = await fetch(
-        'https://backend-production-c8ff.up.railway.app/api/auth/signup',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          // Send trimmed values
-          body: JSON.stringify({ fullName: trimmedFullName, email: trimmedEmail, password }),
-        },
-      )
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Send trimmed values
+        body: JSON.stringify({ fullName: trimmedFullName, email: trimmedEmail, password }),
+      })
 
       const data = await response.json()
       setIsLoading(false) // Stop loading indicator regardless of outcome
