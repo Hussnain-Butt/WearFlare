@@ -9,7 +9,7 @@ import { toast, Toaster } from 'react-hot-toast'
 // --- Backend API Base URL ---
 const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Adjust if your backend runs elsewhere
 
-// --- Updated Product Detail Interface ---
+// --- Product Detail Interface from API ---
 interface ProductDetail {
   _id: string
   title: string
@@ -24,8 +24,8 @@ interface ProductDetail {
   colors?: string[] // Optional: If you implement color variants
 }
 
-// --- Cart Item Interface (Ensure matches CartContext definition) ---
-interface CartItem {
+// --- Cart Item Interface (Must match CartContext definition including availableStock) ---
+interface CartItemForContext {
   _id: string
   title: string
   price: number // Use number type for calculations in cart
@@ -33,12 +33,13 @@ interface CartItem {
   selectedSize: string | null // Size is mandatory if product has sizes
   selectedColor?: string | null // Optional color
   quantity: number
+  availableStock: number // *** This MUST be included ****
 }
 
 const ProductDetailsPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>() // Get product ID from URL params
   const navigate = useNavigate()
-  const { addToCart } = useCart() // Access cart context
+  const { addToCart, cart } = useCart() // Access cart context and current cart state
 
   // --- Component State ---
   const [product, setProduct] = useState<ProductDetail | null>(null) // Holds fetched product data
@@ -51,11 +52,9 @@ const ProductDetailsPage: React.FC = () => {
 
   // --- Derived State ---
   // Check if the currently selected size has stock > 0
-  const isSelectedSizeAvailable = !!(
-    selectedSize &&
-    product?.stockDetails &&
-    product.stockDetails[selectedSize] > 0
-  )
+  const stockForSelectedSize =
+    selectedSize && product?.stockDetails ? product.stockDetails[selectedSize] ?? 0 : 0
+  const isSelectedSizeAvailable = stockForSelectedSize > 0
 
   // Helper booleans for readability
   const hasSizes = product?.sizes && product.sizes.length > 0
@@ -63,40 +62,45 @@ const ProductDetailsPage: React.FC = () => {
 
   // --- Fetch Product Data Effect ---
   useEffect(() => {
-    // Validate productId
     if (!productId) {
       setError('Product ID is missing from the URL.')
       setLoading(false)
       return
     }
 
-    // Reset state for new product load
     setLoading(true)
     setError(null)
     setSelectedSize(null)
     setSelectedColor(null)
-    setProduct(null) // Clear previous product data
+    setProduct(null)
 
     const fetchProduct = async () => {
       try {
-        // Fetch product details from the backend API
         const response = await axios.get<ProductDetail>(`${API_BASE_URL}/api/products/${productId}`)
 
-        // Basic validation of received data
         if (!response.data || !response.data._id) {
           throw new Error('Invalid product data received from the server.')
         }
 
-        // Set product state, ensuring defaults for potentially missing fields
+        // Ensure stockDetails is an object even if null/undefined from backend
+        const stockDetailsObject = response.data.stockDetails ?? {}
+
         setProduct({
           ...response.data,
-          isInStock: response.data.isInStock ?? false, // Use backend virtual, default false
-          sizes: response.data.sizes ?? [], // Default to empty array
-          stockDetails: response.data.stockDetails ?? {}, // Default to empty object
-          colors: response.data.colors ?? [], // Default to empty array (if using colors)
+          isInStock: response.data.isInStock ?? false,
+          sizes: response.data.sizes ?? [],
+          stockDetails: stockDetailsObject, // Set the validated object
+          colors: response.data.colors ?? [],
         })
+
+        // Auto-select first AVAILABLE size if sizes exist
+        if (response.data.sizes && response.data.sizes.length > 0) {
+          const firstAvailableSize = response.data.sizes.find(
+            (size) => stockDetailsObject[size] > 0,
+          )
+          setSelectedSize(firstAvailableSize || null) // Select first available or null if none are
+        }
       } catch (err: any) {
-        // Handle fetch errors (network, 404, etc.)
         console.error('Fetch product error:', err)
         if (err.response?.status === 404) {
           setError('Product not found.')
@@ -106,18 +110,15 @@ const ProductDetailsPage: React.FC = () => {
           setError('Failed to load product details. Please try again.')
         }
       } finally {
-        // Always stop loading indicator
         setLoading(false)
       }
     }
 
     fetchProduct()
-  }, [productId]) // Re-run effect if productId changes
+  }, [productId])
 
   // --- Size Selection Handler ---
   const handleSelectSize = (size: string) => {
-    // Update the selected size state
-    // We allow selecting an OOS size to show feedback, but block adding to cart later
     setSelectedSize(size)
   }
 
@@ -135,64 +136,72 @@ const ProductDetailsPage: React.FC = () => {
       return
     }
     if (hasColors && !selectedColor) {
-      // Keep if using colors
       toast.error('Please select a color first.')
       return
     }
 
     // --- CRITICAL STOCK CHECK for the SELECTED size ---
+    // Re-check just before adding
     if (hasSizes && selectedSize && !isSelectedSizeAvailable) {
       toast.error(`Sorry, size ${selectedSize} is currently out of stock.`)
       return // Stop the process
     }
-    // --- End Stock Check ---
 
-    // Set loading state for the button
+    // --- Check against current cart quantity ---
+    const currentCartItem = cart.find(
+      (item) => item._id === product._id && item.selectedSize === selectedSize, // && item.selectedColor === selectedColor // Add color if needed
+    )
+    const currentQuantityInCart = currentCartItem ? currentCartItem.quantity : 0
+
+    // Check if adding one more exceeds available stock (using derived stockForSelectedSize)
+    if (currentQuantityInCart + 1 > stockForSelectedSize && hasSizes) {
+      toast.error(
+        `Cannot add more. You already have ${currentQuantityInCart} (max: ${stockForSelectedSize}) of Size ${selectedSize} in your cart.`,
+      )
+      return
+    }
+
     setIsAddingToCart(true)
-    setShowAddedMessage(false) // Hide previous success message
+    setShowAddedMessage(false)
 
-    // Simulate adding to cart (actual stock check/decrement is on backend during checkout)
+    // Simulate adding to cart (can be immediate, backend handles final check)
     setTimeout(() => {
       try {
-        // Validate and convert price string to number for cart logic
         const priceNumber = parseFloat(product.price)
         if (isNaN(priceNumber) || priceNumber < 0) {
           console.error('Invalid product price:', product.price)
           throw new Error('Product price is invalid.')
         }
 
-        // Create the item object to add to the cart context
-        const cartItemToAdd: CartItem = {
+        // *** CONSTRUCT THE ITEM OBJECT *INCLUDING* availableStock ***
+        const cartItemToAdd: CartItemForContext = {
           _id: product._id,
           title: product.title,
           price: priceNumber,
           image: product.image,
-          selectedSize: selectedSize, // Include selected size
-          selectedColor: selectedColor, // Include selected color (if applicable)
-          quantity: 1, // Add one item at a time
+          selectedSize: selectedSize,
+          selectedColor: selectedColor,
+          quantity: 1, // Add one item at a time from this page
+          availableStock: stockForSelectedSize, // <-- PASS THE CALCULATED STOCK for the selected size
         }
 
         addToCart(cartItemToAdd) // Call the function from CartContext
 
-        // Update button state to show success
         setIsAddingToCart(false)
         setShowAddedMessage(true)
-        // Automatically hide the "Added!" message after a short delay
         setTimeout(() => setShowAddedMessage(false), 2500)
       } catch (cartError: any) {
-        // Handle errors during cart addition (e.g., price conversion failed)
         console.error('Add to cart error:', cartError)
         toast.error(cartError.message || 'Could not add item to cart.')
-        setIsAddingToCart(false) // Reset button state on error
+        setIsAddingToCart(false)
       }
-    }, 300) // Small delay to simulate processing
+    }, 100) // Short delay for visual feedback if needed
   }
 
   // --- Try Now Handler ---
   const handleTryNow = () => {
-    // Allow Try Now if the product is generally in stock (specific size might not matter for Try On)
     if (product && productId && product.isInStock) {
-      navigate(`/try-on/${productId}`) // Navigate to the Try On route
+      navigate(`/try-on/${productId}`)
     } else if (product && !product.isInStock) {
       toast.error('Cannot try on an item that is out of stock.')
     } else {
@@ -202,10 +211,9 @@ const ProductDetailsPage: React.FC = () => {
 
   // --- Render Logic ---
 
-  // Loading State
   if (loading) {
     return (
-      <div className="loading-placeholder">
+      <div className="flex justify-center items-center min-h-[60vh]">
         <div
           className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-[#c8a98a] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
           role="status"
@@ -218,120 +226,154 @@ const ProductDetailsPage: React.FC = () => {
     )
   }
 
-  // Error State
   if (error) {
-    return <div className="error-placeholder">{error}</div>
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[60vh] p-8 text-center bg-red-50 text-red-700 border border-red-200 rounded-md">
+        <XCircle className="w-12 h-12 mb-4 text-red-500" />
+        <p className="font-semibold text-lg">Error Loading Product</p>
+        <p>{error}</p>
+        <Link
+          to="/"
+          className="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+        >
+          Go Home
+        </Link>
+      </div>
+    )
   }
 
-  // Product Not Found / Data Issue State
   if (!product) {
-    return <div className="error-placeholder">Product data could not be loaded.</div>
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[60vh] p-8 text-center text-gray-600">
+        <p className="font-semibold text-lg">Product not found or data could not be loaded.</p>
+        <Link
+          to="/"
+          className="mt-6 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+        >
+          Go Home
+        </Link>
+      </div>
+    )
   }
 
-  // Calculate AddToCart button disabled state based on multiple factors
+  // Calculate AddToCart button disabled state
   const isAddToCartDisabled =
-    !product.isInStock || // Product is generally out of stock
-    isAddingToCart || // Action already in progress
-    showAddedMessage || // Success message is being shown
-    (hasSizes && !selectedSize) || // Size is required but not selected
-    (hasColors && !selectedColor) || // Color is required but not selected (if applicable)
-    (hasSizes && selectedSize && !isSelectedSizeAvailable) // Size is selected, but specifically out of stock
+    !product.isInStock ||
+    isAddingToCart ||
+    showAddedMessage ||
+    (hasSizes && !selectedSize) ||
+    (hasColors && !selectedColor) ||
+    (hasSizes && selectedSize && !isSelectedSizeAvailable)
 
   return (
     <div className="min-h-screen bg-white font-sans">
-      <Toaster position="top-center" reverseOrder={false} containerClassName="toaster-z-index" />
+      <Toaster position="top-center" reverseOrder={false} containerClassName="!z-[9999]" />{' '}
+      {/* Ensure Toaster is on top */}
       {/* Breadcrumbs Section */}
-      <div className="breadcrumb-container">
-        <nav className="breadcrumb-nav" aria-label="Breadcrumb">
-          <Link to="/" className="breadcrumb-link hover:text-[#c8a98a]">
+      <div className="w-full px-4 py-3 bg-gray-50 border-b border-gray-200">
+        <nav
+          className="max-w-7xl mx-auto flex items-center flex-wrap text-xs text-gray-500"
+          aria-label="Breadcrumb"
+        >
+          <Link to="/" className="uppercase hover:text-[#c8a98a] transition-colors mr-1">
             HOME
           </Link>
-          <ChevronRight className="breadcrumb-separator" />
+          <ChevronRight className="h-3.5 w-3.5 mx-1 text-gray-400 shrink-0" />
           <Link
             to={`/${product.gender.toLowerCase()}`}
-            className="breadcrumb-link hover:text-[#c8a98a]"
+            className="uppercase hover:text-[#c8a98a] transition-colors mr-1"
           >
-            {product.gender.toUpperCase()}
+            {product.gender}
           </Link>
           {product.category && (
             <>
-              <ChevronRight className="breadcrumb-separator" />
-              {/* Link category dynamically if possible, otherwise just display */}
-              <span className="breadcrumb-link">{product.category.toUpperCase()}</span>
-              {/*
-                <Link to={`/${product.gender.toLowerCase()}?category=${encodeURIComponent(product.category)}`} className="breadcrumb-link hover:text-[#c8a98a]">
-                    {product.category.toUpperCase()}
-                </Link>
-                */}
+              <ChevronRight className="h-3.5 w-3.5 mx-1 text-gray-400 shrink-0" />
+              {/* For now, just display category. Make linkable if you have category pages */}
+              <span className="uppercase font-medium text-gray-700">{product.category}</span>
             </>
           )}
-          <ChevronRight className="breadcrumb-separator" />
-          <span className="breadcrumb-current">{product.title.toUpperCase()}</span>
+          <ChevronRight className="h-3.5 w-3.5 mx-1 text-gray-400 shrink-0" />
+          <span
+            className="uppercase font-semibold text-gray-800 ml-1 truncate"
+            title={product.title}
+          >
+            {product.title}
+          </span>
         </nav>
       </div>
       {/* Main Product Details Area */}
-      <div className="product-details-container">
-        <div className="product-details-grid">
+      <div className="max-w-7xl mx-auto mt-8 mb-16 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Section (Left) */}
-          <div className="product-image-section">
-            <div className="product-image-wrapper">
+          <div className="flex justify-center items-start">
+            <div className="bg-white rounded-md overflow-hidden w-full max-w-lg aspect-[3/4] relative border border-gray-200">
               <img
                 src={`${API_BASE_URL}${product.image}`}
                 alt={product.title}
-                // Apply dimming if overall product is out of stock
-                className={`product-image ${!product.isInStock ? 'opacity-60' : ''}`}
+                className={`block w-full h-full object-cover object-center transition-opacity duration-300 ${
+                  !product.isInStock ? 'opacity-60' : ''
+                }`}
                 loading="lazy"
                 onError={(e) => {
-                  // Fallback image if the original fails to load
                   e.currentTarget.src =
                     'https://via.placeholder.com/600x800?text=Image+Not+Available'
                 }}
               />
-              {/* Out of Stock Badge based on overall isInStock */}
-              {!product.isInStock && <div className="out-of-stock-badge-details">Out of Stock</div>}
+              {!product.isInStock && (
+                <div className="absolute top-3 right-3 bg-red-600/90 text-white text-xs font-semibold px-2.5 py-1 rounded-md z-10">
+                  Out of Stock
+                </div>
+              )}
             </div>
           </div>
           {/* Info & Actions Section (Right) */}
-          <div className="product-info-section">
-            {/* Product Title */}
-            <h1 className="product-title">{product.title}</h1>
-            {/* Product Price */}
-            <p className="product-price">PKR {Number(product.price).toLocaleString('en-PK')}</p>
-            {/* Gender Info */}
-            <div className="info-row">
-              <h3 className="info-label">Gender</h3>
-              <span className="info-value">{product.gender.toUpperCase()}</span>
-            </div>
+          <div className="flex flex-col pt-4 md:pt-0">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
+            <p className="text-xl lg:text-2xl font-semibold text-gray-800 mb-5">
+              PKR {Number(product.price).toLocaleString('en-PK')}
+            </p>
 
             {/* Size Selection Area */}
             {hasSizes && (
-              <div className="options-section">
-                <div className="options-header">
-                  <h3 className="info-label">Select Size</h3>
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wide">
+                    Select Size
+                  </h3>
                   {/* Optional Size Guide Link */}
-                  {/* <button className="size-guide-link">Size Guide</button> */}
                 </div>
-                <div className="options-buttons-container">
+                <div className="flex flex-wrap gap-2.5">
                   {product.sizes?.map((size) => {
-                    // Check stock for this specific size
-                    const isSizeAvailable = product.stockDetails?.[size] > 0
+                    const sizeStock = product.stockDetails?.[size] ?? 0
+                    const isAvailable = sizeStock > 0
                     const isSelected = selectedSize === size
 
                     return (
                       <button
                         key={size}
                         onClick={() => handleSelectSize(size)}
-                        // Disable the button if this specific size has 0 stock
-                        disabled={!isSizeAvailable}
-                        className={`size-button ${isSelected ? 'selected' : ''} ${
-                          !isSizeAvailable ? 'disabled unavailable' : '' // Add specific class for OOS styling
-                        }`}
-                        aria-pressed={isSelected} // Accessibility for selected state
-                        title={!isSizeAvailable ? `${size} - Out of stock` : `Select size ${size}`}
+                        disabled={!isAvailable} // Disable button if stock is 0
+                        className={`
+                          py-2 px-4 border rounded-md text-sm font-medium transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#c8a98a] relative min-w-[48px] text-center group
+                          ${
+                            isSelected
+                              ? 'bg-[#c8a98a] text-white border-[#c8a98a] shadow-sm font-semibold'
+                              : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                          }
+                          ${
+                            !isAvailable
+                              ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed !shadow-none'
+                              : 'hover:bg-gray-50'
+                          }
+                        `}
+                        aria-pressed={isSelected}
+                        title={!isAvailable ? `${size} - Out of stock` : `Select size ${size}`}
                       >
                         {size}
-                        {/* Visual indicator for unavailable size */}
-                        {!isSizeAvailable && <span className="oos-indicator"></span>}
+                        {/* Red line-through effect for unavailable sizes */}
+                        {!isAvailable && (
+                          <span className="absolute inset-x-0 bottom-[4px] h-[1.5px] bg-red-400 group-hover:bg-red-400 transform scale-x-105"></span>
+                        )}
                       </button>
                     )
                   })}
@@ -339,61 +381,94 @@ const ProductDetailsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Color Selection Area (Conditional) */}
-            {hasColors && ( // Only render if product has color options
-              <div className="options-section">
-                <div className="options-header">
-                  <h3 className="info-label">Select Color</h3>
-                </div>
-                <div className="options-buttons-container">
+            {/* Color Selection Area (Example - Adapt if using) */}
+            {hasColors && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wide mb-2">
+                  Select Color
+                </h3>
+                <div className="flex flex-wrap gap-3">
                   {product.colors?.map((color) => {
                     const isSelected = selectedColor === color
                     return (
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
-                        // Assuming color doesn't affect stock, disable only if overall product is OOS
-                        disabled={!product.isInStock}
-                        className={`color-button ${isSelected ? 'selected' : ''} ${
-                          !product.isInStock ? 'disabled' : ''
-                        }`}
+                        disabled={!product.isInStock} // General stock check for color button
+                        className={`
+                            w-8 h-8 rounded-full border-2 p-0.5 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c8a98a]
+                            ${
+                              isSelected
+                                ? 'border-[#c8a98a]'
+                                : 'border-gray-300 hover:border-gray-400'
+                            }
+                            ${!product.isInStock ? 'opacity-50 cursor-not-allowed' : ''}
+                          `}
                         aria-label={`Select color ${color}`}
                         title={color}
                         aria-pressed={isSelected}
                       >
-                        {/* Use background color for the swatch */}
-                        <span className="color-swatch" style={{ backgroundColor: color }}></span>
+                        <span
+                          className="block w-full h-full rounded-full border border-black/5"
+                          style={{ backgroundColor: color }}
+                        ></span>
                       </button>
                     )
                   })}
-                  {/* // */}
                 </div>
               </div>
             )}
-            {/* Product Description Section */}
-            {product.description?.trim() && ( // Only render if description exists and is not just whitespace
-              <div className="description-section">
-                <h3 className="description-title">Description</h3>
-                <p className="description-text">{product.description.trim()}</p>
+
+            {/* Description Section */}
+            {product.description?.trim() && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wide mb-3">
+                  Description
+                </h3>
+                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+                  {product.description.trim()}
+                </p>
               </div>
             )}
+
             {/* --- Action Buttons Container --- */}
-            <div className="action-buttons-container">
-              {/* Add to Cart Button */}
-              <button
-                onClick={handleAddToCart}
-                disabled={isAddToCartDisabled} // Use the calculated disabled state
-                className="add-to-cart-button primary-button"
-                aria-live="polite" // Announces changes for screen readers
-              >
-                {/* Dynamic Button Text */}
-                {!product.isInStock ? (
-                  'Out of Stock' // Overall OOS
-                ) : isAddingToCart ? (
-                  <>
-                    {' '}
+            <div className="mt-10 pt-6 border-t border-gray-200">
+              {/* Selection Prompt Text */}
+              {product.isInStock && !isAddingToCart && !showAddedMessage && (
+                <div className="mb-4 text-center h-5">
+                  {' '}
+                  {/* Reserve space */}
+                  {hasSizes && !selectedSize && (
+                    <p className="text-xs text-red-600 font-medium">Please select size.</p>
+                  )}
+                  {hasColors && !selectedColor && (
+                    <p className="text-xs text-red-600 font-medium">Please select color.</p>
+                  )}
+                  {hasSizes && selectedSize && !isSelectedSizeAvailable && (
+                    <p className="text-xs text-red-600 font-medium">
+                      Size {selectedSize} is currently out of stock.
+                    </p>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Add to Cart Button */}
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAddToCartDisabled}
+                  className={`
+                    flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c8a98a]
+                    ${
+                      isAddToCartDisabled
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-[#c8a98a] hover:bg-[#b08d6a]'
+                    }
+                  `}
+                  aria-live="polite"
+                >
+                  {isAddingToCart ? (
                     <svg
-                      className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -411,514 +486,48 @@ const ProductDetailsPage: React.FC = () => {
                         fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
-                    </svg>{' '}
-                    Adding...{' '}
-                  </>
-                ) : showAddedMessage ? (
-                  <>
-                    {' '}
-                    <CheckCircle className="-ml-1 mr-2 h-5 w-5" /> Added!{' '}
-                  </> // Success state
-                ) : hasSizes && selectedSize && !isSelectedSizeAvailable ? (
-                  <>
-                    {' '}
-                    <XCircle className="-ml-1 mr-2 h-5 w-5" /> Size Unavailable{' '}
-                  </> // Specific size OOS
-                ) : (
-                  'Add To Cart' // Default state
-                )}
-              </button>
+                    </svg>
+                  ) : showAddedMessage ? (
+                    <CheckCircle className="-ml-1 mr-2 h-5 w-5" />
+                  ) : hasSizes && selectedSize && !isSelectedSizeAvailable ? (
+                    <XCircle className="-ml-1 mr-2 h-5 w-5" />
+                  ) : null}
+                  {isAddingToCart
+                    ? 'Adding...'
+                    : showAddedMessage
+                    ? 'Added!'
+                    : hasSizes && selectedSize && !isSelectedSizeAvailable
+                    ? 'Size Unavailable'
+                    : 'Add To Cart'}
+                </button>
 
-              {/* Try Now Button */}
-              <button
-                onClick={handleTryNow}
-                // Disable only if the product is generally out of stock
-                disabled={!product.isInStock}
-                className="try-on-button secondary-button"
-                aria-label="Try this item on virtually"
-              >
-                <Camera className="-ml-1 mr-2 h-5 w-5" />
-                Try Now
-              </button>
-
-              {/* Selection Prompt Text - Show relevant prompts */}
-              {product.isInStock && !isAddingToCart && !showAddedMessage && (
-                <div className="prompt-messages-container">
-                  {hasSizes && !selectedSize && (
-                    <p className="selection-prompt">Please select size.</p>
-                  )}
-                  {hasColors && !selectedColor && (
-                    <p className="selection-prompt">Please select color.</p>
-                  )}
-                  {/* Specific message if selected size is out of stock */}
-                  {hasSizes && selectedSize && !isSelectedSizeAvailable && (
-                    <p className="selection-prompt error-prompt">
-                      Size {selectedSize} is currently out of stock.
-                    </p>
-                  )}
-                </div>
-              )}
+                {/* Try Now Button */}
+                <button
+                  onClick={handleTryNow}
+                  disabled={!product.isInStock} // Only disable if product overall is OOS
+                  className={`
+                    flex-1 inline-flex items-center justify-center px-6 py-3 border rounded-md shadow-sm text-base font-medium transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c8a98a]
+                    ${
+                      !product.isInStock
+                        ? 'border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed'
+                        : 'border-[#c8a98a] text-[#c8a98a] bg-white hover:bg-gray-50'
+                    }
+                  `}
+                  aria-label="Try this item on virtually"
+                >
+                  <Camera className="-ml-1 mr-2 h-5 w-5" />
+                  Try Now
+                </button>
+              </div>
             </div>
-            {/* --- End Action Buttons Container --- */}
           </div>{' '}
           {/* End Info Section */}
         </div>{' '}
         {/* End Grid */}
       </div>{' '}
       {/* End Container */}
-      {/* --- Inline CSS for Styling --- */}
-      <style jsx>{`
-        /* Ensure toaster is above other elements if needed */
-        :global(.toaster-z-index) {
-          z-index: 9999;
-        }
-
-        /* General Placeholders */
-        .loading-placeholder,
-        .error-placeholder {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          min-height: 60vh;
-          padding: 2rem;
-          text-align: center;
-          font-size: 1.1rem;
-          color: #6b7280;
-        }
-        .error-placeholder {
-          background-color: #fef2f2;
-          color: #b91c1c;
-          font-weight: 500;
-          border: 1px solid #fecaca;
-          border-radius: 0.375rem;
-        }
-
-        /* Breadcrumbs */
-        .breadcrumb-container {
-          width: 100%;
-          padding: 0.75rem 1rem;
-          background-color: #f9fafb;
-          border-bottom: 1px solid #e5e7eb;
-        }
-        @media (min-width: 768px) {
-          .breadcrumb-container {
-            padding: 1rem 1.5rem;
-          }
-        }
-        .breadcrumb-nav {
-          max-width: 80rem;
-          margin-left: auto;
-          margin-right: auto;
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap; /* Allow wrapping on small screens */
-          font-size: 0.75rem; /* Smaller font */
-          color: #6b7280;
-        }
-        .breadcrumb-link {
-          text-transform: uppercase;
-          transition: color 0.2s;
-          margin-right: 0.25rem;
-        }
-        .breadcrumb-link:hover {
-          color: #c8a98a;
-        }
-        .breadcrumb-current {
-          text-transform: uppercase;
-          font-weight: 600;
-          color: #1f2937;
-          margin-left: 0.25rem;
-        }
-        .breadcrumb-separator {
-          height: 0.9rem;
-          width: 0.9rem;
-          margin: 0 0.25rem;
-          color: #9ca3af;
-          flex-shrink: 0;
-        } /* Prevent separator shrinking */
-
-        /* Main Layout */
-        .product-details-container {
-          max-width: 80rem;
-          margin: 2rem auto;
-          padding: 0 1rem;
-        }
-        @media (min-width: 768px) {
-          .product-details-container {
-            margin: 3rem auto;
-            padding: 0 1.5rem;
-          }
-        }
-        @media (min-width: 1024px) {
-          .product-details-container {
-            margin: 4rem auto;
-            padding: 0 2rem;
-          }
-        }
-        .product-details-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 2rem;
-        }
-        @media (min-width: 768px) {
-          .product-details-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 3rem;
-          }
-        }
-        @media (min-width: 1024px) {
-          .product-details-grid {
-            gap: 4rem;
-          }
-        }
-
-        /* Image Section */
-        .product-image-section {
-          display: flex;
-          justify-content: center;
-          align-items: flex-start;
-        }
-        .product-image-wrapper {
-          background-color: #ffffff;
-          border-radius: 0.375rem;
-          overflow: hidden;
-          width: 100%;
-          max-width: 36rem; /* Max width for image */
-          aspect-ratio: 3 / 4; /* Common aspect ratio for clothing */
-          position: relative;
-          border: 1px solid #e5e7eb;
-        }
-        .product-image {
-          display: block;
-          width: 100%;
-          height: 100%;
-          object-fit: cover; /* Ensure image covers */
-          object-position: center;
-          transition: opacity 0.3s ease;
-        }
-        .product-image.opacity-60 {
-          opacity: 0.6;
-        } /* Dimmed image style */
-        .out-of-stock-badge-details {
-          position: absolute;
-          top: 0.75rem;
-          right: 0.75rem;
-          background-color: rgba(220, 38, 38, 0.9); /* Red */
-          color: white;
-          font-size: 0.75rem;
-          font-weight: 600;
-          padding: 0.25rem 0.6rem;
-          border-radius: 0.25rem;
-          z-index: 10;
-        }
-
-        /* Info Section */
-        .product-info-section {
-          display: flex;
-          flex-direction: column;
-          padding-top: 1rem;
-        } /* Add padding for mobile */
-        @media (min-width: 768px) {
-          .product-info-section {
-            padding-top: 0;
-          }
-        }
-        .product-title {
-          font-size: 1.75rem;
-          font-weight: 700;
-          color: #111827;
-          margin-bottom: 0.5rem;
-          line-height: 1.3;
-        }
-        @media (min-width: 1024px) {
-          .product-title {
-            font-size: 2.125rem;
-            margin-bottom: 0.75rem;
-          }
-        }
-        .product-price {
-          font-size: 1.375rem;
-          font-weight: 600;
-          color: #1f2937;
-          margin-bottom: 1.5rem;
-        }
-        @media (min-width: 1024px) {
-          .product-price {
-            font-size: 1.625rem;
-            margin-bottom: 2rem;
-          }
-        }
-        .info-row {
-          display: flex;
-          align-items: center;
-          margin-bottom: 1rem;
-          font-size: 0.875rem;
-        }
-        .info-label {
-          font-weight: 600;
-          color: #374151;
-          width: 6rem;
-          text-transform: uppercase;
-          flex-shrink: 0;
-        }
-        .info-value {
-          color: #4b5563;
-          text-transform: uppercase;
-        }
-
-        /* Options (Sizes/Colors) */
-        .options-section {
-          margin-bottom: 1.5rem;
-        }
-        @media (min-width: 1024px) {
-          .options-section {
-            margin-bottom: 2rem;
-          }
-        }
-        .options-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 0.75rem;
-        }
-        .size-guide-link {
-          font-size: 0.8rem;
-          font-weight: 500;
-          color: #c8a98a;
-          text-decoration: underline;
-          cursor: pointer;
-          background: none;
-          border: none;
-          padding: 0;
-        }
-        .size-guide-link:hover {
-          color: #a88a6a;
-        }
-        .options-buttons-container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.6rem;
-        }
-        .size-button {
-          padding: 0.5rem 1rem;
-          border: 1px solid #d1d5db;
-          border-radius: 0.25rem;
-          font-size: 0.875rem;
-          font-weight: 500;
-          transition: all 0.2s ease-in-out;
-          cursor: pointer;
-          background-color: white;
-          color: #374151;
-          min-width: 48px;
-          text-align: center;
-          position: relative; /* For indicator */
-        }
-        .size-button:hover:not(.selected):not(.disabled) {
-          border-color: #9ca3af;
-          background-color: #f9fafb;
-        }
-        .size-button.selected {
-          background-color: #c8a98a;
-          color: white;
-          border-color: #c8a98a;
-          box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-          font-weight: 600;
-        }
-        .size-button:focus:not(.selected) {
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(200, 169, 138, 0.5);
-        }
-        /* Unavailable Size Style */
-        .size-button.unavailable {
-          background-color: #f8f8f8;
-          color: #b0b0b0;
-          border-color: #e5e7eb;
-          cursor: not-allowed;
-          text-decoration: line-through;
-          text-decoration-color: #ef4444;
-        }
-        .size-button.unavailable:hover {
-          border-color: #e5e7eb;
-          background-color: #f8f8f8;
-        } /* Prevent hover */
-        .oos-indicator {
-          /* Tiny line at bottom */
-          position: absolute;
-          bottom: 3px;
-          left: 25%;
-          width: 50%;
-          height: 1px;
-          background-color: #f87171;
-          border-radius: 1px;
-        }
-        /* Base disabled style (for overall OOS) */
-        .size-button.disabled:not(.unavailable) {
-          opacity: 0.5;
-          cursor: not-allowed;
-          background-color: #f3f4f6;
-          border-color: #e5e7eb;
-        }
-
-        /* Color Swatch Styles */
-        .color-button {
-          width: 2.25rem;
-          height: 2.25rem;
-          border-radius: 9999px;
-          border: 2px solid #e5e7eb;
-          padding: 2px;
-          transition: all 0.2s ease-in-out;
-          cursor: pointer;
-          background-clip: content-box;
-        }
-        .color-button:hover:not(.selected):not(.disabled) {
-          border-color: #9ca3af;
-        }
-        .color-button.selected {
-          border-color: #c8a98a;
-          box-shadow: 0 0 0 2px #c8a98a;
-        }
-        .color-button:focus {
-          outline: none;
-          box-shadow: 0 0 0 3px rgba(200, 169, 138, 0.5);
-        }
-        .color-button.disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .color-swatch {
-          display: block;
-          width: 100%;
-          height: 100%;
-          border-radius: 9999px;
-          border: 1px solid rgba(0, 0, 0, 0.05);
-        } /* Subtle border for light colors */
-
-        /* Action Buttons Container */
-        .action-buttons-container {
-          margin-top: auto; /* Pushes to bottom */
-          padding-top: 1.5rem;
-          border-top: 1px solid #f3f4f6;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-        @media (min-width: 1024px) {
-          .action-buttons-container {
-            padding-top: 2rem;
-          }
-        }
-
-        /* General Button Styles */
-        .primary-button,
-        .secondary-button {
-          width: 100%;
-          display: inline-flex;
-          justify-content: center;
-          align-items: center;
-          padding: 0.75rem 1rem;
-          border-radius: 0.375rem;
-          font-size: 0.9rem;
-          font-weight: 600;
-          transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
-          cursor: pointer;
-          border: 1px solid transparent;
-          box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-          text-transform: uppercase;
-          letter-spacing: 0.025em;
-        }
-        .primary-button:disabled,
-        .secondary-button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-        .primary-button svg,
-        .secondary-button svg {
-          height: 1.125rem;
-          width: 1.125rem;
-        } /* Icon size */
-
-        /* Add to Cart Specific Styles */
-        .add-to-cart-button {
-          background-color: #c8a98a;
-          color: white;
-        }
-        .add-to-cart-button:hover:not(:disabled) {
-          background-color: #b08d6a;
-        }
-        .add-to-cart-button:disabled {
-          background-color: #dcd1c7;
-        } /* Distinct disabled color */
-
-        /* Try Now Specific Styles */
-        .try-on-button {
-          background-color: transparent;
-          color: #c8a98a;
-          border: 1px solid #c8a98a;
-        }
-        .try-on-button:hover:not(:disabled) {
-          background-color: #fdf9f6;
-          border-color: #b08d6a;
-          color: #b08d6a;
-        }
-        .try-on-button:disabled {
-          border-color: #e5e7eb;
-          color: #9ca3af;
-          background-color: #f9fafb;
-        }
-
-        /* Selection Prompt Text */
-        .prompt-messages-container {
-          margin-top: 0.5rem;
-          text-align: center;
-        }
-        .selection-prompt {
-          font-size: 0.8rem;
-          color: #b91c1c;
-          font-weight: 500;
-          line-height: 1.4;
-        }
-        .error-prompt {
-          color: #b91c1c;
-        } /* Already red */
-
-        /* Description Section */
-        .description-section {
-          margin-top: 2rem;
-          padding-top: 1.5rem;
-          border-top: 1px solid #e5e7eb;
-        }
-        @media (min-width: 1024px) {
-          .description-section {
-            margin-top: 2.5rem;
-            padding-top: 2rem;
-          }
-        }
-        .description-title {
-          font-size: 1rem;
-          font-weight: 600;
-          color: #111827;
-          margin-bottom: 0.75rem;
-        }
-        .description-text {
-          font-size: 0.875rem;
-          color: #4b5563;
-          white-space: pre-line;
-          line-height: 1.6;
-          word-break: break-word;
-        }
-
-        /* Loading spinner keyframes */
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
-    </div>
+      {/* NO <style jsx> block here */}
+    </div> // End Page Container
   )
 }
 

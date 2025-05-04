@@ -1,46 +1,51 @@
 // src/context/CartContext.tsx
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react'
-// Removed useLocation import as it's not strictly needed here anymore for this feature
-import { toast } from 'react-hot-toast'
+// Keep the complete code from the previous correct answer.
+// The validation check inside addToCart is correct, it just wasn't receiving
+// the 'availableStock' property from the calling component.
 
-// Interface for a single item in the cart (Keep as is)
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react'
+import { toast } from 'react-hot-toast' // Using react-hot-toast for notifications
+
+// Interface for a single item in the cart - Includes availableStock
 interface CartItem {
   _id: string
   title: string
-  price: number
+  price: number // Keep as number for calculations
   image: string
   quantity: number
   selectedSize: string | null
   selectedColor?: string | null
+  availableStock: number // **** Stores the stock quantity for the selectedSize ****
 }
 
 // Interface for the Cart Context state and functions
 interface CartContextType {
   cart: CartItem[]
-  addToCart: (item: CartItem) => void
+  addToCart: (itemToAdd: CartItem) => void // Expects the full CartItem including availableStock
   removeFromCart: (itemId: string, size: string | null, color?: string | null) => void
   updateQuantity: (
     itemId: string,
-    quantity: number,
+    quantity: number, // The desired new quantity
     size: string | null,
     color?: string | null,
   ) => void
   clearCart: () => void
   totalItems: number
   totalPrice: number
-
-  // --- STATE FOR RETURNING TO PRODUCT ROW & CATEGORY ---
-  lastProductListUrl: string | null // URL of the listing page (e.g., /men, /women)
-  lastViewedProductId: string | null // ID of the product whose details were viewed
-  lastSelectedCategory: string | null // *** NEW: Category filter active on listing page ***
-  setLastProductOrigin: (url: string, productId: string, category: string) => void // *** Updated function signature ***
+  lastProductListUrl: string | null
+  lastViewedProductId: string | null
+  lastSelectedCategory: string | null
+  setLastProductOrigin: (
+    url: string | null,
+    productId: string | null,
+    category: string | null,
+  ) => void // Allow nulls
 }
 
-// Local storage key constants (Keep as is)
-const CART_STORAGE_KEY = 'wearflare_cart_v2'
-const DEFAULT_SHOP_URL = '/shop'
+// Local storage key constants
+const CART_STORAGE_KEY = 'wearflare_cart_v3' // Updated key if structure changes significantly
 
-// Create the context (Keep as is)
+// Create the context
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 // Cart Provider Component
@@ -49,7 +54,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
       const localData = localStorage.getItem(CART_STORAGE_KEY)
-      return localData ? JSON.parse(localData) : []
+      if (localData) {
+        const parsedData = JSON.parse(localData)
+        if (Array.isArray(parsedData)) {
+          return parsedData
+        }
+      }
+      return []
     } catch (error) {
       console.error('Error reading cart from local storage:', error)
       localStorage.removeItem(CART_STORAGE_KEY)
@@ -57,13 +68,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   })
 
-  // --- State for tracking the specific product origin ---
+  // State for tracking the specific product origin
   const [lastProductListUrl, setLastProductListUrlState] = useState<string | null>(null)
   const [lastViewedProductId, setLastViewedProductIdState] = useState<string | null>(null)
-  const [lastSelectedCategory, setLastSelectedCategoryState] = useState<string | null>(null) // *** NEW STATE ***
+  const [lastSelectedCategory, setLastSelectedCategoryState] = useState<string | null>(null)
 
   // --- Effects ---
-  // Persist cart to local storage (Keep as is)
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
@@ -72,30 +82,39 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [cart])
 
-  // --- Cart Calculations (Keep as is) ---
+  // --- Cart Calculations ---
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   // --- Cart Functions ---
-
-  // --- UPDATED: Function to explicitly set the product origin including category ---
-  const setLastProductOrigin = (url: string, productId: string, category: string) => {
-    if (url && url.startsWith('/') && productId && category) {
+  const setLastProductOrigin = (
+    url: string | null,
+    productId: string | null,
+    category: string | null,
+  ) => {
+    if (url === null || (typeof url === 'string' && url.startsWith('/'))) {
       setLastProductListUrlState(url)
-      setLastViewedProductIdState(productId)
-      setLastSelectedCategoryState(category) // *** Store category ***
-      console.log(
-        `🛒 Set last product origin: URL=${url}, ProductID=${productId}, Category=${category}`,
-      )
     } else {
-      console.warn('🛒 Attempted to set invalid product origin:', { url, productId, category })
+      console.warn('🛒 Invalid URL provided to setLastProductOrigin:', url)
     }
+    setLastViewedProductIdState(productId)
+    setLastSelectedCategoryState(category)
   }
 
-  // --- Other Cart Functions (addToCart, removeFromCart, updateQuantity, clearCart) ---
-  // Keep these functions as they were in the previous correct version
   const addToCart = (itemToAdd: CartItem) => {
-    /* ... (no changes needed here) ... */
+    // *** This validation is CORRECT, the error happened because itemToAdd was missing availableStock ***
+    if (
+      !itemToAdd ||
+      !itemToAdd._id ||
+      itemToAdd.quantity <= 0 ||
+      itemToAdd.availableStock === undefined ||
+      itemToAdd.availableStock < 0
+    ) {
+      console.error('Invalid item passed to addToCart:', itemToAdd) // Log the invalid item
+      toast.error('Could not add item to cart (Invalid data).')
+      return // Stop execution if item data is invalid
+    }
+
     setCart((prevCart) => {
       const existingItemIndex = prevCart.findIndex(
         (item) =>
@@ -103,46 +122,86 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           item.selectedSize === itemToAdd.selectedSize &&
           item.selectedColor === itemToAdd.selectedColor,
       )
+
       let updatedCart
+
       if (existingItemIndex > -1) {
         updatedCart = [...prevCart]
-        updatedCart[existingItemIndex].quantity += itemToAdd.quantity
+        const existingItem = updatedCart[existingItemIndex]
+        const potentialNewQuantity = existingItem.quantity + itemToAdd.quantity
+        const newQuantity = Math.min(potentialNewQuantity, existingItem.availableStock) // Clamp to stock
+
+        if (potentialNewQuantity > existingItem.availableStock) {
+          toast.error(
+            `Only ${existingItem.availableStock - existingItem.quantity} more available for ${
+              existingItem.title
+            } (Size: ${existingItem.selectedSize || 'N/A'}). Quantity adjusted.`,
+            { duration: 4000 },
+          )
+        } else if (newQuantity > existingItem.quantity) {
+          toast.success(`${itemToAdd.quantity} x ${itemToAdd.title} added/updated in cart!`)
+        }
+
+        updatedCart[existingItemIndex] = { ...existingItem, quantity: newQuantity }
       } else {
-        updatedCart = [...prevCart, { ...itemToAdd }]
+        const initialQuantity = Math.min(itemToAdd.quantity, itemToAdd.availableStock) // Clamp initial add
+
+        if (itemToAdd.quantity > itemToAdd.availableStock) {
+          toast.error(
+            `Only ${itemToAdd.availableStock} available for ${itemToAdd.title} (Size: ${
+              itemToAdd.selectedSize || 'N/A'
+            }). Added ${initialQuantity} to cart.`,
+            { duration: 4000 },
+          )
+        } else {
+          toast.success(`${initialQuantity} x ${itemToAdd.title} added to cart!`)
+        }
+        updatedCart = [...prevCart, { ...itemToAdd, quantity: initialQuantity }]
       }
       return updatedCart
     })
-    toast.success(`${itemToAdd.title} added to cart!`)
   }
 
   const removeFromCart = (itemId: string, size: string | null, color?: string | null) => {
-    /* ... (no changes needed here) ... */
+    let itemRemovedTitle = 'Item'
     setCart((prevCart) => {
-      const itemToRemove = prevCart.find(
-        (item) => item._id === itemId && item.selectedSize === size && item.selectedColor === color,
-      )
-      if (itemToRemove) {
-        toast.error(`${itemToRemove.title} removed from cart.`)
+      const newCart = prevCart.filter((item) => {
+        const match =
+          item._id === itemId && item.selectedSize === size && item.selectedColor === color
+        if (match) {
+          itemRemovedTitle = item.title
+        }
+        return !match
+      })
+      if (newCart.length < prevCart.length) {
+        toast.error(`${itemRemovedTitle} removed from cart.`)
       }
-      return prevCart.filter(
-        (item) =>
-          !(item._id === itemId && item.selectedSize === size && item.selectedColor === color),
-      )
+      return newCart
     })
   }
 
   const updateQuantity = (
     itemId: string,
-    quantity: number,
+    newQuantity: number,
     size: string | null,
     color?: string | null,
   ) => {
-    /* ... (no changes needed here) ... */
-    const newQuantity = Math.max(1, quantity)
     setCart((prevCart) =>
       prevCart.map((item) => {
         if (item._id === itemId && item.selectedSize === size && item.selectedColor === color) {
-          return { ...item, quantity: newQuantity }
+          const validatedQuantity = Math.max(1, newQuantity) // Min quantity is 1
+
+          if (validatedQuantity > item.availableStock) {
+            toast.error(
+              `Max stock (${item.availableStock}) reached for ${item.title} (Size: ${
+                size || 'N/A'
+              }).`,
+              { id: `stock-limit-${itemId}-${size}` },
+            )
+            return { ...item, quantity: item.availableStock } // Clamp to max stock
+          } else {
+            return { ...item, quantity: validatedQuantity } // Update to valid quantity
+          }
         }
         return item
       }),
@@ -150,17 +209,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   const clearCart = () => {
-    /* ... (no changes needed here) ... */
-    setCart([])
-    // Optional: Reset origin state when clearing cart?
-    // setLastProductListUrlState(null);
-    // setLastViewedProductIdState(null);
-    // setLastSelectedCategoryState(null);
-    toast.success('Cart cleared!')
+    if (cart.length > 0) {
+      setCart([])
+      toast.success('Cart cleared!')
+    }
   }
-  // --- End Cart Functions ---
 
-  // Value provided by the context
   const contextValue: CartContextType = {
     cart,
     addToCart,
@@ -169,17 +223,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     clearCart,
     totalItems,
     totalPrice,
-    // --- Provide the specific origin state and setter ---
     lastProductListUrl,
     lastViewedProductId,
-    lastSelectedCategory, // *** Provide category ***
-    setLastProductOrigin, // *** Provide updated setter ***
+    lastSelectedCategory,
+    setLastProductOrigin,
   }
 
   return <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
 }
 
-// Custom hook to use the Cart Context (Keep as is)
 export const useCart = (): CartContextType => {
   const context = useContext(CartContext)
   if (context === undefined) {
