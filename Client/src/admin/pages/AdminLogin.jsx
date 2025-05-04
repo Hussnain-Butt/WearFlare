@@ -21,7 +21,7 @@ const AdminLogin = () => {
 
     try {
       // Use apiClient and relative path '/admin/login'
-      // The baseURL ('http://localhost:5000/api') is added by apiClient
+      // The baseURL ('https://backend-production-c8ff.up.railway.app/api') is added by apiClient
       const response = await apiClient.post('/admin/login', {
         username,
         password,

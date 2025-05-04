@@ -18,7 +18,8 @@ interface Product {
 }
 
 // --- API Base URL ---
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
 
 // --- NEW: Props Interface ---
 interface NewCollectionProps {

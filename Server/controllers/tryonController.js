@@ -9,7 +9,8 @@ console.log('--- Loading tryonController.js ---')
 // --- Configuration ---
 const FASHNAI_API_TIMEOUT = 60000 // Timeout for POST /run (60 seconds)
 const FASHNAI_STATUS_TIMEOUT = 15000 // Timeout for GET /status (15 seconds)
-const MY_BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000'
+const MY_BACKEND_BASE_URL =
+  process.env.BACKEND_URL || 'https://backend-production-c8ff.up.railway.app'
 const FASHNAI_API_KEY = process.env.FASHNAI_API_KEY || 'fa-v0kUsjkkMQHI-Dqpu7R1k9ZmuTWkP6Y6Jbrpt' // Default for testing ONLY if env var not set
 
 // --- Helper: Check API Key on startup/load ---

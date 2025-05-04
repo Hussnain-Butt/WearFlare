@@ -5,7 +5,7 @@ import { Mail, Phone, MapPin, Globe, Loader2 } from 'lucide-react' // Added Load
 import AnimatedSection from './AnimatedSection' // Ensure path is correct
 
 // Define API base URL (adjust if needed)
-const API_BASE_URL = 'http://localhost:5000' // Or http://localhost:5000
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
 const CONTACT_API_ENDPOINT = `${API_BASE_URL}/api/contact`
 
 // Define interface for toast state

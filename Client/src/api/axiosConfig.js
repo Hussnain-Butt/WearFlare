@@ -2,7 +2,7 @@
 import axios from 'axios'
 
 // Define your API base URL
-const API_BASE_URL = 'http://localhost:5000/api' // Or just http://localhost:5000 if your routes don't include /api
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app/api' // Or just https://backend-production-c8ff.up.railway.app if your routes don't include /api
 
 // Create an Axios instance
 const apiClient = axios.create({

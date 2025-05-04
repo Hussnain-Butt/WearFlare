@@ -6,7 +6,7 @@ import { toast, Toaster } from 'react-hot-toast'
 import { Loader2, CheckCircle, XCircle, Star, Edit, Trash2 } from 'lucide-react' // Keep icons
 
 // Define the base URL for displaying images
-const IMAGE_SERVER_URL = 'http://localhost:5000' // Your backend URL
+const IMAGE_SERVER_URL = 'https://backend-production-c8ff.up.railway.app' // Your backend URL
 
 // --- Updated Product Interface (Matches Backend Response) ---
 interface Product {

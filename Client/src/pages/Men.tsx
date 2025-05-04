@@ -13,7 +13,7 @@ import AnimatedSection from '@/components/AnimatedSection'
 import NewCollection from '@/components/NewCollection'
 
 // --- Backend API Base URL ---
-const API_BASE_URL = 'http://localhost:5000' // Or your local URL
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your local URL
 
 // --- Product Interface (Keep as is) ---
 interface Product {

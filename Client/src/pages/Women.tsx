@@ -9,7 +9,7 @@ import NewsLetter from '@/components/NewsLetter'
 import AnimatedSection from '@/components/AnimatedSection'
 import NewCollection from '@/components/NewCollection'
 
-const API_BASE_URL = 'http://localhost:5000'
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app'
 
 interface Product {
   /* ... Interface remains the same ... */ _id: string

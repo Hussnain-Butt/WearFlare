@@ -20,7 +20,7 @@ const PopularSection: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   // Ensure this matches your actual backend API URL
-  const API_BASE_URL = 'http://localhost:5000' // Or http://localhost:5000
+  const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
 
   useEffect(() => {
     setLoading(true)

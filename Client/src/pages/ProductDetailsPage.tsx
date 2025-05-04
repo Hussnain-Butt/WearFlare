@@ -7,7 +7,7 @@ import { ChevronRight, CheckCircle, Camera, XCircle } from 'lucide-react' // Ico
 import { toast, Toaster } from 'react-hot-toast'
 
 // --- Backend API Base URL ---
-const API_BASE_URL = 'http://localhost:5000' // Adjust if your backend runs elsewhere
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Adjust if your backend runs elsewhere
 
 // --- Updated Product Detail Interface ---
 interface ProductDetail {
