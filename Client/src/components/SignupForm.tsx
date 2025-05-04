@@ -68,7 +68,7 @@ const SignupForm = () => {
 
     // --- Optional: Add password strength validation (example: min 8 chars) ---
     if (password.length < 8) {
-      showToast('Password must be at least 8 characters long', 'error')
+      showToast('Password must be at least 6 characters long', 'error')
       return
     }
     // --- --- --- --- --- --- --- --- ---
