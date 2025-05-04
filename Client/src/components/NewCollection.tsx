@@ -1,6 +1,6 @@
 // src/components/NewCollection.tsx
 import React, { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import AnimatedSection from './AnimatedSection' // Ensure path is correct
 import { Loader2 } from 'lucide-react' // For loading indicator
