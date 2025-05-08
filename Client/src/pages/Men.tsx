@@ -1,21 +1,18 @@
 // src/pages/Men.tsx
 import React, { useState, useEffect } from 'react'
-// *** Import useLocation and useCart ***
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-// import { ChevronRight } from 'lucide-react'; // Keep if used elsewhere (Not used in this snippet)
 import axios from 'axios'
-import { useCart } from '../context/CartContext' // *** Import useCart ***
+import { motion, AnimatePresence } from 'framer-motion'
+import { Loader2, ShoppingBag, Eye, XCircle } from 'lucide-react'
+import { useCart } from '../context/CartContext'
 
-// Components (ensure paths are correct)
+// Components
 import NewsLetter from '@/components/NewsLetter'
-import arrival_image from '/new_arrival.png' // Ensure path is correct from public folder
-import AnimatedSection from '@/components/AnimatedSection'
+import arrivalImageImport from '../assets/banner.png'
 import NewCollection from '@/components/NewCollection'
 
-// --- Backend API Base URL ---
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your local URL
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app'
 
-// --- Product Interface (Keep as is) ---
 interface Product {
   _id: string
   title: string
@@ -23,35 +20,65 @@ interface Product {
   category: string
   gender: string
   image: string
-  isInStock?: boolean // Keep optional or ensure backend always provides it
+  isInStock?: boolean
 }
 
-// --- Define categories ---
-const categories = ['All', 'Pants', 'Sweatshirt', 'Jackets', 'Shirts'] // Your Men categories
+const categories = ['All', 'Pants', 'Sweatshirt', 'Jackets', 'Shirts']
+
+// Animation Variants
+const pageVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.4, when: 'beforeChildren', staggerChildren: 0.1 },
+  },
+}
+
+const filterButtonContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.15 } },
+}
+
+const filterButtonVariants = {
+  hidden: { opacity: 0, y: -15 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 350, damping: 25 } },
+}
+
+const productGridVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.25 } },
+}
+
+const productCardVariants = {
+  hidden: { opacity: 0, y: 25, scale: 0.97 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: 'spring', stiffness: 180, damping: 20, duration: 0.35 },
+  },
+}
 
 const Men: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
-  const location = useLocation() // *** Get location object ***
-  const { setLastProductOrigin } = useCart() // *** Get the function from context ***
+  const location = useLocation()
+  const { setLastProductOrigin } = useCart()
 
-  // *** Initialize category state using location.state passed from Cart ***
-  const initialCategory = location.state?.category || 'All' // Default to 'All'
+  const initialCategory = location.state?.category || 'All'
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory)
 
-  // --- Fetch Products based on Gender (Keep as is) ---
   useEffect(() => {
     setLoading(true)
     setError(null)
     axios
       .get<Product[]>(`${API_BASE_URL}/api/products?gender=Men`)
       .then((res) => {
-        // Ensure isInStock has a default value if missing from API
         const processedProducts = res.data.map((p) => ({
           ...p,
-          isInStock: p.isInStock ?? true, // Default to true if undefined/null
+          isInStock: p.isInStock ?? true,
         }))
         setProducts(processedProducts)
       })
@@ -62,28 +89,23 @@ const Men: React.FC = () => {
       .finally(() => {
         setLoading(false)
       })
-  }, []) // Runs once on component mount
+  }, [])
 
-  // --- Scroll Effect (Keep as is) ---
   useEffect(() => {
     if (!loading && products.length > 0 && location.hash && location.hash.startsWith('#product-')) {
       const productIdToScroll = location.hash.substring('#product-'.length)
       if (productIdToScroll) {
         const timer = setTimeout(() => {
-          const element = document.getElementById(`product-row-${productIdToScroll}`)
+          const element = document.getElementById(`product-card-${productIdToScroll}`)
           if (element) {
-            console.log(`Scrolling to element: product-row-${productIdToScroll}`)
             element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          } else {
-            console.warn(`Element not found for scrolling: product-row-${productIdToScroll}`)
           }
-        }, 100)
+        }, 200)
         return () => clearTimeout(timer)
       }
     }
-  }, [loading, products, location.hash, location.state, navigate])
+  }, [loading, products, location.hash, location.state])
 
-  // --- Filter Products by Selected Category (Keep as is) ---
   const filteredProducts =
     selectedCategory === 'All'
       ? products
@@ -91,194 +113,213 @@ const Men: React.FC = () => {
           (product) => product.category.toLowerCase() === selectedCategory.toLowerCase(),
         )
 
-  // --- UPDATED Navigation Handlers (Keep as is) ---
   const handleViewDetails = (productId: string) => {
     setLastProductOrigin(location.pathname, productId, selectedCategory)
     navigate(`/product/${productId}`)
   }
 
-  // Optional: Keep if needed, otherwise remove
-  // const handleTryNow = (productId: string) => {
-  //   navigate(`/try-on/${productId}`);
-  // };
-
-  // --- Render Component ---
   return (
-    <div className="min-h-screen bg-[#eee8e3]">
-      {' '}
-      {/* Light beige background for the whole page */}
-      {/* Product Listing Section */}
-      <section className="w-full py-10 px-4 sm:px-6 md:px-12 bg-[#D3C5B8] mb-12 md:mb-16">
-        {' '}
-        {/* Slightly darker beige for this section */}
-        <AnimatedSection direction="left">
-          {/* Category Filter Buttons (Keep as is) */}
-          <div className="flex flex-wrap justify-center mb-8 gap-2 md:gap-3">
+    <motion.div
+      className="min-h-screen bg-gray-100 font-inter"
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+      exit="hidden"
+    >
+      <section className="w-full py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.h1
+            className="text-3xl sm:text-4xl font-bold text-trendzone-dark-blue text-center mb-8 md:mb-10"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            Men's Collection
+          </motion.h1>
+
+          {/* Category Filter Buttons - Pill Background Style */}
+          <motion.div
+            className="flex justify-center mb-8 md:mb-12 space-x-1 sm:space-x-2"
+            variants={filterButtonContainerVariants}
+          >
             {categories.map((category) => (
-              <button
+              <motion.button
                 key={category}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#6b5745] focus:ring-offset-1 ${
+                variants={filterButtonVariants}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className={`relative px-4 py-2 sm:px-5 sm:py-2.5 rounded-md text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
                   selectedCategory === category
-                    ? 'bg-[#6b5745] text-white shadow-md'
-                    : 'bg-white text-black hover:bg-gray-200 border border-gray-300'
+                    ? 'text-white focus-visible:ring-trendzone-light-blue' // Active button text is white
+                    : 'text-trendzone-dark-blue hover:bg-gray-200/60 focus-visible:ring-trendzone-dark-blue' // Inactive button
                 }`}
                 onClick={() => setSelectedCategory(category)}
               >
-                {category}
-              </button>
-            ))}
-          </div>
+                {/* Span to ensure text is above the z-[-1] pill */}
+                <span className="relative z-10">{category}</span>
 
-          {/* Loading State (Keep as is) */}
+                {/* Animated background pill for the active button */}
+                {selectedCategory === category && (
+                  <motion.div
+                    className="absolute inset-0 bg-trendzone-dark-blue rounded-md z-0" // z-0 is fine if text is z-10
+                    layoutId="activeCategoryPill" // Shared layout ID for smooth transition
+                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                  />
+                )}
+              </motion.button>
+            ))}
+          </motion.div>
+
           {loading && (
-            <div className="text-center py-12">
-              <div
-                className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#6b5745] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                role="status"
-              >
-                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-                  Loading...
-                </span>
-              </div>
-              <p className="mt-2 text-gray-600">Loading products...</p>
+            <div className="text-center py-20 flex flex-col items-center justify-center">
+              <Loader2 className="h-10 w-10 animate-spin text-trendzone-dark-blue mb-3" />
+              <p className="text-md text-gray-600">Loading products...</p>
             </div>
           )}
-          {/* Error State (Keep as is) */}
-          {error && <p className="text-center text-red-600 font-medium py-8">{error}</p>}
+          {error && (
+            <div className="text-center py-20 flex flex-col items-center justify-center">
+              <XCircle className="h-10 w-10 text-red-500 mb-3" />
+              <p className="text-md text-red-600 font-medium">{error}</p>
+            </div>
+          )}
 
-          {/* Product Grid */}
           {!loading && !error && (
-            // Adjusted gap for slightly more space
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 md:gap-x-8 gap-y-8 md:gap-y-12">
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8 md:gap-x-6 md:gap-y-10"
+              variants={productGridVariants}
+            >
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((product) => (
-                  // --- [PROFESSIONAL DESIGN UPDATE START] ---
-                  // --- Individual Product Card ---
-                  // Added unique ID for scrolling target
-                  <div
+                  <motion.div
                     key={product._id}
-                    id={`product-row-${product._id}`}
-                    // Unified card styling: white background, rounded corners, subtle shadow, hover effect
+                    id={`product-card-${product._id}`}
                     className="group flex flex-col bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+                    variants={productCardVariants}
+                    layout
                   >
-                    {/* Image Container: Make it clickable if in stock */}
                     <div
-                      className="relative overflow-hidden cursor-pointer"
+                      className="relative overflow-hidden cursor-pointer aspect-[3/4]"
                       onClick={() => product.isInStock && handleViewDetails(product._id)}
                     >
-                      {/* Out of Stock Badge (Positioned top-right) */}
                       {!product.isInStock && (
-                        <div className="absolute top-3 right-3 bg-red-100 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded-full z-10 ring-1 ring-inset ring-red-600/20">
+                        <div className="absolute top-2.5 right-2.5 bg-red-500/90 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-md z-20 shadow">
                           Out of Stock
                         </div>
                       )}
-                      {/* Product Image: Adjusted height, added scale transition on hover */}
-                      <img
-                        src={`${API_BASE_URL}${product.image}`}
+                      <motion.img
+                        src={`${API_BASE_URL}${product.image.startsWith('/') ? '' : '/'}${
+                          product.image
+                        }`}
                         alt={product.title}
-                        className={`w-full h-72 sm:h-80 md:h-[350px] object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 ${
-                          !product.isInStock ? 'opacity-50 grayscale-[50%]' : '' // Added subtle grayscale for out of stock
+                        className={`w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 ${
+                          !product.isInStock ? 'opacity-60 grayscale-[0.5]' : ''
                         }`}
                         loading="lazy"
                         onError={(e) => {
-                          e.currentTarget.src = 'https://via.placeholder.com/300?text=No+Image'
-                        }} // Fallback
+                          e.currentTarget.src = 'https://via.placeholder.com/400?text=No+Image'
+                        }}
+                        initial={{ opacity: 0.8 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.4 }}
                       />
-                    </div>
-
-                    {/* Product Info & Actions: Added padding, adjusted text alignment and spacing */}
-                    <div className="p-4 flex flex-col flex-grow">
-                      {' '}
-                      {/* flex-grow makes this section fill remaining space */}
-                      {/* Title: Slightly larger, bold, left-aligned, margin-bottom */}
-                      <h3
-                        className="text-base font-semibold text-gray-800 truncate mb-1 text-left"
-                        title={product.title}
-                      >
-                        {/* Make title clickable */}
-                        {product.isInStock ? (
-                          <Link
-                            to="#" // Use Link for semantics, prevent default handles navigation
+                      {product.isInStock && (
+                        <motion.div
+                          className="absolute inset-0 flex items-center justify-center z-10"
+                          initial={{ opacity: 0 }}
+                          whileHover={{ opacity: 1, backgroundColor: 'rgba(0,0,0,0.05)' }}
+                          transition={{ duration: 0.25 }}
+                        >
+                          <motion.button
+                            aria-label="View product details"
+                            className="p-2.5 bg-white text-trendzone-dark-blue rounded-full shadow-md hover:bg-gray-100 scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-250"
                             onClick={(e) => {
-                              e.preventDefault()
+                              e.stopPropagation()
                               handleViewDetails(product._id)
                             }}
-                            className="hover:text-[#6b5745] transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </motion.button>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    <div className="p-4 flex flex-col flex-grow">
+                      <h3
+                        className="text-sm md:text-base font-semibold text-trendzone-dark-blue truncate mb-0.5"
+                        title={product.title}
+                      >
+                        {product.isInStock ? (
+                          <Link
+                            to={`/product/${product._id}`}
+                            className="hover:text-trendzone-light-blue transition-colors"
                           >
                             {product.title}
                           </Link>
                         ) : (
-                          // Non-clickable title when out of stock
                           <span>{product.title}</span>
                         )}
                       </h3>
-                      {/* Price: Left-aligned, margin-bottom */}
-                      <p className="text-sm font-semibold text-[#6b5745] mb-3 text-left">
+                      <p className="text-xs md:text-sm font-medium text-trendzone-dark-blue/70 mb-3">
                         PKR {Number(product.price).toLocaleString('en-PK')}
                       </p>
-                      {/* --- Buttons Container / Out of Stock Message --- */}
-                      {/* Use mt-auto to push buttons to the bottom if card heights vary */}
-                      <div className="mt-auto pt-2">
+                      <div className="mt-auto">
                         {product.isInStock ? (
-                          <>
-                            {/* View Details Button: Refined styling */}
-                            <button
-                              className="w-full px-4 py-2.5 bg-[#6b5745] text-white text-sm font-medium rounded-md hover:bg-[#5d4c3b] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#6b5745] focus:ring-offset-2"
-                              onClick={() => handleViewDetails(product._id)}
-                            >
-                              View Details
-                            </button>
-                            {/* Optional Try Now Button - Uncomment if needed
-                            <button
-                              className="w-full mt-2 px-4 py-2.5 bg-[#c8a98a] text-[#6b5745] text-sm font-medium rounded-md hover:bg-[#b08d6a] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#c8a98a] focus:ring-offset-2"
-                              onClick={() => handleTryNow(product._id)}
-                            >
-                              Try Now
-                            </button>
-                             */}
-                          </>
+                          <motion.button
+                            className="w-full px-4 py-2 bg-trendzone-dark-blue text-white text-xs sm:text-sm font-medium rounded-md hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 flex items-center justify-center gap-1.5"
+                            onClick={() => handleViewDetails(product._id)}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            View Details
+                          </motion.button>
                         ) : (
-                          // Out of Stock Button (Disabled look): Consistent styling
                           <button
-                            className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 text-sm font-medium rounded-md cursor-not-allowed"
-                            disabled // Make it a disabled button
+                            className="w-full px-4 py-2 bg-gray-200 text-gray-500 text-xs sm:text-sm font-medium rounded-md cursor-not-allowed"
+                            disabled
                           >
                             Out of Stock
                           </button>
                         )}
                       </div>
-                      {/* --- End Buttons Container --- */}
                     </div>
-                  </div> // End Product Card
-                  // --- [PROFESSIONAL DESIGN UPDATE END] ---
-                )) // End map
+                  </motion.div>
+                ))
               ) : (
-                // Message when no products match the filter (Keep as is)
-                <p className="text-center text-gray-500 col-span-full py-10">
-                  No products found{' '}
-                  {selectedCategory !== 'All' ? `in category "${selectedCategory}"` : 'for men'}.
-                </p>
+                <motion.p
+                  className="text-center text-gray-500 col-span-full py-16 text-lg"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  No products found in "{selectedCategory}". Try a different category!
+                </motion.p>
               )}
-            </div> // End Grid
+            </motion.div>
           )}
-        </AnimatedSection>
+        </div>
       </section>
-      {/* --- Other Sections (Conditional or Static - Keep as is) --- */}
+
       {selectedCategory === 'All' && !loading && !error && (
         <>
-          <div className="my-12 md:my-16 w-full px-4 sm:px-0">
+          <motion.div
+            className="my-12 md:my-16 w-full px-4 sm:px-6 lg:px-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             <img
-              src={arrival_image}
+              src={arrivalImageImport}
               alt="New Arrivals"
-              className="w-full object-cover rounded-lg shadow-md"
+              className="w-full h-auto object-cover rounded-xl shadow-lg"
             />
-          </div>
+          </motion.div>
           <NewCollection genderFilter="Men" limit={4} />
         </>
       )}
-      {/* Newsletter Section (Keep as is) */}
+
       {!loading && !error && <NewsLetter />}
-    </div> // End Page Container
+    </motion.div>
   )
 }
 

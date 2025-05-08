@@ -1,21 +1,55 @@
-// src/pages/TryOnPage.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react' // Added useCallback
+// src/pages/TryOnPage.tsx
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
-import { Upload, ImagePlus, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import {
+  UploadCloud,
+  ImagePlus,
+  Loader2,
+  XCircle,
+  Sparkles,
+  Image as ImageIcon,
+} from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
-const POLLING_INTERVAL = 5000 // Check status every 5 seconds
-const MAX_POLLING_ATTEMPTS = 24 // Try for max 2 minutes
+const POLLING_INTERVAL = 5000
+const MAX_POLLING_ATTEMPTS = 24
 
-const TryOnPage = () => {
-  const { productId } = useParams()
-  const [product, setProduct] = useState<any>(null)
+// --- CORRECTED: Using your specified backend URL directly ---
+const backendApiUrl = 'https://backend-production-c8ff.up.railway.app'
+// --- END CORRECTION ---
+
+interface Product {
+  _id: string
+  image: string
+  title?: string
+}
+
+// Animation Variants
+const pageVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.5, staggerChildren: 0.1, when: 'beforeChildren' },
+  },
+}
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+}
+const cardVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: 20 },
+  visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+}
+
+const TryOnPage: React.FC = () => {
+  const { productId } = useParams<{ productId: string }>()
+  const [product, setProduct] = useState<Product | null>(null)
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
-  const [tryOnResult, setTryOnResult] = useState<string | null>(null) // Final image URL
-  const [showTryButton, setShowTryButton] = useState(false)
+  const [tryOnResult, setTryOnResult] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isPolling, setIsPolling] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
@@ -23,159 +57,111 @@ const TryOnPage = () => {
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const pollingAttemptsRef = useRef<number>(0)
 
-  // Use REACT_APP_ prefix for create-react-app or VITE_ prefix for Vite
-  const backendApiUrl =
-    process.env.REACT_APP_BACKEND_URL ||
-    process.env.VITE_BACKEND_URL ||
-    'https://backend-production-c8ff.up.railway.app'
-
-  // --- Stop Polling Function ---
   const stopPolling = useCallback(() => {
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current)
       pollingIntervalRef.current = null
       pollingAttemptsRef.current = 0
+      setIsPolling(false)
       console.log('Polling stopped.')
-      // Only set loading to false if we are actually stopping polling
-      // If it completes successfully or fails, the specific handlers will set isLoading.
-      // This prevents stopping loading prematurely if component unmounts.
-      // setIsLoading(false); // Removed from here
     }
-  }, []) // No dependencies needed
+  }, [])
 
-  // --- Start Polling Function ---
   const startPolling = useCallback(
-    (jobId) => {
-      stopPolling() // Clear any previous interval
+    (jobId: string) => {
+      stopPolling()
       setCurrentJobId(jobId)
       pollingAttemptsRef.current = 0
-      setInfoMessage(`Processing started (Job ID: ${jobId.substring(0, 8)}...). Checking status...`)
-      setErrorMessage(null) // Clear previous errors
-      setTryOnResult(null) // Clear previous results
-      setIsLoading(true) // Ensure loading is true
+      setInfoMessage(`Processing your try-on (Job: ${jobId.substring(0, 6)})...`)
+      setErrorMessage(null)
+      setTryOnResult(null)
+      setIsLoading(true)
+      setIsPolling(true)
 
       pollingIntervalRef.current = setInterval(async () => {
         if (!jobId || !pollingIntervalRef.current) {
-          // Check if polling was stopped
-          // This check prevents calls after stopPolling is called elsewhere
           if (pollingIntervalRef.current) stopPolling()
           return
         }
-
         pollingAttemptsRef.current += 1
-        console.log(`Polling attempt ${pollingAttemptsRef.current} for Job ID: ${jobId}`)
-
         if (pollingAttemptsRef.current > MAX_POLLING_ATTEMPTS) {
-          console.error('Polling timeout reached for Job ID:', jobId)
-          setErrorMessage('Try-on request timed out while waiting for results.')
+          setErrorMessage('Try-on request timed out.')
           setInfoMessage(null)
           stopPolling()
-          setIsLoading(false) // Stop loading on timeout
+          setIsLoading(false)
           return
         }
-
         try {
           const statusRes = await axios.get(`${backendApiUrl}/api/tryon/status/${jobId}`)
           const { status, outputImageUrl, error: statusErrorMessage } = statusRes.data
-
-          console.log('Status check response:', { status, outputImageUrl, statusErrorMessage })
-
-          // --- Handle different statuses ---
           if (status === 'completed' && outputImageUrl) {
-            console.log('Polling success: Job completed!')
             setTryOnResult(outputImageUrl)
-            setInfoMessage('Try-on completed!')
+            setInfoMessage('Your try-on is ready!')
             setErrorMessage(null)
             stopPolling()
-            setIsLoading(false) // Stop loading on completion
+            setIsLoading(false)
           } else if (status === 'failed') {
-            console.error('Polling detected failure:', statusErrorMessage)
-            // <<<--- UPDATED ERROR MESSAGE HANDLING --- >>>
-            setErrorMessage(`Try-on failed: ${statusErrorMessage || 'Unknown reason'}`)
+            setErrorMessage(`Try-on failed: ${statusErrorMessage || 'Unknown error'}`)
             setInfoMessage(null)
             stopPolling()
-            setIsLoading(false) // Stop loading on failure
+            setIsLoading(false)
           } else if (status === 'check_failed') {
-            // Error occurred during the status check itself (reported by backend)
-            console.error('Polling status check failed:', statusErrorMessage)
-            setErrorMessage(`Failed to check status: ${statusErrorMessage || 'Unknown error'}`)
+            setErrorMessage(`Status check failed: ${statusErrorMessage || 'Unknown error'}`)
             setInfoMessage(null)
-            // Consider stopping polling if check fails repeatedly, but maybe allow retries for temporary issues
-            // For now, stop polling on check failure
             stopPolling()
             setIsLoading(false)
           } else if (['processing', 'in_queue', 'starting', 'unknown'].includes(status)) {
-            // Still processing, update info message
-            setInfoMessage(`Status: ${status}... (Job ID: ${jobId.substring(0, 8)}...)`)
-            // Keep polling, isLoading remains true
+            setInfoMessage(`Status: ${status}... (Job: ${jobId.substring(0, 6)}...)`)
           } else {
-            // Unexpected status
-            console.warn('Received unexpected status during polling:', status)
-            setInfoMessage(`Status: ${status}... (Job ID: ${jobId.substring(0, 8)}...)`)
+            setInfoMessage(`Status: ${status}... (Job: ${jobId.substring(0, 6)}...)`)
           }
-        } catch (pollError) {
-          console.error('Error during status polling request:', pollError)
-          const errMsg =
-            pollError.response?.data?.error ||
-            pollError.response?.data?.details ||
-            pollError.message ||
-            'Could not check job status.'
-          setErrorMessage(`Error checking status: ${errMsg}`)
+        } catch (pollError: any) {
+          setErrorMessage(`Error checking status: ${pollError.message || 'Connection issue'}`)
           setInfoMessage(null)
-          stopPolling() // Stop polling on network/request error
+          stopPolling()
           setIsLoading(false)
         }
       }, POLLING_INTERVAL)
     },
     [backendApiUrl, stopPolling],
-  ) // Added dependencies
+  )
 
-  // --- Fetch Product Details ---
   useEffect(() => {
     if (productId) {
-      console.log('Fetching product details for ID:', productId)
+      setIsLoading(true)
       axios
-        .get(`${backendApiUrl}/api/products/${productId}`)
+        .get<Product>(`${backendApiUrl}/api/products/${productId}`)
         .then((res) => {
-          console.log('Product details fetched:', res.data)
           setProduct(res.data)
         })
         .catch((err) => {
           console.error('Failed to fetch product:', err)
           setErrorMessage('Failed to load product details.')
         })
+        .finally(() => setIsLoading(false))
     }
-    // Cleanup polling interval on component unmount or productId change
-    return stopPolling // Return the cleanup function directly
-  }, [productId, backendApiUrl, stopPolling]) // Added stopPolling dependency
+    return stopPolling
+  }, [productId, backendApiUrl, stopPolling])
 
-  // --- Handle Image Upload ---
-  const handleImageUpload = (e) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    stopPolling() // Stop any active polling
+    stopPolling()
     setCurrentJobId(null)
     setUploadedImage(file)
-    if (previewImageUrl) {
-      URL.revokeObjectURL(previewImageUrl)
-    }
+    if (previewImageUrl) URL.revokeObjectURL(previewImageUrl)
     setPreviewImageUrl(URL.createObjectURL(file))
-    setShowTryButton(true)
     setTryOnResult(null)
     setErrorMessage(null)
-    setInfoMessage(null)
+    setInfoMessage('Image selected. Ready to generate try-on.')
   }
 
-  // --- Handle Try-On Request Initiation ---
   const handleTryOn = async () => {
-    if (!uploadedImage || !product) {
-      console.warn('Attempted Try-On without image or product.')
-      return
-    }
+    if (!uploadedImage || !product) return
     stopPolling()
     setIsLoading(true)
     setErrorMessage(null)
-    setInfoMessage('Initiating try-on request...')
+    setInfoMessage('Initiating try-on...')
     setTryOnResult(null)
     setCurrentJobId(null)
 
@@ -183,7 +169,7 @@ const TryOnPage = () => {
     formData.append('userImage', uploadedImage)
     let imagePath = product.image
     if (!imagePath) {
-      setErrorMessage('Product information is missing the image path.')
+      setErrorMessage('Product image path missing.')
       setIsLoading(false)
       return
     }
@@ -191,150 +177,209 @@ const TryOnPage = () => {
       ? `${backendApiUrl}${imagePath}`
       : `${backendApiUrl}/${imagePath}`
     formData.append('clothingImage', clothingImageUrl)
-    console.log('Initiating Try-On with Model:', clothingImageUrl)
-
     try {
       const res = await axios.post(`${backendApiUrl}/api/tryon`, formData)
-
       if (res.data && res.data.jobId) {
-        console.log('Received Job ID from backend:', res.data.jobId)
-        startPolling(res.data.jobId) // Start polling with the received Job ID
+        startPolling(res.data.jobId)
       } else {
-        console.error('Backend did not return jobId after initiation:', res.data)
-        setErrorMessage(res.data?.message || 'Failed to start try-on job. No Job ID received.')
-        setIsLoading(false)
+        throw new Error(res.data?.message || 'Failed to start job. No Job ID.')
       }
-    } catch (err) {
-      console.error('Try-on initiation failed (POST /api/tryon):', err)
+    } catch (err: any) {
       const backendError =
-        err.response?.data?.error ||
-        err.response?.data?.details ||
-        'Failed to initiate try-on request.'
-      const status = err.response?.status
-      let displayError = status ? `Error ${status}: ${backendError}` : backendError
-      setErrorMessage(displayError)
+        err.response?.data?.error || err.response?.data?.details || 'Failed to initiate try-on.'
+      setErrorMessage(
+        err.response?.status ? `Error ${err.response.status}: ${backendError}` : backendError,
+      )
       setIsLoading(false)
     }
   }
 
-  // --- Cleanup Preview URL on Unmount ---
   useEffect(() => {
-    // This effect specifically handles the preview URL cleanup
-    const currentPreviewUrl = previewImageUrl // Capture value for cleanup function
+    const currentPreviewUrl = previewImageUrl
     return () => {
-      if (currentPreviewUrl) {
-        URL.revokeObjectURL(currentPreviewUrl)
-        console.log('Revoked preview URL:', currentPreviewUrl)
-      }
+      if (currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl)
     }
   }, [previewImageUrl])
 
-  // --- Render Component ---
   return (
-    <div className="min-h-screen bg-[#f8f6f2] flex flex-col items-center px-4 py-10">
-      <h2 className="text-3xl font-semibold text-[#6b5745] mb-10">Virtual Try-On</h2>
+    <motion.div
+      className="min-h-screen bg-gray-50 flex flex-col items-center px-4 py-12 sm:py-16 font-inter"
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.h2
+        className="text-3xl sm:text-4xl lg:text-5xl font-bold text-trendzone-dark-blue mb-10 sm:mb-12 text-center"
+        variants={itemVariants}
+      >
+        Virtual Try-On
+      </motion.h2>
 
-      {/* Notifications Area */}
-      <div className="w-full max-w-lg mb-6 space-y-2">
+      <AnimatePresence>
         {errorMessage && (
-          <div
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+          <motion.div
+            className="w-full max-w-lg mb-6 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2 shadow-md"
             role="alert"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
           >
-            <span className="block sm:inline">{errorMessage}</span>
-          </div>
+            {' '}
+            <XCircle size={18} className="flex-shrink-0" /> {errorMessage}{' '}
+          </motion.div>
         )}
-        {!errorMessage && infoMessage && (
-          <div
-            className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative"
-            role="info"
+        {!errorMessage && infoMessage && !tryOnResult && !(isLoading || isPolling) && (
+          <motion.div
+            className="w-full max-w-lg mb-6 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-lg text-sm shadow-md"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            role="status"
           >
-            <span className="block sm:inline">{infoMessage}</span>
-          </div>
+            {' '}
+            {infoMessage}{' '}
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
-      <div className="flex flex-col md:flex-row gap-10 w-full max-w-4xl justify-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 w-full max-w-4xl lg:max-w-5xl">
         {/* Left: Upload Section */}
-        <div className="w-full max-w-[400px] bg-[#6b5745] text-[#c8a98a] p-6 rounded-xl shadow-md flex flex-col items-center">
-          <Upload className="h-12 w-12 mb-4" />
-          <p className="mb-4 text-center">Upload your photo to try this outfit</p>
-          <input
-            type="file"
-            accept="image/png, image/jpeg, image/webp"
-            onChange={handleImageUpload}
-            className="hidden"
-            id="fileUpload"
+        <motion.div
+          className="w-full bg-white text-trendzone-dark-blue p-6 sm:p-8 rounded-2xl shadow-xl flex flex-col items-center"
+          variants={cardVariants}
+        >
+          <UploadCloud
+            className="h-12 w-12 sm:h-14 sm:w-14 mb-4 text-trendzone-light-blue"
+            strokeWidth={1.5}
           />
+          <h3 className="text-lg sm:text-xl font-semibold mb-2 text-center">Upload Your Photo</h3>
+          <p className="text-sm text-gray-500 mb-6 text-center max-w-xs">
+            Choose a clear, front-facing photo to virtually try on this {product?.title || 'outfit'}
+            .
+          </p>
+
           <label
             htmlFor="fileUpload"
-            className="cursor-pointer bg-[#c8a98a] text-[#6b5745] px-5 py-2 rounded-full font-medium hover:bg-white transition"
+            className="w-full cursor-pointer bg-trendzone-dark-blue text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue transition-colors duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg mb-4"
           >
-            Choose Image
+            <ImageIcon size={18} />
+            <span>{uploadedImage ? 'Change Image' : 'Choose Image'}</span>
+            <input
+              type="file"
+              accept="image/png, image/jpeg, image/webp"
+              onChange={handleImageUpload}
+              className="hidden"
+              id="fileUpload"
+            />
           </label>
+
           {previewImageUrl && (
-            <div className="mt-6 w-full h-[300px] overflow-hidden rounded-lg bg-gray-200 flex items-center justify-center">
+            <motion.div
+              className="mt-4 mb-5 w-full aspect-[3/4] max-h-[300px] sm:max-h-[350px] overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
               <img
                 src={previewImageUrl}
                 alt="Uploaded Preview"
-                className="object-contain max-h-full max-w-full"
+                className="object-contain max-h-full max-w-full rounded-md"
               />
-            </div>
+            </motion.div>
           )}
-          {showTryButton &&
-            product && ( // Only show button if product details are loaded
-              <Button
-                onClick={handleTryOn}
-                disabled={isLoading || !uploadedImage}
-                className="mt-6 bg-[#c8a98a] text-[#6b5745] px-6 py-2 rounded-full hover:bg-white transition flex items-center disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <>
-                    {' '}
-                    <Loader2 className="animate-spin mr-2 w-4 h-4" /> Processing...{' '}
-                  </>
-                ) : (
-                  'Generate Try-On'
-                )}
-              </Button>
+
+          {uploadedImage && product && (
+            <motion.button
+              onClick={handleTryOn}
+              disabled={isLoading || isPolling} // Disable while general loading OR specifically polling
+              className="mt-auto w-full bg-trendzone-light-blue text-trendzone-dark-blue px-6 py-3 rounded-lg font-bold text-sm hover:bg-trendzone-dark-blue hover:text-white transition-colors duration-300 flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+              whileHover={!(isLoading || isPolling) ? { scale: 1.03 } : {}}
+              whileTap={!(isLoading || isPolling) ? { scale: 0.98 } : {}}
+            >
+              {isLoading || isPolling ? ( // Check both flags for loading text
+                <>
+                  {' '}
+                  <Loader2 className="animate-spin mr-2 w-5 h-5" />{' '}
+                  {isPolling && infoMessage ? infoMessage.split('...')[0] : 'Processing...'}{' '}
+                </>
+              ) : (
+                <>
+                  <Sparkles size={18} className="mr-2" /> Generate Try-On
+                </>
+              )}
+            </motion.button>
+          )}
+          {!product &&
+            productId &&
+            !errorMessage &&
+            !isLoading && ( // Show if not loading product details
+              <p className="mt-4 text-xs text-gray-500">Product details are loading...</p>
             )}
-          {!product && productId && <p className="mt-4 text-sm">Loading product...</p>}
-        </div>
+          {isLoading &&
+            !isPolling &&
+            !product && ( // Specifically for initial product load
+              <div className="mt-4 flex items-center text-xs text-gray-500">
+                <Loader2 className="animate-spin mr-2 w-4 h-4" />
+                Loading product info...
+              </div>
+            )}
+        </motion.div>
 
         {/* Right: Try-On Result */}
-        <div className="w-full max-w-[400px] bg-[#fffefc] text-[#6b5745] p-6 rounded-xl shadow-md flex flex-col items-center justify-center min-h-[400px]">
-          <ImagePlus className="h-10 w-10 mb-3" />
-          {/* Loading State */}
-          {isLoading && (
-            <div className="flex flex-col items-center text-center">
-              <Loader2 className="animate-spin w-8 h-8 mb-2" />
-              {/* Show specific info message during loading/polling */}
-              <p>{infoMessage || 'Processing...'}</p>
-              <p className="text-sm text-gray-500">(May take up to a minute or two)</p>
-            </div>
-          )}
-          {/* Result State */}
-          {!isLoading && tryOnResult && (
-            <img
-              src={tryOnResult}
-              alt="Try-On Result"
-              className="w-full rounded-lg object-contain"
-            />
-          )}
-          {/* Initial / Failed / Info State (when not loading and no result image) */}
-          {!isLoading && !tryOnResult && (
-            <p className="text-center text-[#6b5745]">
-              {errorMessage
-                ? 'Failed to generate.' // Indicates failure after processing
-                : infoMessage
-                ? infoMessage // Shows 'Completed!' or other final info
-                : 'Your try-on preview will appear here'}{' '}
-              {/* Default placeholder */}
-            </p>
-          )}
-        </div>
+        <motion.div
+          className="w-full bg-white p-6 sm:p-8 rounded-2xl shadow-xl flex flex-col items-center justify-center min-h-[350px] sm:min-h-[450px] md:min-h-full aspect-[3/4]"
+          variants={cardVariants}
+        >
+          <AnimatePresence mode="wait">
+            {isPolling || (isLoading && !tryOnResult && !errorMessage) ? ( // Show loading if polling or if general loading is true without a result/error yet
+              <motion.div
+                key="loading-result"
+                className="flex flex-col items-center text-center text-trendzone-dark-blue p-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Loader2 className="animate-spin w-10 h-10 sm:w-12 sm:w-12 mb-4 text-trendzone-light-blue" />
+                <p className="font-semibold text-sm sm:text-base">
+                  {infoMessage || 'Generating your try-on...'}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">This may take a moment, please wait.</p>
+              </motion.div>
+            ) : tryOnResult ? (
+              <motion.img
+                key="result-image"
+                src={tryOnResult}
+                alt="Virtual Try-On Result"
+                className="w-full h-full object-contain rounded-lg"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, ease: 'circOut' }}
+              />
+            ) : (
+              <motion.div
+                key="placeholder-result"
+                className="flex flex-col items-center text-center text-gray-400 p-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <ImageIcon className="h-12 w-12 sm:h-16 sm:h-16 mb-4" strokeWidth={1} />
+                <p className="text-sm font-medium text-trendzone-dark-blue">
+                  {errorMessage ? 'Try-on Failed' : 'Your try-on result will appear here'}
+                </p>
+                {errorMessage && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errorMessage.includes('timed out')
+                      ? 'The request took too long. Please try again.'
+                      : 'An error occurred.'}
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 

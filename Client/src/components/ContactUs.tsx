@@ -1,447 +1,377 @@
 // src/components/ContactUs.tsx
 import React, { useState } from 'react'
-import axios from 'axios' // *** Import axios ***
-import { Mail, Phone, MapPin, Globe, Loader2 } from 'lucide-react' // Added Loader2
-import AnimatedSection from './AnimatedSection' // Ensure path is correct
+import axios from 'axios'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Send, PhoneCall, Mail, MapPin, ExternalLink, Loader2 } from 'lucide-react'
 
-// Define API base URL (adjust if needed)
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or https://backend-production-c8ff.up.railway.app
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
 const CONTACT_API_ENDPOINT = `${API_BASE_URL}/api/contact`
 
-// Define interface for toast state
 interface ToastState {
+  id: number
   message: string
   type: 'success' | 'error'
 }
 
-// --- Define interface for form errors ---
+interface FormData {
+  name: string
+  email: string
+  phone: string
+  subject: string
+  message: string
+}
+
 interface FormErrors {
-  firstName?: string
-  lastName?: string
+  name?: string
   email?: string
+  phone?: string
+  subject?: string
   message?: string
-  // No general error needed if using toast for general messages
+}
+
+// Animation Variants (can be slightly adjusted for this new style)
+const pageVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.4, staggerChildren: 0.15, when: 'beforeChildren' },
+  },
+}
+
+const columnVariants = (fromLeft: boolean = true) => ({
+  hidden: { opacity: 0, x: fromLeft ? -40 : 40 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.6, ease: 'easeOut', staggerChildren: 0.1 },
+  },
+})
+
+const textItemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+}
+
+const formBlockVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: 'easeOut', delay: 0.2, staggerChildren: 0.07 },
+  },
+}
+
+const formInputVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
 }
 
 const ContactUs: React.FC = () => {
-  // Use React.FC for type safety
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+  })
   const [isLoading, setIsLoading] = useState(false)
-  const [toast, setToast] = useState<ToastState | null>(null) // Typed toast state
-  const [errors, setErrors] = useState<FormErrors>({}) // --- State for validation errors ---
+  const [toast, setToast] = useState<ToastState | null>(null)
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3500) // Slightly longer duration
+    // ... (showToast logic remains the same) ...
+    const newToast = { id: Date.now(), message, type }
+    setToast(newToast)
+    setTimeout(
+      () => setToast((currentToast) => (currentToast?.id === newToast.id ? null : currentToast)),
+      4500,
+    )
   }
 
-  // --- Validation Function ---
   const validateForm = (): FormErrors => {
+    // ... (validation logic remains the same) ...
     const newErrors: FormErrors = {}
-    const nameRegex = /^[A-Za-z\s'-]+$/ // Allows letters, space, hyphen, apostrophe
+    const { name, email, phone, subject, message } = formData
 
-    // Trim values before validation
-    const fName = firstName.trim()
-    const lName = lastName.trim()
-    const mail = email.trim()
-    const msg = message.trim()
+    if (!name.trim()) newErrors.name = 'Name is required.'
+    else if (name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters.'
 
-    // First Name validation
-    if (!fName) {
-      newErrors.firstName = 'First Name is required.'
-    } else if (!nameRegex.test(fName)) {
-      newErrors.firstName = 'First Name can only contain letters, spaces, hyphens, and apostrophes.'
-    } else if (fName.length < 2) {
-      newErrors.firstName = 'First Name must be at least 2 characters.'
-    }
+    if (!email.trim()) newErrors.email = 'Email is required.'
+    else if (!/.+@.+\..+/.test(email.trim())) newErrors.email = 'Invalid email format.'
 
-    // Last Name validation
-    if (!lName) {
-      newErrors.lastName = 'Last Name is required.'
-    } else if (!nameRegex.test(lName)) {
-      newErrors.lastName = 'Last Name can only contain letters, spaces, hyphens, and apostrophes.'
-    } else if (lName.length < 2) {
-      newErrors.lastName = 'Last Name must be at least 2 characters.'
-    }
+    if (phone.trim() && !/^\+?[0-9\s-()]{7,20}$/.test(phone.trim()))
+      newErrors.phone = 'Invalid phone number format.'
 
-    // Email validation
-    if (!mail) {
-      newErrors.email = 'Email Address is required.'
-    } else if (!/.+@.+\..+/.test(mail)) {
-      // Basic email format check
-      newErrors.email = 'Please enter a valid email address.'
-    }
+    if (!subject.trim()) newErrors.subject = 'Subject is required.'
+    else if (subject.trim().length < 3) newErrors.subject = 'Subject must be at least 3 characters.'
 
-    // Message validation
-    if (!msg) {
-      newErrors.message = 'Message is required.'
-    } else if (msg.length < 10) {
-      // Example: Minimum 10 characters
-      newErrors.message = 'Message must be at least 10 characters long.'
-    }
+    if (!message.trim()) newErrors.message = 'Message is required.'
+    else if (message.trim().length < 10)
+      newErrors.message = 'Message must be at least 10 characters.'
 
     return newErrors
   }
-  // --- End Validation Function ---
 
-  // --- UPDATED handleSubmit Function ---
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    // ... (handleChange logic remains the same) ...
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => {
+        const updated = { ...prev }
+        delete updated[name as keyof FormErrors]
+        return updated
+      })
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    // ... (handleSubmit logic remains the same) ...
     e.preventDefault()
-    setErrors({}) // Clear previous errors
-    setToast(null) // Clear previous toast
+    setErrors({})
+    setToast(null)
 
-    // --- Validate the form ---
     const validationErrors = validateForm()
-
-    // --- If there are errors, update state and stop submission ---
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
-      showToast('Please fix the errors in the form.', 'error')
-      return // Stop submission
+      showToast('Please correct the errors below.', 'error')
+      return
     }
 
-    // --- If validation passes, proceed with API call ---
     setIsLoading(true)
-
-    const payload = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email.trim(),
-      message: message.trim(),
-    }
-
     try {
-      const response = await axios.post(CONTACT_API_ENDPOINT, payload)
+      const [firstName, ...lastNameParts] = formData.name.trim().split(' ')
+      const lastName = lastNameParts.join(' ')
 
-      if (response.status === 200) {
-        showToast('Message sent successfully! We will get back to you soon.', 'success')
-        // Clear the form and errors on success
-        setFirstName('')
-        setLastName('')
-        setEmail('')
-        setMessage('')
-        setErrors({}) // Clear errors state
+      const payload = {
+        firstName: firstName || 'N/A',
+        lastName: lastName || '',
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+      }
+
+      const response = await axios.post(CONTACT_API_ENDPOINT, payload)
+      if (response.status === 200 || response.status === 201) {
+        showToast("Message sent! We'll be in touch soon.", 'success')
+        setFormData({ name: '', email: '', phone: '', subject: '', message: '' })
+        setErrors({})
       } else {
         throw new Error(response.data.message || 'Failed to send message.')
       }
     } catch (error: any) {
-      console.error('Contact form submission error:', error.response?.data || error.message)
       const errorMessage =
-        error.response?.data?.message || 'Could not send message. Please try again later.'
+        error.response?.data?.message || 'Message could not be sent. Please try again.'
       showToast(errorMessage, 'error')
     } finally {
       setIsLoading(false)
     }
   }
-  // --- END UPDATED handleSubmit ---
 
-  // --- Helper to clear error for a field on change ---
-  const handleInputChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>, fieldName: keyof FormErrors) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setter(e.target.value)
-      // Clear the specific error when the user starts typing in the field
-      if (errors[fieldName]) {
-        setErrors((prev) => {
-          const updatedErrors = { ...prev }
-          delete updatedErrors[fieldName]
-          return updatedErrors
-        })
-      }
-    }
+  const formFields = [
+    { name: 'name', type: 'text', placeholder: 'Name', error: errors.name },
+    { name: 'email', type: 'email', placeholder: 'Email', error: errors.email },
+    { name: 'phone', type: 'tel', placeholder: 'Phone (Optional)', error: errors.phone },
+    { name: 'subject', type: 'text', placeholder: 'Subject', error: errors.subject },
+  ]
 
   return (
-    <div className="min-h-screen bg-[#F8F6F2] flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
-      {/* Heading */}
-      <h1 className="text-3xl sm:text-4xl font-bold text-[#6b5745] mb-10 text-center">
-        Get in <span className="text-[#c8a98a]">Touch.</span>
-      </h1>
-      <div className="max-w-6xl w-full bg-white shadow-lg rounded-lg p-6 sm:p-10 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
-        {/* Contact Form */}
-        <AnimatedSection direction="left">
-          <div>
-            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6" noValidate>
-              {' '}
-              {/* Added noValidate to prevent default HTML5 validation popups */}
-              {/* Name Fields */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="firstName" className="sr-only">
-                    First Name
-                  </label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    placeholder="First Name"
-                    // --- Apply error class dynamically ---
-                    className={`contact-input ${
-                      errors.firstName
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
-                        : 'border-gray-300 focus:border-[#c8a98a] focus:ring-[#c8a98a]/40'
-                    }`}
-                    value={firstName}
-                    // --- Use helper for onChange ---
-                    onChange={handleInputChange(setFirstName, 'firstName')}
-                    required // Keep for basic browser fallback and semantics
-                    aria-invalid={!!errors.firstName} // Accessibility
-                    aria-describedby={errors.firstName ? 'firstName-error' : undefined} // Accessibility
-                  />
-                  {/* --- Display First Name Error --- */}
-                  {errors.firstName && (
-                    <p id="firstName-error" className="mt-1 text-xs text-red-600" role="alert">
-                      {errors.firstName}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="lastName" className="sr-only">
-                    Last Name
-                  </label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    placeholder="Last Name"
-                    // --- Apply error class dynamically ---
-                    className={`contact-input ${
-                      errors.lastName
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
-                        : 'border-gray-300 focus:border-[#c8a98a] focus:ring-[#c8a98a]/40'
-                    }`}
-                    value={lastName}
-                    // --- Use helper for onChange ---
-                    onChange={handleInputChange(setLastName, 'lastName')}
-                    required
-                    aria-invalid={!!errors.lastName} // Accessibility
-                    aria-describedby={errors.lastName ? 'lastName-error' : undefined} // Accessibility
-                  />
-                  {/* --- Display Last Name Error --- */}
-                  {errors.lastName && (
-                    <p id="lastName-error" className="mt-1 text-xs text-red-600" role="alert">
-                      {errors.lastName}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {/* Email Field */}
-              <div>
-                <label htmlFor="email" className="sr-only">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  type="email" // Keep type email for mobile keyboards etc.
-                  placeholder="Email Address"
-                  // --- Apply error class dynamically ---
-                  className={`contact-input ${
-                    errors.email
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
-                      : 'border-gray-300 focus:border-[#c8a98a] focus:ring-[#c8a98a]/40'
-                  }`}
-                  value={email}
-                  // --- Use helper for onChange ---
-                  onChange={handleInputChange(setEmail, 'email')}
-                  required
-                  aria-invalid={!!errors.email} // Accessibility
-                  aria-describedby={errors.email ? 'email-error' : undefined} // Accessibility
+    <motion.div
+      className="min-h-screen bg-gray-50 flex flex-col font-inter overflow-x-hidden" // Overall page bg
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <AnimatePresence>
+        {toast /* ... Toast styling ... */ && (
+          <motion.div
+            key={toast.id}
+            className={`fixed top-5 right-5 px-6 py-3 rounded-lg text-white font-medium shadow-xl z-[100] text-sm`}
+            style={{ backgroundColor: toast.type === 'success' ? '#10B981' : '#EF4444' }}
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9, transition: { duration: 0.2 } }}
+            role="alert"
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="w-full flex-grow grid grid-cols-1 md:grid-cols-2">
+        {/* Left Column */}
+        <motion.div
+          className="w-full bg-white text-trendzone-dark-blue p-8 sm:p-12 md:p-16 lg:p-24 flex flex-col justify-center"
+          variants={columnVariants(true)}
+        >
+          <motion.h1
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-none tracking-tighter mb-8"
+            variants={textItemVariants}
+          >
+            Let's get
+            <br />
+            in touch
+          </motion.h1>
+
+          <motion.h2
+            className="text-xl sm:text-2xl font-semibold mb-6 text-gray-800"
+            variants={textItemVariants}
+          >
+            Don't be afraid to say hello with us!
+          </motion.h2>
+
+          <motion.div
+            className="space-y-5 text-sm sm:text-base text-gray-700"
+            variants={textItemVariants}
+          >
+            <div className="flex items-center">
+              <PhoneCall size={18} className="mr-3 text-trendzone-light-blue flex-shrink-0" />
+              <span>
+                Phone:{' '}
+                <a
+                  href="tel:+2578365379"
+                  className="hover:text-trendzone-light-blue transition-colors"
+                >
+                  + (2) 578-365-379
+                </a>
+              </span>
+            </div>
+            <div className="flex items-center">
+              <Mail size={18} className="mr-3 text-trendzone-light-blue flex-shrink-0" />
+              <span>
+                Email:{' '}
+                <a
+                  href="mailto:hello@trendzone.com"
+                  className="hover:text-trendzone-light-blue transition-colors"
+                >
+                  hello@trendzone.com
+                </a>
+              </span>
+            </div>
+            <div className="flex items-start">
+              <MapPin size={18} className="mr-3 mt-1 text-trendzone-light-blue flex-shrink-0" />
+              <span>Office: 123 Fashion Ave, Style City, PK</span>
+            </div>
+            <div>
+              <a
+                href="https://maps.google.com/?q=123+Fashion+Ave,+Style+City,+PK"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-trendzone-dark-blue hover:text-trendzone-light-blue font-medium transition-colors group text-sm"
+              >
+                See on Google Map
+                <ExternalLink
+                  size={14}
+                  className="ml-1.5 transform transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                 />
-                {/* --- Display Email Error --- */}
-                {errors.email && (
-                  <p id="email-error" className="mt-1 text-xs text-red-600" role="alert">
-                    {errors.email}
-                  </p>
-                )}
+              </a>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* Right Column */}
+        <motion.div
+          className="w-full bg-white p-8 sm:p-12 md:p-16 lg:p-20 flex flex-col" // Right column now has white background
+          variants={columnVariants(false)}
+        >
+          <motion.div className="flex items-start mb-10 md:mb-12" variants={textItemVariants}>
+            {' '}
+            {/* Increased bottom margin */}
+            <motion.p className="text-sm text-gray-600 mr-4 leading-relaxed max-w-xs pt-1">
+              {' '}
+              {/* Adjusted leading and pt */}
+              Great! We're excited to hear from you and let's start something special together. Call
+              us for any inquiry.
+            </motion.p>
+            <ArrowRight
+              size={28}
+              className="text-trendzone-dark-blue flex-shrink-0 hidden sm:block mt-1"
+            />{' '}
+            {/* Adjusted size and margin */}
+          </motion.div>
+
+          <motion.div
+            className="bg-trendzone-dark-blue p-8 sm:p-10 rounded-xl shadow-2xl text-white flex-grow flex flex-col" // flex-grow and flex-col
+            variants={formBlockVariants}
+          >
+            <h3 className="text-xl sm:text-2xl font-semibold mb-8 text-center sm:text-left">
+              Contact
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-5 flex-grow flex flex-col" noValidate>
+              {' '}
+              {/* flex-grow and flex-col */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5">
+                {' '}
+                {/* Reduced gap */}
+                {formFields.map((field, index) => (
+                  <motion.div key={field.name} variants={formInputVariants} custom={index}>
+                    {/* Removed placeholder from label, using sr-only */}
+                    <label htmlFor={field.name} className="sr-only">
+                      {field.placeholder}
+                    </label>
+                    <input
+                      id={field.name}
+                      name={field.name}
+                      type={field.type}
+                      placeholder={field.placeholder}
+                      value={formData[field.name as keyof FormData]}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-trendzone-dark-blue placeholder-gray-500 focus:outline-none focus:ring-2 transition-colors duration-200 ${
+                        field.error
+                          ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                          : 'focus:ring-trendzone-light-blue focus:border-trendzone-light-blue'
+                      }`}
+                      required={field.name !== 'phone'}
+                      aria-invalid={!!field.error}
+                    />
+                    {field.error && <p className="mt-1.5 text-xs text-red-400">{field.error}</p>}
+                  </motion.div>
+                ))}
               </div>
-              {/* Message Textarea */}
-              <div>
+              <motion.div
+                variants={formInputVariants}
+                custom={formFields.length}
+                className="flex-grow flex flex-col"
+              >
+                {' '}
+                {/* flex-grow */}
                 <label htmlFor="message" className="sr-only">
-                  Message
+                  Tell us about what you're interested in
                 </label>
                 <textarea
                   id="message"
-                  placeholder="Your Message"
-                  rows={5}
-                  // --- Apply error class dynamically ---
-                  className={`contact-input resize-y ${
+                  name="message"
+                  placeholder="Tell us about what you're interested in"
+                  value={formData.message}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-trendzone-dark-blue placeholder-gray-500 focus:outline-none focus:ring-2 resize-none transition-colors duration-200 flex-grow ${
+                    // flex-grow
                     errors.message
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
-                      : 'border-gray-300 focus:border-[#c8a98a] focus:ring-[#c8a98a]/40'
+                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                      : 'focus:ring-trendzone-light-blue focus:border-trendzone-light-blue'
                   }`}
-                  value={message}
-                  // --- Use helper for onChange ---
-                  onChange={handleInputChange(setMessage, 'message')}
                   required
-                  aria-invalid={!!errors.message} // Accessibility
-                  aria-describedby={errors.message ? 'message-error' : undefined} // Accessibility
+                  aria-invalid={!!errors.message}
                 ></textarea>
-                {/* --- Display Message Error --- */}
-                {errors.message && (
-                  <p id="message-error" className="mt-1 text-xs text-red-600" role="alert">
-                    {errors.message}
-                  </p>
-                )}
-              </div>
-              {/* Submit Button */}
-              <button
+                {errors.message && <p className="mt-1.5 text-xs text-red-400">{errors.message}</p>}
+              </motion.div>
+              <motion.button
                 type="submit"
-                className="w-full bg-[#c8a98a] text-white py-3 rounded-md text-lg font-medium hover:bg-[#b08d6a] transition duration-300 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#c8a98a] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
+                className="w-full bg-trendzone-light-blue text-trendzone-dark-blue py-3 px-6 rounded-lg text-sm sm:text-base font-semibold hover:bg-white transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-trendzone-dark-blue focus:ring-white disabled:opacity-60 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-auto" // mt-auto
                 disabled={isLoading}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                {isLoading ? (
-                  <>
-                    {' '}
-                    <Loader2 className="animate-spin mr-2 h-5 w-5" /> Sending...{' '}
-                  </>
-                ) : (
-                  'Submit'
-                )}
-              </button>
+                {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Send to us'}
+              </motion.button>
             </form>
-          </div>
-        </AnimatedSection>
-
-        {/* Contact Information (Right Side) */}
-        <div className="bg-[#F5EDE2] p-6 sm:p-8 rounded-lg shadow-inner">
-          {' '}
-          {/* Changed shadow */}
-          <h2 className="text-2xl font-semibold text-[#6b5745] mb-6">Contact Us</h2>
-          <p className="text-gray-700 mb-6 text-sm sm:text-base">
-            Whether you have questions about our services, need support, or want to share your
-            feedback, our dedicated team is here to assist you.
-          </p>
-          <div className="space-y-5 sm:space-y-6">
-            {/* Email */}
-            <div className="flex items-start gap-3 sm:gap-4">
-              <Mail className="text-[#c8a98a] mt-1 flex-shrink-0" size={22} />
-              <div>
-                <h3 className="text-md sm:text-lg font-semibold text-[#6b5745]">Email</h3>
-                <a
-                  href="mailto:hello@gmail.com"
-                  className="text-gray-800 text-sm sm:text-base hover:text-[#c8a98a] break-all"
-                >
-                  hello@gmail.com
-                </a>
-              </div>
-            </div>
-            {/* Phone */}
-            <div className="flex items-start gap-3 sm:gap-4">
-              <Phone className="text-[#c8a98a] mt-1 flex-shrink-0" size={22} />
-              <div>
-                <h3 className="text-md sm:text-lg font-semibold text-[#6b5745]">Phone</h3>
-                {/* Make phone number clickable */}
-                <a
-                  href="tel:+9232643456"
-                  className="text-gray-800 text-sm sm:text-base hover:text-[#c8a98a]"
-                >
-                  032643456
-                </a>{' '}
-                {/* Adjust format if needed */}
-              </div>
-            </div>
-            {/* Location */}
-            <div className="flex items-start gap-3 sm:gap-4">
-              <MapPin className="text-[#c8a98a] mt-1 flex-shrink-0" size={22} />
-              <div>
-                <h3 className="text-md sm:text-lg font-semibold text-[#6b5745]">Location</h3>
-                <p className="text-gray-800 text-sm sm:text-base">
-                  123 Anywhere St., Any City, Pakistan
-                </p>{' '}
-                {/* Added country */}
-              </div>
-            </div>
-            {/* Website */}
-            <div className="flex items-start gap-3 sm:gap-4">
-              <Globe className="text-[#c8a98a] mt-1 flex-shrink-0" size={22} />
-              <div>
-                <h3 className="text-md sm:text-lg font-semibold text-[#6b5745]">Website</h3>
-                {/* Make website clickable and add protocol */}
-                <a
-                  href="https://Wearflaresite.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-800 text-sm sm:text-base hover:text-[#c8a98a]"
-                >
-                  Wearflaresite.com
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>{' '}
-      {/* End main content grid */}
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          // Added animation classes
-          className={`fixed bottom-5 left-1/2 transform -translate-x-1/2 px-5 py-3 rounded-md text-white font-medium shadow-lg transition-all duration-300 ease-out ${
-            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-          } ${toast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} // Animate in/out
-          role="alert"
-        >
-          {toast.message}
-        </div>
-      )}
-      {/* --- Styles --- */}
-      <style jsx>{`
-        .contact-input {
-          display: block;
-          width: 100%;
-          padding: 0.75rem; /* p-3 */
-          border: 1px solid #d1d5db; /* default: border-gray-300 */
-          border-radius: 0.375rem; /* rounded-md */
-          transition: border-color 0.2s, box-shadow 0.2s;
-          font-size: 0.875rem; /* text-sm */
-        }
-        /* --- Updated Focus Styles --- */
-        .contact-input:focus {
-          outline: none;
-          /* Dynamic ring/border color is handled by utility classes now */
-          /* border-color: #c8a98a; */
-          /* box-shadow: 0 0 0 2px rgba(200, 169, 138, 0.4); */
-        }
-        /* --- Add Specific Error Border Style (optional, can be done with Tailwind class 'border-red-500') --- */
-        /* .contact-input.border-red-500 { border-color: #ef4444; } */
-
-        /* --- Focus styles are now applied conditionally using Tailwind classes --- */
-        /* Example for normal state: focus:border-[#c8a98a] focus:ring-[#c8a98a]/40 */
-        /* Example for error state: focus:border-red-500 focus:ring-red-500/40 */
-
-        .animate-spin {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        /* --- Style for error text --- */
-        .text-red-600 {
-          color: #dc2626;
-        }
-        .text-xs {
-          font-size: 0.75rem;
-        }
-        .mt-1 {
-          margin-top: 0.25rem;
-        }
-        /* --- Style for error border (applied via className) --- */
-        .border-red-500 {
-          border-color: #ef4444;
-        }
-        /* --- Style for error focus ring (applied via className) --- */
-        .focus\\:border-red-500:focus {
-          border-color: #ef4444;
-        }
-        .focus\\:ring-red-500\\/40:focus {
-          box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4);
-        } /* Tailwind ring color with opacity */
-      `}</style>
-    </div> // End Page Container
+          </motion.div>
+        </motion.div>
+      </div>
+    </motion.div>
   )
 }
 

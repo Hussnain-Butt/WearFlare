@@ -1,9 +1,10 @@
+// src/components/SearchOverlay.tsx
 import React, { useState } from 'react'
 import axios from 'axios'
-import { X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom' // Import useNavigate
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, Search as SearchIcon, ImagePlus, Loader2, ArrowRight } from 'lucide-react' // Added icons
+import { useNavigate } from 'react-router-dom'
 
-// Interface for Product data
 interface ProductType {
   _id: string
   title: string
@@ -13,82 +14,111 @@ interface ProductType {
   image?: string
 }
 
-// Interface for component props
 interface SearchOverlayProps {
   onClose: () => void
 }
 
-// --- Backend Base URL ---
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // Or your local URL
-// --- / ---
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
+
+// Animation Variants
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.2 } },
+}
+
+const modalVariants = {
+  hidden: { opacity: 0, scale: 0.9, y: 20 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 250,
+      damping: 25,
+      duration: 0.3,
+      staggerChildren: 0.05,
+    },
+  },
+  exit: { opacity: 0, scale: 0.9, y: 20, transition: { duration: 0.2 } },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+}
 
 const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
-  const navigate = useNavigate() // Initialize useNavigate hook
+  const navigate = useNavigate()
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [searchResults, setSearchResults] = useState<ProductType[]>([])
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageSearchResults, setImageSearchResults] = useState<ProductType[]>([])
+  const [labels, setLabels] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [isSearchingText, setIsSearchingText] = useState(false)
+  const [isSearchingImage, setIsSearchingImage] = useState(false)
+  const [lastSearchedQuery, setLastSearchedQuery] = useState<string>('')
+  const [lastSearchedImage, setLastSearchedImage] = useState<boolean>(false)
 
-  // --- State Variables ---
-  const [searchQuery, setSearchQuery] = useState<string>('') // For category search input
-  const [searchResults, setSearchResults] = useState<ProductType[]>([]) // Category search results
-  const [selectedFile, setSelectedFile] = useState<File | null>(null) // Image search file
-  const [imageSearchResults, setImageSearchResults] = useState<ProductType[]>([]) // Image search results
-  const [labels, setLabels] = useState<string[]>([]) // Labels from image search
-  const [error, setError] = useState<string | null>(null) // Error message
-  const [isSearchingText, setIsSearchingText] = useState(false) // Loading for category search
-  const [isSearchingImage, setIsSearchingImage] = useState(false) // Loading for image search
-  const [lastSearchedQuery, setLastSearchedQuery] = useState<string>('') // To display "no results for..." message correctly
-  const [lastSearchedImage, setLastSearchedImage] = useState<boolean>(false) // To display "no results for..." message correctly
-
-  // --- Text Search Handler (Searches Category) ---
   const handleTextSearch = async () => {
+    // ... (functionality remains the same, ensure errors are set via setError)
     const trimmedQuery = searchQuery.trim()
-    if (!trimmedQuery) return
-
+    if (!trimmedQuery) {
+      setError('Please enter a category to search.')
+      return
+    }
     setIsSearchingText(true)
     setError(null)
     setSearchResults([])
-    setImageSearchResults([]) // Clear other results
+    setImageSearchResults([])
     setLabels([])
-    setLastSearchedQuery(trimmedQuery) // Store the query being searched
-    setLastSearchedImage(false) // Indicate text search was last
-
+    setLastSearchedQuery(trimmedQuery)
+    setLastSearchedImage(false)
     try {
       const response = await axios.get<ProductType[]>(
         `${API_BASE_URL}/api/products/search?query=${encodeURIComponent(trimmedQuery)}`,
       )
       setSearchResults(Array.isArray(response.data) ? response.data : [])
-    } catch (err: any) {
-      console.error('Category Search Error:', err)
-      setError('Error searching by category. Please check the category name or try again.')
-      setSearchResults([])
+    } catch (err) {
+      setError('Error searching by category. Please try again.')
     } finally {
       setIsSearchingText(false)
     }
   }
 
-  // --- File Change Handler ---
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setSelectedFile(e.target.files[0])
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      setImagePreview(URL.createObjectURL(file)) // Create preview
       setImageSearchResults([])
       setLabels([])
       setError(null)
-      setSearchResults([]) // Clear text results when new file chosen
-      setLastSearchedImage(false) // Reset flag
-      setLastSearchedQuery('') // Reset flag
+      setSearchResults([])
+      setLastSearchedImage(false)
+      setLastSearchedQuery('')
+    } else {
+      setSelectedFile(null)
+      setImagePreview(null)
     }
   }
 
-  // --- Image Search Handler ---
   const handleImageSearch = async () => {
-    if (!selectedFile) return
-
+    // ... (functionality remains the same, ensure errors are set via setError)
+    if (!selectedFile) {
+      setError('Please select an image file.')
+      return
+    }
     setIsSearchingImage(true)
     setError(null)
     setImageSearchResults([])
     setLabels([])
-    setSearchResults([]) // Clear text results
-    setLastSearchedImage(true) // Indicate image search was last
-    setLastSearchedQuery('') // Reset flag
-
+    setSearchResults([])
+    setLastSearchedImage(true)
+    setLastSearchedQuery('')
     try {
       const formData = new FormData()
       formData.append('image', selectedFile)
@@ -99,192 +129,253 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
       )
       setImageSearchResults(response.data?.products || [])
       setLabels(response.data?.labels || [])
-    } catch (err: any) {
-      console.error('Image Search Error:', err)
+    } catch (err) {
       setError('Error performing image search. Please try again.')
-      setImageSearchResults([])
-      setLabels([])
     } finally {
       setIsSearchingImage(false)
     }
   }
 
-  // --- Navigation Handler ---
   const handleResultClick = (productId: string) => {
     if (!productId) return
     navigate(`/product/${productId}`)
-    onClose() // Close the overlay
+    onClose()
   }
 
-  // Determine if any search has been performed and finished
   const searchAttempted =
     (lastSearchedQuery || lastSearchedImage) && !isSearchingText && !isSearchingImage
   const noResultsFound = searchResults.length === 0 && imageSearchResults.length === 0
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-3xl rounded-lg shadow-xl relative p-6 md:p-8 max-h-[90vh] overflow-y-hidden flex flex-col font-sans">
-        {' '}
-        {/* Changed overflow-y */}
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6 pr-8 flex-shrink-0">
-          <h2 className="text-2xl font-bold text-gray-800">Search Products</h2>
-          <button
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-inter"
+      variants={backdropVariants}
+      initial="hidden"
+      animate="visible"
+      exit="hidden"
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white w-full max-w-2xl lg:max-w-3xl rounded-xl shadow-2xl relative p-6 sm:p-8 flex flex-col max-h-[90vh]"
+        variants={modalVariants}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <motion.div
+          className="flex justify-between items-center mb-6 flex-shrink-0"
+          variants={itemVariants}
+        >
+          <h2 className="text-2xl sm:text-3xl font-bold text-trendzone-dark-blue">
+            Search Products
+          </h2>
+          <motion.button
             onClick={onClose}
-            className="absolute top-3 right-3 text-gray-500 hover:text-red-600 focus:outline-none z-10 p-1 rounded-full hover:bg-gray-100"
+            className="p-1.5 text-gray-500 hover:text-trendzone-dark-blue rounded-full hover:bg-gray-100 transition-colors"
             aria-label="Close search"
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
           >
             <X size={24} />
-          </button>
-        </div>
-        {/* Global Error Display */}
-        {error && <p className="error-message flex-shrink-0">{error}</p>}
-        {/* Search Inputs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-6 flex-shrink-0">
-          {/* Left Side: Text Search (by Category) */}
-          <div>
-            <label htmlFor="text-search" className="search-label">
+          </motion.button>
+        </motion.div>
+
+        {error && (
+          <motion.p
+            className="bg-red-50 text-red-600 border border-red-200 px-4 py-2.5 rounded-md text-sm mb-4 flex-shrink-0"
+            variants={itemVariants}
+          >
+            {error}
+          </motion.p>
+        )}
+
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-6 flex-shrink-0"
+          variants={itemVariants}
+        >
+          {/* Text Search */}
+          <div className="space-y-2">
+            <label
+              htmlFor="text-search"
+              className="block text-sm font-semibold text-trendzone-dark-blue mb-1"
+            >
               Search by Category
             </label>
             <div className="flex items-center space-x-2">
               <input
                 id="text-search"
                 type="text"
-                className="search-input"
-                placeholder="Enter category (e.g., Shirts)"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-trendzone-dark-blue placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-trendzone-light-blue focus:border-transparent transition-colors"
+                placeholder="e.g., Shirts, Jackets"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleTextSearch()}
+                onKeyDown={(e) =>
+                  e.key === 'Enter' && !isSearchingText && searchQuery.trim() && handleTextSearch()
+                }
               />
-              <button
+              <motion.button
                 onClick={handleTextSearch}
                 disabled={isSearchingText || !searchQuery.trim()}
-                className="search-button primary-button"
+                className="px-4 py-2.5 bg-trendzone-dark-blue text-white text-sm font-semibold rounded-lg hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue transition-colors disabled:opacity-60 flex items-center justify-center h-[44px] w-[100px]" // Fixed height for consistency
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
               >
-                {isSearchingText ? '...' : 'Search'}
-              </button>
+                {isSearchingText ? (
+                  <Loader2 className="animate-spin w-5 h-5" />
+                ) : (
+                  <SearchIcon size={18} />
+                )}
+              </motion.button>
             </div>
           </div>
 
-          {/* Right Side: Image Search */}
-          <div>
-            <label htmlFor="image-search-input" className="search-label">
+          {/* Image Search */}
+          <div className="space-y-2">
+            <label
+              htmlFor="image-search-input"
+              className="block text-sm font-semibold text-trendzone-dark-blue mb-1"
+            >
               Search by Image
             </label>
-            <div className="flex flex-col space-y-2">
-              {' '}
-              {/* Reduced space */}
-              <input
-                id="image-search-input"
-                type="file"
-                onChange={handleFileChange}
-                className="file-input"
-                accept="image/png, image/jpeg, image/webp"
-              />
-              {selectedFile && (
-                <span className="text-xs text-gray-600 truncate">
-                  Selected: {selectedFile.name}
+            <div className="flex items-center space-x-2">
+              <label className="flex-grow h-[44px] px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-500 hover:border-trendzone-light-blue cursor-pointer transition-colors flex items-center justify-center">
+                <ImagePlus size={18} className="mr-2 text-gray-400" />
+                <span>
+                  {selectedFile
+                    ? selectedFile.name.substring(0, 20) +
+                      (selectedFile.name.length > 20 ? '...' : '')
+                    : 'Choose File'}
                 </span>
-              )}
-              <button
+                <input
+                  id="image-search-input"
+                  type="file"
+                  onChange={handleFileChange}
+                  className="sr-only" // Hidden, styled by label
+                  accept="image/png, image/jpeg, image/webp"
+                />
+              </label>
+              <motion.button
                 onClick={handleImageSearch}
                 disabled={!selectedFile || isSearchingImage}
-                className="search-button secondary-button self-start mt-1" // Added margin top
+                className="px-4 py-2.5 bg-trendzone-dark-blue text-white text-sm font-semibold rounded-lg hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue transition-colors disabled:opacity-60 flex items-center justify-center h-[44px] w-[100px]" // Fixed height for consistency
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
               >
-                {isSearchingImage ? 'Analysing...' : 'Search Image'}
-              </button>
+                {isSearchingImage ? <Loader2 className="animate-spin w-5 h-5" /> : 'Search'}
+              </motion.button>
             </div>
+            {imagePreview && (
+              <div className="mt-2 w-20 h-20 rounded-md overflow-hidden border border-gray-200">
+                <img
+                  src={imagePreview}
+                  alt="Selected preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
           </div>
-        </div>
-        {/* Results Area - Scrollable */}
-        <div className="flex-grow border-t border-gray-200 pt-4 overflow-y-auto">
-          {' '}
-          {/* Added overflow-y-auto */}
-          {/* Loading Indicators */}
+        </motion.div>
+
+        {/* Results Area */}
+        <motion.div
+          className="flex-grow border-t border-gray-200 pt-4 overflow-y-auto"
+          variants={itemVariants}
+        >
           {(isSearchingText || isSearchingImage) && (
-            <p className="search-status text-center py-4">
-              {isSearchingText
-                ? `Searching for category "${lastSearchedQuery}"...`
-                : 'Analyzing image and searching...'}
-            </p>
+            <div className="flex flex-col items-center justify-center py-6 text-gray-600">
+              <Loader2 className="animate-spin w-7 h-7 mb-2 text-trendzone-light-blue" />
+              <p className="text-sm">
+                {isSearchingText ? `Searching for "${lastSearchedQuery}"...` : 'Analyzing image...'}
+              </p>
+            </div>
           )}
-          {/* Results Display */}
+
           {!isSearchingText &&
             !isSearchingImage &&
             (searchResults.length > 0 || imageSearchResults.length > 0) && (
-              <div className="space-y-4">
-                {' '}
-                {/* Add space between result sections */}
-                {/* Text Search Results - CLICKABLE */}
+              <div className="space-y-5">
                 {searchResults.length > 0 && (
-                  <div className="search-results-section">
-                    <h3 className="results-title">Category Search Results:</h3>
-                    <ul className="results-list">
+                  <div>
+                    <h3 className="text-md font-semibold text-trendzone-dark-blue mb-2">
+                      Category Matches:
+                    </h3>
+                    <ul className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                      {' '}
+                      {/* Scrollable list */}
                       {searchResults.map((product) => (
                         <li
                           key={product._id}
                           onClick={() => handleResultClick(product._id)}
-                          className="result-item group"
-                          role="button"
+                          className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors group"
                           tabIndex={0}
                           onKeyDown={(e) => e.key === 'Enter' && handleResultClick(product._id)}
                         >
                           <img
-                            src={`${API_BASE_URL}${product.image}`}
+                            src={`${API_BASE_URL}${product.image?.startsWith('/') ? '' : '/'}${
+                              product.image
+                            }`}
                             alt={product.title}
-                            className="result-image"
+                            className="w-12 h-12 object-cover rounded-md bg-gray-200"
                             onError={(e) => {
-                              e.currentTarget.src = 'https://via.placeholder.com/100?text=No+Img'
-                              e.currentTarget.alt = 'Image unavailable'
+                              e.currentTarget.src = 'https://via.placeholder.com/100?text=N/A'
                             }}
                           />
-                          <div className="result-info">
-                            {' '}
-                            <strong className="result-title">{product.title}</strong>{' '}
-                            <span className="result-price">Rs {product.price}</span>{' '}
+                          <div className="flex-grow min-w-0">
+                            <p className="text-sm font-medium text-trendzone-dark-blue truncate group-hover:text-trendzone-light-blue">
+                              {product.title}
+                            </p>
+                            <p className="text-xs text-gray-500">PKR {product.price}</p>
                           </div>
-                          <span className="result-view-indicator">View</span>
+                          <ArrowRight
+                            size={16}
+                            className="text-gray-400 group-hover:text-trendzone-light-blue transition-colors flex-shrink-0"
+                          />
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
-                {/* Image Search Results - CLICKABLE */}
                 {imageSearchResults.length > 0 && (
-                  <div className="search-results-section">
-                    <h3 className="results-title">Image Search Results:</h3>
+                  <div>
+                    <h3 className="text-md font-semibold text-trendzone-dark-blue mb-2">
+                      Image Matches:
+                    </h3>
                     {labels.length > 0 && (
-                      <p className="detected-labels">
+                      <p className="text-xs text-gray-500 mb-2">
                         <span className="font-medium">Detected:</span>{' '}
-                        {labels.slice(0, 5).join(', ')}
-                        {labels.length > 5 ? '...' : ''}
+                        {labels.slice(0, 4).join(', ')}
+                        {labels.length > 4 ? '...' : ''}
                       </p>
                     )}
-                    <ul className="results-list">
+                    <ul className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                      {' '}
+                      {/* Scrollable list */}
                       {imageSearchResults.map((product) => (
                         <li
                           key={product._id}
                           onClick={() => handleResultClick(product._id)}
-                          className="result-item group"
-                          role="button"
+                          className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors group"
                           tabIndex={0}
                           onKeyDown={(e) => e.key === 'Enter' && handleResultClick(product._id)}
                         >
                           <img
-                            src={`${API_BASE_URL}${product.image}`}
+                            src={`${API_BASE_URL}${product.image?.startsWith('/') ? '' : '/'}${
+                              product.image
+                            }`}
                             alt={product.title}
-                            className="result-image"
+                            className="w-12 h-12 object-cover rounded-md bg-gray-200"
                             onError={(e) => {
-                              e.currentTarget.src = 'https://via.placeholder.com/100?text=No+Img'
-                              e.currentTarget.alt = 'Image unavailable'
+                              e.currentTarget.src = 'https://via.placeholder.com/100?text=N/A'
                             }}
                           />
-                          <div className="result-info">
-                            {' '}
-                            <strong className="result-title">{product.title}</strong>{' '}
-                            <span className="result-price">Rs {product.price}</span>{' '}
+                          <div className="flex-grow min-w-0">
+                            <p className="text-sm font-medium text-trendzone-dark-blue truncate group-hover:text-trendzone-light-blue">
+                              {product.title}
+                            </p>
+                            <p className="text-xs text-gray-500">PKR {product.price}</p>
                           </div>
-                          <span className="result-view-indicator">View</span>
+                          <ArrowRight
+                            size={16}
+                            className="text-gray-400 group-hover:text-trendzone-light-blue transition-colors flex-shrink-0"
+                          />
                         </li>
                       ))}
                     </ul>
@@ -292,189 +383,21 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
                 )}
               </div>
             )}
-          {/* No Results/Initial State Messages */}
           {!isSearchingText && !isSearchingImage && noResultsFound && searchAttempted && (
-            <p className="search-status text-center py-4">
+            <p className="text-sm text-center text-gray-500 py-6">
               {lastSearchedQuery
-                ? `No products found for category "${lastSearchedQuery}".`
-                : lastSearchedImage
-                ? 'No similar products found for the uploaded image.'
-                : 'No results.'}
+                ? `No results found for "${lastSearchedQuery}".`
+                : 'No similar products found for the uploaded image.'}
             </p>
           )}
           {!searchAttempted && !isSearchingText && !isSearchingImage && (
-            <p className="search-status text-center py-4 text-gray-500">
+            <p className="text-sm text-center text-gray-400 py-6">
               Enter a category or upload an image to start searching.
             </p>
           )}
-        </div>{' '}
-        {/* End Results Area */}
-      </div>{' '}
-      {/* End Modal Content */}
-      {/* --- Basic Styles (Copied from previous response, ensure they match your needs) --- */}
-      <style jsx>{`
-        /* Input & Button Styles */
-        .search-label {
-          display: block;
-          margin-bottom: 0.5rem;
-          font-weight: 600;
-          color: #374151; /* text-gray-700 */
-          font-size: 0.875rem; /* text-sm */
-        }
-        .search-input {
-          border: 1px solid #d1d5db;
-          border-radius: 0.375rem;
-          padding: 0.5rem 0.75rem;
-          width: 100%;
-          flex-grow: 1;
-          font-size: 0.875rem;
-        }
-        .search-input:focus {
-          outline: none;
-          border-color: #c8a98a;
-          box-shadow: 0 0 0 1px #c8a98a;
-        }
-        .file-input {
-          display: block;
-          width: 100%;
-          font-size: 0.875rem;
-          color: #6b7280;
-        }
-        .file-input::file-selector-button {
-          margin-right: 1rem;
-          padding: 0.5rem 1rem;
-          border-radius: 0.25rem;
-          border: none;
-          font-size: 0.875rem;
-          font-weight: 600;
-          background-color: #f3f0e9; /* Lighter beige */
-          color: #a88a6a;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        .file-input::file-selector-button:hover {
-          background-color: #e6dcc8;
-        }
-        .search-button {
-          padding: 0.5rem 1rem;
-          border-radius: 0.375rem;
-          color: white;
-          transition: background-color 0.2s, opacity 0.2s;
-          font-weight: 500;
-          white-space: nowrap;
-          font-size: 0.875rem;
-          border: none;
-          cursor: pointer;
-        }
-        .search-button.primary-button {
-          background-color: #c8a98a;
-        }
-        .search-button.primary-button:hover:not(:disabled) {
-          background-color: #b08d6a;
-        }
-        .search-button.secondary-button {
-          background-color: #a88a6a;
-        } /* Slightly different brown */
-        .search-button.secondary-button:hover:not(:disabled) {
-          background-color: #8b6e4a;
-        }
-        .search-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        /* Status & Results Styles */
-        .search-status {
-          color: #4b5563; /* gray-600 */
-          font-size: 0.875rem;
-        }
-        .error-message {
-          background-color: #fee2e2;
-          color: #b91c1c;
-          border: 1px solid #fecaca;
-          padding: 0.5rem 1rem;
-          border-radius: 0.25rem;
-          margin-bottom: 1rem;
-          font-size: 0.875rem;
-        }
-        .search-results-section {
-          /* Optional: Add margin if needed */
-        }
-        .results-title {
-          font-size: 1rem; /* text-base */
-          font-weight: 600; /* font-semibold */
-          margin-bottom: 0.75rem; /* mb-3 */
-          color: #374151; /* text-gray-800 */
-          flex-shrink: 0;
-        }
-        .detected-labels {
-          font-size: 0.8rem;
-          color: #4b5563;
-          margin-bottom: 0.75rem;
-          flex-shrink: 0;
-          line-height: 1.4;
-        }
-        .results-list {
-          list-style: none;
-          padding: 0;
-          margin: 0; /* Handled by parent now */
-          space-y: 0.75rem; /* space-y-3 */
-        }
-        .result-item {
-          border: 1px solid #e5e7eb; /* border-gray-200 */
-          padding: 0.75rem; /* p-3 */
-          border-radius: 0.375rem; /* rounded */
-          transition: background-color 0.2s, border-color 0.2s;
-          display: flex;
-          align-items: center;
-          gap: 1rem; /* space-x-4 */
-          cursor: pointer;
-        }
-        .result-item:hover,
-        .result-item:focus {
-          background-color: #f9fafb; /* hover:bg-gray-50 */
-          outline: none;
-          border-color: #c8a98a;
-        }
-        .result-image {
-          width: 3.5rem; /* w-14 */
-          height: 3.5rem; /* h-14 */
-          object-fit: cover;
-          border-radius: 0.25rem; /* rounded */
-          flex-shrink: 0;
-          background-color: #f3f4f6; /* BG for placeholders */
-        }
-        .result-info {
-          flex-grow: 1;
-          min-width: 0; /* Allow text truncation */
-        }
-        .result-title {
-          display: block;
-          font-size: 0.875rem; /* text-sm */
-          font-weight: 500; /* font-medium */
-          color: #111827; /* text-gray-900 */
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .result-price {
-          font-size: 0.8rem;
-          color: #4b5563; /* text-gray-600 */
-        }
-        .result-view-indicator {
-          margin-left: auto;
-          font-size: 0.75rem;
-          color: #9ca3af; /* gray-400 */
-          opacity: 0;
-          transition: opacity 0.2s;
-          flex-shrink: 0;
-        } /* Added flex-shrink */
-        .result-item:hover .result-view-indicator,
-        .result-item:focus .result-view-indicator {
-          opacity: 1;
-        }
-      `}</style>
-    </div> // End Modal Container
+        </motion.div>
+      </motion.div>
+    </motion.div>
   )
 }
 

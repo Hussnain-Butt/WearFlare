@@ -3,8 +3,29 @@ import React, { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Menu, X } from 'lucide-react'
 import AuthContext from '../context/AuthContext'
-import { useCart } from '../context/CartContext' // <--- Import useCart
+import { useCart } from '../context/CartContext'
 import SearchOverlay from './SearchOverlay'
+
+const NavLink: React.FC<{
+  to: string
+  children: React.ReactNode
+  onClick?: () => void
+  isMobile?: boolean
+}> = ({ to, children, onClick, isMobile = false }) => {
+  const baseDesktopClasses =
+    'relative text-sm lg:text-base font-medium text-trendzone-dark-blue hover:text-trendzone-light-blue transition-colors duration-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm'
+  const baseMobileClasses =
+    'block px-3 py-2 rounded-md text-base font-medium text-trendzone-dark-blue hover:text-trendzone-light-blue hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus-visible:bg-gray-200 focus-visible:text-trendzone-dark-blue'
+
+  return (
+    <Link to={to} className={isMobile ? baseMobileClasses : baseDesktopClasses} onClick={onClick}>
+      {children}
+      {!isMobile && (
+        <span className="absolute bottom-[-4px] left-0 w-0 h-[2px] bg-trendzone-light-blue group-hover:w-full transition-all duration-300"></span>
+      )}
+    </Link>
+  )
+}
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -12,11 +33,10 @@ const Navbar: React.FC = () => {
 
   const authContext = useContext(AuthContext)
   if (!authContext) {
-    // This error handling is good.
     throw new Error('AuthContext is undefined. Make sure AuthProvider is wrapping the App.')
   }
   const { user, logout } = authContext
-  const { totalItems } = useCart() // <--- Get totalItems from CartContext
+  const { totalItems } = useCart()
 
   const navigate = useNavigate()
 
@@ -32,70 +52,40 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="bg-white shadow-md w-full sticky top-0 z-40">
-      {' '}
-      {/* Make navbar sticky */}
-      <div className="max-w-10xl mx-auto px-4 sm:px-6 lg:px-10">
-        {' '}
-        {/* Adjusted padding */}
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {' '}
-          {/* Standard height */}
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" onClick={closeMobileMenu}>
-              <img src="/logoWeb.png" className="h-10 md:h-12 w-auto" alt="WearFlare Logo" />{' '}
-              {/* Use height control */}
-            </Link>
-          </div>
-          {/* Desktop Menu - Centered */}
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8 flex-grow justify-center">
             <Link
               to="/"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
+              onClick={closeMobileMenu}
+              className="text-2xl md:text-3xl font-bold text-trendzone-dark-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm"
             >
-              Home
+              WearFlare
             </Link>
-            {/* <Link
-              to="/shop"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
-            >
-              Shop
-            </Link> */}
-            <Link
-              to="/men"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
-            >
-              Men
-            </Link>
-            <Link
-              to="/women"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
-            >
-              Women
-            </Link>
-            <Link
-              to="/contact"
-              className="text-sm lg:text-base font-medium text-gray-700 hover:text-[#c8a98a] transition-colors duration-200"
-            >
-              Contact Us
-            </Link>
-            {/* Add other links similarly */}
           </div>
-          {/* Icons & Signup Button (Desktop) */}
-          <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            {/* Search Button */}
+
+          {/* Desktop Menu - Centered */}
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8 flex-grow justify-center">
+            <NavLink to="/">Home</NavLink>
+            <NavLink to="/men">Men</NavLink>
+            <NavLink to="/women">Women</NavLink>
+            <NavLink to="/contact">Contact</NavLink>
+          </div>
+
+          {/* Icons & Auth Button (Desktop) */}
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-5">
             <button
               onClick={() => setShowSearchOverlay(true)}
-              className="p-2 text-gray-600 hover:text-[#c8a98a] focus:outline-none transition-colors duration-200"
+              className="p-2 text-trendzone-dark-blue hover:text-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-full transition-all duration-200 hover:scale-110"
               aria-label="Search Products"
             >
               <Search className="h-5 w-5 lg:h-6 lg:w-6" />
             </button>
 
-            {/* Cart Link with Badge */}
             <Link
               to="/cart"
-              className="relative p-2 text-gray-600 hover:text-[#c8a98a] transition-colors duration-200"
+              className="relative p-2 text-trendzone-dark-blue hover:text-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-full transition-all duration-200 hover:scale-110"
               aria-label={`Shopping Cart with ${totalItems} items`}
             >
               <ShoppingCart className="h-5 w-5 lg:h-6 lg:w-6" />
@@ -106,30 +96,29 @@ const Navbar: React.FC = () => {
               )}
             </Link>
 
-            {/* Auth Button */}
             {user ? (
               <button
                 onClick={handleLogout}
-                className="bg-[#c8a98a] text-white px-3 py-1.5 lg:px-4 lg:py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
+                className="bg-trendzone-dark-blue text-white px-4 py-2 lg:px-5 text-sm rounded-full hover:bg-trendzone-light-blue transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2"
               >
                 Logout
               </button>
             ) : (
               <Link
-                to="/signup"
-                className="bg-[#c8a98a] text-white px-3 py-1.5 lg:px-4 lg:py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
+                to="/login"
+                className="border border-trendzone-dark-blue text-trendzone-dark-blue px-4 py-2 lg:px-5 text-sm rounded-full hover:bg-trendzone-dark-blue hover:text-white transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-dark-blue focus-visible:ring-offset-1"
               >
-                Signup
+                Sign In
               </Link>
             )}
           </div>
-          {/* Mobile Menu Button */}
+
+          {/* Mobile Menu Button & Cart */}
           <div className="md:hidden flex items-center">
-            {/* Mobile Cart Icon - Placed before Menu button for better flow */}
             <Link
               to="/cart"
               onClick={closeMobileMenu}
-              className="relative p-2 mr-2 text-gray-600 hover:text-[#c8a98a] transition-colors duration-200"
+              className="relative p-2 mr-2 text-trendzone-dark-blue hover:text-trendzone-light-blue transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-full"
               aria-label={`Shopping Cart with ${totalItems} items`}
             >
               <ShoppingCart className="h-6 w-6" />
@@ -139,9 +128,8 @@ const Navbar: React.FC = () => {
                 </span>
               )}
             </Link>
-            {/* Mobile Menu Toggle */}
             <button
-              className="p-2 inline-flex items-center justify-center text-gray-600 hover:text-gray-800 focus:outline-none"
+              className="p-2 inline-flex items-center justify-center text-trendzone-dark-blue hover:text-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-md"
               onClick={() => setIsOpen(!isOpen)}
               aria-expanded={isOpen}
               aria-controls="mobile-menu"
@@ -151,92 +139,70 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div
-          id="mobile-menu"
-          className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-200 py-4 z-30"
-        >
-          <div className="px-4 space-y-3">
-            {/* Mobile Nav Links */}
-            <Link
-              to="/"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
-            >
-              Home
-            </Link>
-            {/* <Link
-              to="/shop"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
-            >
-              Shop
-            </Link> */}
-            <Link
-              to="/men"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
-            >
-              Men
-            </Link>
-            <Link
-              to="/women"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
-            >
-              Women
-            </Link>
-            <Link
-              to="/contact"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#c8a98a] hover:bg-gray-50"
-            >
-              Contact Us
-            </Link>
-            {/* Add other links similarly */}
 
-            {/* Divider */}
+      {/* Mobile Menu */}
+      <div
+        id="mobile-menu"
+        className={`
+          md:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-200 py-4 z-30
+          transition-all duration-300 ease-in-out transform
+          ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible'}
+        `}
+      >
+        {isOpen && ( // Conditional rendering can help if content is heavy, or for accessibility
+          <div className="px-4 space-y-3">
+            <NavLink to="/" onClick={closeMobileMenu} isMobile>
+              Home
+            </NavLink>
+            <NavLink to="/new-arrivals" onClick={closeMobileMenu} isMobile>
+              New Arrivals
+            </NavLink>
+            <NavLink to="/shop" onClick={closeMobileMenu} isMobile>
+              Shop
+            </NavLink>
+            <NavLink to="/contact" onClick={closeMobileMenu} isMobile>
+              Contact
+            </NavLink>
+            <NavLink to="/about-us" onClick={closeMobileMenu} isMobile>
+              About Us
+            </NavLink>
+
             <div className="border-t border-gray-200 pt-4 mt-4"></div>
 
-            {/* Mobile Icons & Signup */}
             <div className="flex items-center justify-between px-3">
-              {/* Mobile Search Button */}
               <button
                 onClick={() => {
                   setShowSearchOverlay(true)
                   closeMobileMenu()
                 }}
-                className="p-2 text-gray-600 hover:text-[#c8a98a] transition-colors duration-200"
+                className="p-2 text-trendzone-dark-blue hover:text-trendzone-light-blue transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-full"
                 aria-label="Search Products"
               >
                 <Search className="h-6 w-6" />
               </button>
 
-              {/* Mobile Auth Button - Takes remaining space */}
               <div className="flex-grow text-right">
                 {user ? (
                   <button
-                    onClick={handleLogout} // Already closes menu
-                    className="bg-red-600 text-white px-4 py-2 text-sm rounded-md hover:bg-red-700 transition-colors duration-200 shadow-sm"
+                    onClick={handleLogout}
+                    className="bg-trendzone-dark-blue text-white px-4 py-2 text-sm rounded-full hover:bg-trendzone-light-blue transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2"
                   >
                     Logout
                   </button>
                 ) : (
                   <Link
-                    to="/signup"
+                    to="/login"
                     onClick={closeMobileMenu}
-                    className="bg-[#c8a98a] text-white px-4 py-2 text-sm rounded-md hover:bg-[#9e750a] transition-colors duration-200 shadow-sm"
+                    className="bg-trendzone-dark-blue text-white px-4 py-2 text-sm rounded-full hover:bg-trendzone-light-blue transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2"
                   >
-                    Signup
+                    Sign In
                   </Link>
                 )}
               </div>
             </div>
           </div>
-        </div>
-      )}
-      {/* Search Overlay Render */}
+        )}
+      </div>
       {showSearchOverlay && <SearchOverlay onClose={() => setShowSearchOverlay(false)} />}
     </nav>
   )

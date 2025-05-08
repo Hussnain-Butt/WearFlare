@@ -19,6 +19,10 @@ export default {
     },
     extend: {
       colors: {
+        trendzone: {
+          'dark-blue': '#003049',
+          'light-blue': '#669BBC',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
