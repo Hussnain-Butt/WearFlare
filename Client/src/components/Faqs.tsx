@@ -13,9 +13,9 @@ const faqsData = [
       'We offer sizes ranging from XS to XXL across most items. Please refer to the specific product page and our comprehensive size guide for detailed measurements to ensure the perfect fit.',
   },
   {
-    question: 'How can I track my order?',
+    question: 'How can I return a product?',
     answer:
-      "Once your order is dispatched from our warehouse, you will receive a shipping confirmation email containing a tracking number and a link to the carrier's website. You can use this link to monitor your delivery status in real-time.",
+      'If you’re not satisfied with your purchase, you can request a return within 7 days of delivery. Please make sure the product is unused, in its original packaging, and includes all tags. To initiate a return, contact our customer support or follow the return instructions provided in your order confirmation email.',
   },
   {
     question: 'What is your return policy?',

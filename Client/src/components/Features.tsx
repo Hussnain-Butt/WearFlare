@@ -12,9 +12,9 @@ interface FeatureItem {
 const featuresData: FeatureItem[] = [
   {
     icon: Lock,
-    title: 'Secure Payments',
+    title: 'Cash on Delivery Available',
     description:
-      'Shop with confidence knowing that your transactions are safeguarded with top-tier encryption.',
+      'Pay when your order arrives! We offer hassle-free Cash on Delivery (COD) for your convenience and peace of mind.',
   },
   {
     icon: Truck,
@@ -27,12 +27,6 @@ const featuresData: FeatureItem[] = [
     title: 'Easy Returns',
     description:
       'With our hassle-free 30-day return policy, changing your mind has never been more convenient.',
-  },
-  {
-    icon: MapPin,
-    title: 'Order Tracking',
-    description:
-      'Stay in the loop with real-time updates using our Order Tracking feature, from checkout to delivery.',
   },
 ]
 
@@ -68,7 +62,7 @@ const Features: React.FC = () => {
       viewport={{ once: true, amount: 0.2 }} // Trigger animation when 20% is visible
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-8">
           {featuresData.map((feature, index) => (
             <motion.div
               key={index}

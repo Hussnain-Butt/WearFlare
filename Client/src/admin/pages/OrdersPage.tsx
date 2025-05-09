@@ -1,14 +1,17 @@
-// src/admin/pages/OrdersPage.tsx OR src/shared/pages/OrdersPage.tsx
-
+// src/admin/pages/OrdersPage.tsx
 import React, { useState, useEffect, useCallback } from 'react'
-// Import the configured Axios instance
-import apiClient from '../../api/axiosConfig' // <-- IMPORT apiClient (Adjust path if needed)
+import apiClient from '../../api/axiosConfig'
 import { toast, Toaster } from 'react-hot-toast'
-import { CheckCircle, Loader2, XCircle, Ban } from 'lucide-react'
+import { CheckCircle, Loader2, XCircle, Ban, ShoppingBag, RefreshCw } from 'lucide-react' // Added ShoppingBag, RefreshCw
+import { motion, AnimatePresence } from 'framer-motion'
 
-// Removed API_BASE_URL constant as apiClient handles the base URL
+// Color constants from your theme
+const primaryColor = '#003049' // trendzone-dark-blue
+const accentColor = '#669BBC' // trendzone-light-blue
+const lightGrayText = 'text-slate-500'
+const headingColor = `text-[${primaryColor}]`
 
-// --- Interface Definitions ---
+// Interface Definitions (Same as before)
 interface OrderItem {
   productId: string
   title: string
@@ -18,14 +21,12 @@ interface OrderItem {
   selectedSize?: string | null
   selectedColor?: string | null
 }
-
 interface ShippingAddress {
   street: string
   city: string
   postalCode: string
   country: string
 }
-
 interface Order {
   _id: string
   customerName: string
@@ -34,127 +35,90 @@ interface Order {
   shippingAddress: ShippingAddress
   orderItems: OrderItem[]
   totalPrice: number
-  status: 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled'
+  status:
+    | 'Pending'
+    | 'Confirmed'
+    | 'Shipped'
+    | 'Delivered'
+    | 'Cancelled'
+    | 'Awaiting User Confirmation' // Added 'Awaiting User Confirmation'
   paymentMethod: string
   createdAt: string
   updatedAt: string
 }
-// --- End Interface Definitions ---
+
+// Animation Variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+}
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 110, damping: 15 } },
+  exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
+}
 
 const OrdersPage: React.FC = () => {
-  // --- State ---
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-  const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(null)
-  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null)
+  const [actionStates, setActionStates] = useState<
+    Record<string, 'confirming' | 'cancelling' | null>
+  >({})
   const [error, setError] = useState<string | null>(null)
 
-  // --- Fetch Orders Function ---
   const fetchOrders = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      // Use apiClient and relative path. Auth token added by interceptor.
-      console.log('Attempting to fetch orders...') // Log before request
-      const response = await apiClient.get<Order[]>('/orders') // <-- Use apiClient, relative path
-      console.log('Orders received from API:', response.data) // Log received data
+      const response = await apiClient.get<Order[]>('/orders')
       setOrders(Array.isArray(response.data) ? response.data : [])
     } catch (err: any) {
-      console.error('Error fetching orders:', err.response?.data || err.message)
-      setError(err.response?.data?.message || 'Failed to load orders. Check console.')
+      setError(err.response?.data?.message || 'Failed to load orders.')
       setOrders([])
     } finally {
       setLoading(false)
     }
   }, [])
 
-  // Fetch orders on component mount
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
 
-  // --- Confirm Order Handler ---
-  const handleConfirmOrder = async (orderId: string) => {
-    if (confirmingOrderId || cancellingOrderId) return
+  const handleOrderAction = async (orderId: string, action: 'confirm' | 'cancel') => {
+    if (actionStates[orderId]) return // Prevent multiple actions on same order
 
-    setConfirmingOrderId(orderId)
-    const toastId = toast.loading(`Confirming order ${orderId.slice(-6)}...`) // Assign toast ID
+    setActionStates((prev) => ({
+      ...prev,
+      [orderId]: action === 'confirm' ? 'confirming' : 'cancelling',
+    }))
+    const actionText = action === 'confirm' ? 'Confirming' : 'Cancelling'
+    const toastId = toast.loading(`${actionText} order #${orderId.slice(-6)}...`)
 
     try {
-      // Use apiClient and relative path. Interceptor adds auth header.
-      console.log(`Attempting to confirm order: ${orderId}`)
-      const response = await apiClient.patch<{ order: Order }>(
-        `/orders/${orderId}/confirm`, // <-- Use apiClient, relative path
-      )
-      console.log(`Confirm order response for ${orderId}:`, response.data)
-
-      toast.dismiss(toastId) // Dismiss loading toast
+      const response = await apiClient.patch<{ order: Order }>(`/orders/${orderId}/${action}`)
+      toast.dismiss(toastId)
       if (response.status === 200 && response.data.order) {
-        toast.success(`Order ${orderId.slice(-6)} confirmed successfully! Email sent.`)
+        toast.success(`Order #${orderId.slice(-6)} ${action}ed successfully!`)
         setOrders((prevOrders) =>
           prevOrders.map((order) => (order._id === orderId ? { ...response.data.order } : order)),
         )
       } else {
-        throw new Error(response.data.message || 'Unexpected response from server.')
+        throw new Error(response.data.message || `Unexpected server response during ${action}.`)
       }
     } catch (error: any) {
-      toast.dismiss(toastId) // Dismiss loading toast on error
-      console.error(`Error confirming order ${orderId}:`, error.response?.data || error.message)
-      const message = error.response?.data?.message || 'Failed to confirm order.'
+      toast.dismiss(toastId)
+      const message = error.response?.data?.message || `Failed to ${action} order.`
       toast.error(`❌ ${message}`)
     } finally {
-      setConfirmingOrderId(null)
+      setActionStates((prev) => ({ ...prev, [orderId]: null }))
     }
   }
 
-  // --- Cancel/Decline Order Handler ---
-  const handleDeclineOrder = async (orderId: string) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to cancel order #${orderId.slice(
-          -6,
-        )}? This may notify the customer.`,
-      )
-    ) {
-      return
-    }
-    if (cancellingOrderId || confirmingOrderId) return
-
-    setCancellingOrderId(orderId)
-    const toastId = toast.loading(`Cancelling order ${orderId.slice(-6)}...`) // Assign toast ID
-
-    try {
-      // Use apiClient and relative path. Interceptor adds auth header.
-      console.log(`Attempting to cancel order: ${orderId}`)
-      const response = await apiClient.patch<{ order: Order }>(
-        `/orders/${orderId}/cancel`, // <-- Use apiClient, relative path
-      )
-      console.log(`Cancel order response for ${orderId}:`, response.data)
-
-      toast.dismiss(toastId) // Dismiss loading toast
-      if (response.status === 200 && response.data.order) {
-        toast.success(`Order ${orderId.slice(-6)} cancelled successfully!`)
-        setOrders((prevOrders) =>
-          prevOrders.map((order) => (order._id === orderId ? { ...response.data.order } : order)),
-        )
-      } else {
-        throw new Error(response.data.message || 'Unexpected response during cancellation.')
-      }
-    } catch (error: any) {
-      toast.dismiss(toastId) // Dismiss loading toast on error
-      console.error(`Error cancelling order ${orderId}:`, error.response?.data || error.message)
-      const message = error.response?.data?.message || 'Failed to cancel order.'
-      toast.error(`❌ ${message}`)
-    } finally {
-      setCancellingOrderId(null)
-    }
-  }
-
-  // --- Helper to format date (Keep as is) ---
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A'
     try {
-      return new Date(dateString).toLocaleString('en-PK', {
+      return new Date(dateString).toLocaleString('en-US', {
+        // Using en-US for wider compatibility example
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -163,305 +127,314 @@ const OrdersPage: React.FC = () => {
         hour12: true,
       })
     } catch (e) {
-      console.warn('Error formatting date:', dateString, e)
       return dateString
     }
   }
 
-  // --- Render Logic ---
+  const getStatusPillClass = (status: Order['status']) => {
+    switch (status) {
+      case 'Pending':
+        return `bg-yellow-100 text-yellow-700 border-yellow-300`
+      case 'Confirmed':
+        return `bg-green-100 text-green-700 border-green-300`
+      case 'Shipped':
+        return `bg-blue-100 text-blue-700 border-blue-300`
+      case 'Delivered':
+        return `bg-purple-100 text-purple-700 border-purple-300`
+      case 'Cancelled':
+        return `bg-red-100 text-red-700 border-red-300`
+      case 'Awaiting User Confirmation':
+        return `bg-orange-100 text-orange-700 border-orange-300`
+      default:
+        return `bg-slate-100 text-slate-600 border-slate-300`
+    }
+  }
+
   return (
-    <div className="p-6 md:p-10 min-h-screen bg-[#f9f7f3] font-sans">
-      <Toaster position="top-right" />
-      <h1 className="text-3xl font-bold text-[#c8a98a] mb-8">Incoming Orders</h1>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 min-h-screen"
+    >
+      <Toaster position="top-right" containerClassName="mt-20" />
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex justify-center items-center mt-10">
-          <Loader2 className="animate-spin h-8 w-8 text-[#c8a98a]" />
-          <span className="ml-3 text-gray-600">Loading orders...</span>
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-wrap justify-between items-center gap-4"
+      >
+        <div className="flex items-center">
+          <ShoppingBag size={32} className={`mr-3 text-[${accentColor}] opacity-90`} />
+          <h1 className={`text-2xl sm:text-3xl font-bold ${headingColor}`}>Incoming Orders</h1>
         </div>
-      )}
+        <button
+          onClick={fetchOrders}
+          disabled={loading}
+          className={`flex items-center gap-2 py-2 px-4 rounded-lg bg-white text-[${primaryColor}] border border-slate-300 hover:bg-slate-50 shadow-sm active:bg-slate-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
+          title="Refresh Orders"
+        >
+          <RefreshCw size={18} className={`${loading ? 'animate-spin' : ''}`} />
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </motion.div>
 
-      {/* Error State */}
+      {loading &&
+        !orders.length && ( // Show main loader only if no orders are displayed yet
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col justify-center items-center py-20 text-slate-500"
+          >
+            <Loader2 className={`animate-spin h-12 w-12 mb-4 text-[${accentColor}]`} />
+            <p className="text-lg">Loading incoming orders...</p>
+          </motion.div>
+        )}
+
       {!loading && error && (
-        <p className="text-center text-red-600 bg-red-100 p-4 rounded-md shadow border border-red-200">
+        <motion.p
+          variants={itemVariants}
+          className="text-center text-red-600 bg-red-50 p-4 rounded-xl shadow border border-red-200"
+        >
           {error}
-        </p>
+        </motion.p>
       )}
 
-      {/* No Orders State */}
       {!loading && !error && orders.length === 0 && (
-        <p className="text-center text-gray-500 mt-10 text-lg">No incoming orders found.</p>
+        <motion.p
+          variants={itemVariants}
+          className="text-center text-slate-500 py-20 text-lg italic"
+        >
+          No incoming orders at the moment.
+        </motion.p>
       )}
 
-      {/* Orders List */}
       {!loading && !error && orders.length > 0 && (
-        <div className="space-y-6">
+        <motion.div variants={containerVariants} className="space-y-6">
           {orders.map((order) => {
-            const isConfirming = confirmingOrderId === order._id
-            const isCancelling = cancellingOrderId === order._id
+            const currentAction = actionStates[order._id]
             const canConfirm = order.status === 'Pending'
             const canCancel = order.status === 'Pending' || order.status === 'Confirmed'
 
             return (
-              // --- Order Card ---
-              <div
+              <motion.div
                 key={order._id}
-                className="bg-white p-5 md:p-6 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200"
+                variants={itemVariants}
+                layout // Animate layout changes (e.g., on filter/sort if added later)
+                className="bg-white p-5 md:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-slate-200/70"
               >
-                {/* Order Header */}
-                <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start gap-x-4 gap-y-3 mb-4">
                   <div className="flex-grow">
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+                    <h2 className={`text-lg sm:text-xl font-semibold ${headingColor}`}>
                       Order #{order._id.slice(-6)}
                     </h2>
-                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                      Placed on: {formatDate(order.createdAt)}
+                    <p className={`text-xs sm:text-sm ${lightGrayText} mt-0.5`}>
+                      Placed: {formatDate(order.createdAt)}
                     </p>
-                    <p
-                      className={`text-xs sm:text-sm font-medium mt-2 px-2.5 py-0.5 inline-block rounded-full ${
-                        order.status === 'Pending'
-                          ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                          : order.status === 'Confirmed'
-                          ? 'bg-green-100 text-green-800 border border-green-200'
-                          : order.status === 'Shipped'
-                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                          : order.status === 'Delivered'
-                          ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                          : order.status === 'Cancelled'
-                          ? 'bg-red-100 text-red-800 border border-red-200'
-                          : 'bg-gray-100 text-gray-800 border border-gray-200'
-                      }`}
+                    <span
+                      className={`text-xs font-semibold mt-2 px-3 py-1 inline-block rounded-full border ${getStatusPillClass(
+                        order.status,
+                      )}`}
                     >
                       {order.status}
-                    </p>
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap flex-shrink-0 mt-2 sm:mt-0">
+                  <div className="flex items-center gap-2.5 flex-wrap flex-shrink-0 mt-1 sm:mt-0">
                     {canConfirm && (
                       <button
-                        onClick={() => handleConfirmOrder(order._id)}
-                        disabled={isConfirming || isCancelling}
-                        className="action-button confirm-button"
+                        onClick={() => handleOrderAction(order._id, 'confirm')}
+                        disabled={!!currentAction}
+                        className="action-btn confirm-btn-style"
                       >
-                        {isConfirming ? (
+                        {currentAction === 'confirming' ? (
                           <Loader2 className="animate-spin mr-1.5 h-4 w-4" />
                         ) : (
                           <CheckCircle className="mr-1.5 h-4 w-4" />
-                        )}{' '}
-                        {isConfirming ? 'Confirming' : 'Confirm'}{' '}
+                        )}
+                        {currentAction === 'confirming' ? 'Confirming' : 'Confirm'}
                       </button>
                     )}
                     {canCancel && (
                       <button
-                        onClick={() => handleDeclineOrder(order._id)}
-                        disabled={isConfirming || isCancelling}
-                        className="action-button cancel-button"
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Are you sure you want to cancel order #${order._id.slice(-6)}?`,
+                            )
+                          ) {
+                            handleOrderAction(order._id, 'cancel')
+                          }
+                        }}
+                        disabled={!!currentAction}
+                        className="action-btn cancel-btn-style"
                       >
-                        {isCancelling ? (
+                        {currentAction === 'cancelling' ? (
                           <Loader2 className="animate-spin mr-1.5 h-4 w-4" />
                         ) : (
                           <XCircle className="mr-1.5 h-4 w-4" />
-                        )}{' '}
-                        {isCancelling ? 'Cancelling' : 'Cancel'}{' '}
+                        )}
+                        {currentAction === 'cancelling' ? 'Cancelling' : 'Cancel'}
                       </button>
                     )}
-                    {order.status === 'Confirmed' && !canCancel && (
-                      <span className="status-indicator confirmed-indicator">
-                        <CheckCircle className="mr-1 h-4 w-4" /> Confirmed
+                    {/* Display status text if no actions are available */}
+                    {!canConfirm && !canCancel && order.status !== 'Pending' && (
+                      <span className={`status-text-indicator ${getStatusPillClass(order.status)}`}>
+                        {order.status === 'Confirmed' && <CheckCircle className="mr-1.5 h-4 w-4" />}
+                        {order.status === 'Cancelled' && <Ban className="mr-1.5 h-4 w-4" />}
+                        {order.status}
                       </span>
-                    )}
-                    {order.status === 'Cancelled' && (
-                      <span className="status-indicator cancelled-indicator">
-                        <Ban className="mr-1 h-4 w-4" /> Cancelled
-                      </span>
-                    )}
-                    {order.status === 'Shipped' && (
-                      <span className="status-indicator shipped-indicator">Shipped</span>
-                    )}
-                    {order.status === 'Delivered' && (
-                      <span className="status-indicator delivered-indicator">Delivered</span>
                     )}
                   </div>
                 </div>
 
-                {/* Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4 border-t border-gray-100 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4 border-t border-slate-100 pt-4">
                   <div>
-                    <h3 className="details-heading">Customer Details</h3>
-                    {order.customerName ? (
-                      <>
-                        {' '}
-                        <p className="details-text">
-                          <strong>Name:</strong> {order.customerName}
-                        </p>{' '}
-                        <p className="details-text break-words">
-                          <strong>Email:</strong> {order.customerEmail}
-                        </p>{' '}
-                        <p className="details-text">
-                          <strong>Phone:</strong> {order.customerPhone}
-                        </p>{' '}
-                      </>
-                    ) : (
-                      <p className="details-text italic text-gray-500">
-                        Customer details not available.
-                      </p>
-                    )}
+                    <h3 className="details-heading-style">Customer Details</h3>
+                    <p className="details-text-style">
+                      <strong>Name:</strong> {order.customerName}
+                    </p>
+                    <p className="details-text-style break-words">
+                      <strong>Email:</strong> {order.customerEmail}
+                    </p>
+                    <p className="details-text-style">
+                      <strong>Phone:</strong> {order.customerPhone}
+                    </p>
                   </div>
                   <div>
-                    <h3 className="details-heading">Shipping Address</h3>
-                    {order.shippingAddress ? (
-                      <>
-                        {' '}
-                        <p className="details-text">{order.shippingAddress.street}</p>{' '}
-                        <p className="details-text">
-                          {order.shippingAddress.city}, {order.shippingAddress.postalCode}
-                        </p>{' '}
-                        <p className="details-text">{order.shippingAddress.country}</p>{' '}
-                      </>
-                    ) : (
-                      <p className="details-text italic text-gray-500">
-                        Shipping address not available.
-                      </p>
-                    )}
+                    <h3 className="details-heading-style">Shipping Address</h3>
+                    <p className="details-text-style">{order.shippingAddress.street}</p>
+                    <p className="details-text-style">
+                      {order.shippingAddress.city}, {order.shippingAddress.postalCode}
+                    </p>
+                    <p className="details-text-style">{order.shippingAddress.country}</p>
                   </div>
                 </div>
 
-                {/* Order Items List */}
                 <div>
-                  <h3 className="details-heading border-t border-gray-100 pt-4">Items Ordered</h3>
-                  {order.orderItems && order.orderItems.length > 0 ? (
-                    <ul className="space-y-2 mt-2">
+                  <h3 className="details-heading-style border-t border-slate-100 pt-4">
+                    Items Ordered
+                  </h3>
+                  {order.orderItems?.length > 0 ? (
+                    <ul className="space-y-2.5 mt-2">
                       {order.orderItems.map((item, index) => (
                         <li
                           key={`${item.productId}-${index}`}
-                          className="details-text flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-gray-50 pb-2 last:border-b-0"
+                          className="details-text-style flex flex-col sm:flex-row sm:justify-between sm:items-start border-b border-slate-100 pb-2.5 last:border-b-0"
                         >
                           <div className="flex-grow mb-1 sm:mb-0 pr-2">
-                            {item.title || 'N/A'} (Qty: {item.quantity || 0})
+                            {item.title}{' '}
+                            <span className="text-slate-500">(Qty: {item.quantity})</span>
                             {item.selectedSize && (
-                              <span className="item-attribute">[{item.selectedSize}]</span>
+                              <span className="item-attr-style">[{item.selectedSize}]</span>
                             )}
-                            {item.selectedColor && (
-                              <span className="item-attribute">[{item.selectedColor}]</span>
-                            )}
+                            {/* Add selectedColor if you use it */}
                           </div>
-                          <span className="font-medium text-gray-700 flex-shrink-0">
+                          <span className={`font-semibold text-[${primaryColor}] flex-shrink-0`}>
                             PKR {(item.price * item.quantity).toFixed(2)}
                           </span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="details-text italic text-gray-500 mt-2">
-                      No items listed for this order.
+                    <p className="details-text-style italic text-slate-500 mt-2">
+                      No items in this order.
                     </p>
                   )}
-                  <div className="order-total">
-                    Total: PKR {order.totalPrice ? order.totalPrice.toFixed(2) : '0.00'} (
-                    {order.paymentMethod || 'N/A'})
+                  <div className="order-total-style">
+                    Total: PKR {order.totalPrice.toFixed(2)} <span>({order.paymentMethod})</span>
                   </div>
                 </div>
-              </div> // End Order Card
+              </motion.div>
             )
           })}
-        </div> // End Orders List
+        </motion.div>
       )}
 
-      {/* Styles */}
       <style jsx>{`
-        .action-button {
+        .action-btn {
           font-size: 0.8rem;
           font-weight: 500;
-          padding: 0.4rem 0.8rem;
+          padding: 0.5rem 1rem;
           border-radius: 0.375rem;
-          transition: background-color 0.15s ease-in-out, opacity 0.15s ease-in-out;
+          transition: all 0.2s;
           display: inline-flex;
           align-items: center;
-          border: none;
+          border: 1px solid transparent;
           cursor: pointer;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-        .action-button:disabled {
-          opacity: 0.5;
-          cursor: wait;
+        .action-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
-        .confirm-button {
-          background-color: #10b981;
+        .confirm-btn-style {
+          background-color: ${accentColor};
           color: white;
+          border-color: ${accentColor};
         }
-        .confirm-button:hover:not(:disabled) {
-          background-color: #059669;
+        .confirm-btn-style:hover:not(:disabled) {
+          background-color: ${primaryColor};
+          border-color: ${primaryColor};
         }
-        .cancel-button {
+        .cancel-btn-style {
+          background-color: #f87171; /* Lighter Red */
+          color: white;
+          border-color: #f87171;
+        }
+        .cancel-btn-style:hover:not(:disabled) {
           background-color: #ef4444;
-          color: white;
-        }
-        .cancel-button:hover:not(:disabled) {
-          background-color: #dc2626;
-        }
-        .status-indicator {
+          border-color: #ef4444;
+        } /* Standard Red */
+
+        .status-text-indicator {
           font-size: 0.8rem;
           font-weight: 500;
           display: inline-flex;
           align-items: center;
-          padding: 0.2rem 0.6rem;
+          padding: 0.375rem 0.75rem;
           border-radius: 9999px;
+          border-width: 1px;
         }
-        .confirmed-indicator {
-          color: #047857;
-          background-color: #d1fae5;
-        }
-        .cancelled-indicator {
-          color: #b91c1c;
-          background-color: #fee2e2;
-        }
-        .shipped-indicator {
-          color: #1d4ed8;
-          background-color: #dbeafe;
-        }
-        .delivered-indicator {
-          color: #7e22ce;
-          background-color: #f3e8ff;
-        }
-        .details-heading {
+
+        .details-heading-style {
           font-size: 0.95rem;
           font-weight: 600;
-          color: #4b5563;
-          margin-bottom: 0.5rem;
+          color: ${primaryColor};
+          opacity: 0.9;
+          margin-bottom: 0.625rem;
         }
-        .details-text {
+        .details-text-style {
           font-size: 0.875rem;
           color: #374151;
-          margin-bottom: 0.25rem;
-          line-height: 1.4;
+          margin-bottom: 0.375rem;
+          line-height: 1.5;
         }
-        .item-attribute {
+        .item-attr-style {
           font-size: 0.75rem;
           color: #6b7280;
-          margin-left: 0.25rem;
+          margin-left: 0.375rem;
+          background-color: #f3f4f6;
+          padding: 0.125rem 0.375rem;
+          border-radius: 0.25rem;
         }
-        .order-total {
+
+        .order-total-style {
           display: flex;
           justify-content: flex-end;
+          align-items: baseline;
           font-weight: 700;
-          color: #1f2937;
-          margin-top: 0.75rem;
-          padding-top: 0.75rem;
+          color: ${primaryColor};
+          margin-top: 1rem;
+          padding-top: 1rem;
           border-top: 1px solid #e5e7eb;
-          font-size: 0.95rem;
+          font-size: 1rem;
         }
-        .animate-spin {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
+        .order-total-style span {
+          font-size: 0.8rem;
+          color: ${lightGrayText};
+          margin-left: 0.25rem;
+          font-weight: 500;
         }
       `}</style>
-    </div>
+    </motion.div>
   )
 }
 

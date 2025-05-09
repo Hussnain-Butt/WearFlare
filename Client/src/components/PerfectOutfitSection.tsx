@@ -3,14 +3,14 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
+import video1 from '../assets/video 1.mp4'
+import video2 from '../assets/video 2.mp4'
 
 // Placeholder image URLs - Replace with your actual high-quality images
 const centralImageUrl =
   'https://images.pexels.com/photos/6626903/pexels-photo-6626903.jpeg?auto=compress&cs=tinysrgb&w=600' // Smiling woman
-const topRightImageUrl =
-  'https://images.pexels.com/photos/1040173/pexels-photo-1040173.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' // Woman with handbag
-const leftImageUrl =
-  'https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&w=600' // Bag detail
+const topRightImageUrl = video1 // Woman with handbag
+const leftImageUrl = video2
 
 // Animation Variants
 const sectionVariants = {
@@ -82,12 +82,15 @@ const PerfectOutfitSection: React.FC = () => {
             transition={{ type: 'spring', stiffness: 300 }}
           >
             <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-xl">
-              <img
-                src={leftImageUrl}
-                alt="Fashion accessory"
+              <video
                 className="w-full h-full object-cover"
-                loading="lazy"
-              />
+                src={leftImageUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                poster="/placeholder-video-poster.jpg"
+              ></video>
             </div>
           </motion.div>
 
@@ -136,12 +139,15 @@ const PerfectOutfitSection: React.FC = () => {
               whileHover={{ scale: 1.05, zIndex: 15 }}
               transition={{ type: 'spring', stiffness: 300 }}
             >
-              <img
-                src={topRightImageUrl}
-                alt="Fashion model with handbag"
+              <video
                 className="w-full h-full object-cover"
-                loading="lazy"
-              />
+                src={topRightImageUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                poster="/placeholder-video-poster.jpg"
+              ></video>
             </motion.div>
 
             <div className="p-1">

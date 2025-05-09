@@ -4,6 +4,8 @@ import { Search, User, ShoppingCart, Heart, ShoppingBag } from 'lucide-react'
 import Footer from '../components/Footer'
 import FashionRevolution from '../components/FashionRevolution'
 import autoumnPic from '../assets/Autum-banner.png'
+import autoumnPic2 from '../assets/banner-home.jpg'
+
 import StudioShowcase from '../components/StudioShowcase'
 import girlImage from '../../public/girl-image.png'
 import FashionShowcase from '@/components/FashionShowcase'
@@ -36,6 +38,7 @@ const Index = () => {
       <div className="my-10">
         <FashionShowcase />
       </div>
+      <img src={autoumnPic2} alt="" className="my-8 w-full" />
 
       <Features />
       <SubscriptionPopup />

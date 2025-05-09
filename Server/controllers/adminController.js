@@ -1,68 +1,53 @@
 // controllers/adminController.js
-const Admin = require('../models/adminModel')
+const Admin = require('../models/adminModel') // Make sure this path and model name are correct
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const User = require('../models/User') // Assuming you manage regular users too
+const User = require('../models/User')
+const Order = require('../models/Order') // *** IMPORTANT: Import Order model ***
+// const Product = require('../models/Product'); // Uncomment if needed for sales by plan
 
 // Admin login function
 const adminLogin = async (req, res) => {
   const { username, password } = req.body
-  console.log(`[Admin Login Attempt] Username: ${username}`) // Log the username being attempted
+  console.log(`[Admin Login Attempt] Username: ${username}`)
 
   try {
-    // Find admin by username
     const admin = await Admin.findOne({ username })
-
-    // Check if admin exists
     if (!admin) {
       console.log(`[Admin Login Failed] Admin not found for username: ${username}`)
-      // Send a generic message for security, but log specific reason
-      return res.status(401).json({ message: 'Invalid credentials or server error.' }) // Use 401 Unauthorized
+      return res.status(401).json({ message: 'Invalid credentials or server error.' })
     }
 
-    // Compare submitted password with the stored hash
     const isPasswordValid = await bcrypt.compare(password, admin.password)
-
-    // Check if password is valid
     if (!isPasswordValid) {
       console.log(`[Admin Login Failed] Invalid password for username: ${username}`)
-      // Send a generic message for security
-      return res.status(401).json({ message: 'Invalid credentials or server error.' }) // Use 401 Unauthorized
+      return res.status(401).json({ message: 'Invalid credentials or server error.' })
     }
 
-    // --- JWT Payload Update ---
-    // Create JWT payload including the user ID and their role
     const payload = {
       id: admin._id,
-      role: 'admin', // Explicitly set the role for admins
+      role: 'admin',
     }
 
-    // Sign the JWT token
     const token = jwt.sign(
-      payload, // Use the payload with id and role
-      process.env.JWT_SECRET, // Ensure your JWT_SECRET is set in .env
-      { expiresIn: '1h' }, // Token expiration time (e.g., 1 hour)
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_ADMIN_EXPIRES_IN || '1h' }, // Consider separate expiry for admin
     )
 
     console.log(`[Admin Login Success] Token generated for username: ${username}`)
-    // Return only the token (frontend handles storing role based on login route)
-    // Or you could return role too if needed: res.json({ token, role: 'admin' })
     return res.json({ token })
   } catch (error) {
-    // Log the actual server error for debugging
     console.error('[Admin Login Server Error]', error)
-    // Send a generic server error message to the client
     return res.status(500).json({ message: 'Server error during login process.' })
   }
 }
 
 // Fetch all users (Protected Route - Admin Only)
 const getAllUsers = async (req, res) => {
-  // The 'protect' middleware should have already verified the admin role
   try {
-    // Find all users, excluding their passwords
-    const users = await User.find().select('-password') // Exclude password field
-    res.status(200).json(users) // Use 200 OK status
+    const users = await User.find().select('-password')
+    res.status(200).json(users)
   } catch (error) {
     console.error('[Get All Users Error]', error)
     res.status(500).json({ message: 'Server error fetching users.' })
@@ -71,7 +56,6 @@ const getAllUsers = async (req, res) => {
 
 // Delete a user (Protected Route - Admin Only)
 const deleteUser = async (req, res) => {
-  // The 'protect' middleware should have already verified the admin role
   try {
     const { id } = req.params
     const deletedUser = await User.findByIdAndDelete(id)
@@ -80,11 +64,10 @@ const deleteUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found.' })
     }
 
-    console.log(`[User Deleted] User ID: ${id} deleted by Admin: ${req.user?.id}`) // Log who deleted (if req.user is attached by middleware)
-    res.status(200).json({ message: 'User deleted successfully.' }) // Use 200 OK status
+    console.log(`[User Deleted] User ID: ${id} deleted by Admin: ${req.user?.id}`)
+    res.status(200).json({ message: 'User deleted successfully.' })
   } catch (error) {
     console.error('[Delete User Error]', error)
-    // Handle potential CastError for invalid ID format
     if (error.name === 'CastError' && error.kind === 'ObjectId') {
       return res.status(400).json({ message: 'Invalid User ID format.' })
     }
@@ -94,11 +77,8 @@ const deleteUser = async (req, res) => {
 
 // Update user info (Protected Route - Admin Only)
 const updateUser = async (req, res) => {
-  // The 'protect' middleware should have already verified the admin role
   try {
     const { id } = req.params
-    // Prevent password updates through this generic endpoint for security
-    // If password update is needed, create a separate, dedicated route/controller
     const { password, ...updateData } = req.body
     if (password) {
       console.warn(
@@ -109,24 +89,22 @@ const updateUser = async (req, res) => {
         .json({ message: 'Password updates are not allowed via this endpoint.' })
     }
 
-    // Find user by ID and update, return the updated document, run validators
     const updatedUser = await User.findByIdAndUpdate(id, updateData, {
-      new: true, // Return the modified document rather than the original
-      runValidators: true, // Ensure schema validations are run
-    }).select('-password') // Exclude password from the returned object
+      new: true,
+      runValidators: true,
+    }).select('-password')
 
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found.' })
     }
 
     console.log(`[User Updated] User ID: ${id} updated by Admin: ${req.user?.id}`)
-    res.status(200).json(updatedUser) // Use 200 OK status and send updated user
+    res.status(200).json(updatedUser)
   } catch (error) {
     console.error('[Update User Error]', error)
     if (error.name === 'CastError' && error.kind === 'ObjectId') {
       return res.status(400).json({ message: 'Invalid User ID format.' })
     }
-    // Handle Mongoose validation errors specifically
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((el) => el.message)
       return res.status(400).json({ message: `Validation Error: ${messages.join('. ')}` })
@@ -135,9 +113,159 @@ const updateUser = async (req, res) => {
   }
 }
 
+// --- DASHBOARD STATS ---
+
+// 1. Get Key Metrics
+const getDashboardKeyMetrics = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments()
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const recentOrdersForMRR = await Order.find({
+      status: { $in: ['Delivered', 'Confirmed'] },
+      createdAt: { $gte: thirtyDaysAgo },
+    })
+    let currentMRR = recentOrdersForMRR.reduce((sum, order) => sum + order.totalPrice, 0)
+
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    const activeCustomerEmails = await Order.distinct('customerEmail', {
+      createdAt: { $gte: ninetyDaysAgo },
+      status: { $in: ['Pending', 'Confirmed', 'Shipped', 'Delivered'] }, // Consider active based on any recent engagement
+    })
+    const activeCustomersCount = activeCustomerEmails.length
+    const activeCustomersPercentage = totalUsers > 0 ? (activeCustomersCount / totalUsers) * 100 : 0
+
+    // Placeholder for Churn Rate - requires more complex historical data analysis
+    const churnRate = 12 // Example: 12%
+
+    res.status(200).json({
+      currentMRR: currentMRR.toFixed(0),
+      currentCustomers: totalUsers,
+      activeCustomers: activeCustomersPercentage.toFixed(0),
+      churnRate: churnRate,
+    })
+  } catch (error) {
+    console.error('Error fetching key metrics:', error)
+    res.status(500).json({ message: 'Failed to fetch key metrics.' })
+  }
+}
+
+// 2. Get Revenue Trend Data
+const getRevenueTrend = async (req, res) => {
+  try {
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ]
+    const labels = []
+    const revenueData = []
+    const today = new Date()
+
+    for (let i = 8; i >= 0; i--) {
+      // Last 9 months
+      const targetMonthDate = new Date(today.getFullYear(), today.getMonth() - i, 1)
+      labels.push(monthNames[targetMonthDate.getMonth()])
+
+      const startDate = new Date(targetMonthDate.getFullYear(), targetMonthDate.getMonth(), 1)
+      startDate.setHours(0, 0, 0, 0)
+
+      const endDate = new Date(targetMonthDate.getFullYear(), targetMonthDate.getMonth() + 1, 0)
+      endDate.setHours(23, 59, 59, 999)
+
+      const monthOrders = await Order.find({
+        status: { $in: ['Delivered', 'Confirmed'] },
+        createdAt: { $gte: startDate, $lte: endDate },
+      })
+      const monthlyTotal = monthOrders.reduce((sum, order) => sum + order.totalPrice, 0)
+      revenueData.push(monthlyTotal)
+    }
+
+    res.status(200).json({
+      labels: labels,
+      data: revenueData,
+    })
+  } catch (error) {
+    console.error('Error fetching revenue trend:', error)
+    res.status(500).json({ message: 'Failed to fetch revenue trend.' })
+  }
+}
+
+// 3. Get Sales by Plan Data
+const getSalesByPlan = async (req, res) => {
+  try {
+    // This is highly dependent on how you define "plans".
+    // If 'category' in Product model represents plans:
+    // const salesData = await Order.aggregate([
+    //   { $match: { status: { $in: ['Delivered', 'Confirmed'] } } },
+    //   { $unwind: '$orderItems' },
+    //   {
+    //     $lookup: {
+    //       from: 'products', // Name of your products collection
+    //       localField: 'orderItems.productId',
+    //       foreignField: '_id',
+    //       as: 'productInfo'
+    //     }
+    //   },
+    //   { $unwind: '$productInfo' },
+    //   {
+    //     $group: {
+    //       _id: '$productInfo.category', // Group by product category
+    //       totalSales: { $sum: '$orderItems.price' } // Or $sum: 1 for count
+    //     }
+    //   },
+    //   { $sort: { totalSales: -1 } }
+    // ]);
+    // const labels = salesData.map(item => item._id);
+    // const data = salesData.map(item => item.totalSales);
+    // // You might need to convert to percentages if required by pie chart
+
+    // Using placeholder data as per original request
+    res.status(200).json({
+      labels: ['Basic', 'Pro', 'Enterprise'], // These should come from your data
+      data: [40, 35, 25], // Placeholder percentages
+    })
+  } catch (error) {
+    console.error('Error fetching sales by plan:', error)
+    res.status(500).json({ message: 'Failed to fetch sales by plan.' })
+  }
+}
+
+// 4. Get Recent Transactions (Orders)
+const getRecentTransactions = async (req, res) => {
+  try {
+    const recentOrders = await Order.find({
+      status: { $ne: 'Awaiting User Confirmation' },
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('customerName totalPrice status createdAt') // Removed _id to prevent conflicts if not needed for key
+
+    res.status(200).json(recentOrders)
+  } catch (error) {
+    console.error('Error fetching recent transactions:', error)
+    res.status(500).json({ message: 'Failed to fetch recent transactions.' })
+  }
+}
+
+// *** IMPORTANT: Update module.exports to include all functions ***
 module.exports = {
   adminLogin,
   getAllUsers,
   deleteUser,
   updateUser,
+  // Add dashboard functions here:
+  getDashboardKeyMetrics,
+  getRevenueTrend,
+  getSalesByPlan,
+  getRecentTransactions,
 }

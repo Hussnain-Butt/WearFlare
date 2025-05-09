@@ -73,7 +73,7 @@ const FashionShowcase: React.FC = () => {
 
   return (
     <motion.section
-      className="relative w-full bg-white py-16 sm:py-24 px-4 overflow-hidden font-inter" // Using white background as requested
+      className="relative w-full bg-white sm:py-24 px-4 overflow-hidden font-inter" // Using white background as requested
       variants={sectionVariants}
       initial="hidden"
       whileInView="visible"

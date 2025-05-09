@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
 import { Eye, EyeOff, Loader2, LogIn, Star } from 'lucide-react'
 import { toast, Toaster } from 'react-hot-toast'
+import signup from '../assets/signup.mp4'
 
-const signupBgImageUrl =
-  'https://images.pexels.com/photos/12185424/pexels-photo-12185424.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load'
+const signupBgImageUrl = signup
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
@@ -329,14 +329,18 @@ const SignupForm: React.FC = () => {
           className="w-full md:w-1/2 relative hidden md:flex flex-col justify-end order-1 md:order-2 bg-gray-200"
           variants={columnVariants(0.2)} // Slide from right, slight delay
         >
-          <img
+          <video
+            className="w-full h-[720px] object-cover"
             src={signupBgImageUrl}
-            alt="Fashion forward background"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster="/placeholder-video-poster.jpg"
+          ></video>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
 
-          <motion.div className="relative p-8 lg:p-12 text-white z-10" variants={textItemVariants}>
+          {/* <motion.div className="relative p-8 lg:p-12 text-white z-10" variants={textItemVariants}>
             <div className="flex gap-0.5 mb-3">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} size={18} fill="white" strokeWidth={0} />
@@ -348,7 +352,7 @@ const SignupForm: React.FC = () => {
             </blockquote>
             <p className="font-semibold">Sophie Hall</p>
             <p className="text-sm text-gray-300">Founder, Wearflare Catalog</p>
-          </motion.div>
+          </motion.div> */}
         </motion.div>
       </motion.div>
     </div>

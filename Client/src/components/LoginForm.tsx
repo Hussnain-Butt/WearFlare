@@ -6,10 +6,10 @@ import axios from 'axios'
 import { Eye, EyeOff, Loader2, LogIn, Star, User as UserIcon, Lock as LockIcon } from 'lucide-react' // Added UserIcon, LockIcon
 import { toast, Toaster } from 'react-hot-toast'
 import AuthContext from '../context/AuthContext' // Ensure path is correct
+import LoginBg from '../assets/login.mp4'
 
 // Reusing the same background image as signup for consistency, or choose a different one
-const loginBgImageUrl =
-  'https://images.pexels.com/photos/12185654/pexels-photo-12185654.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load'
+const loginBgImageUrl = LoginBg
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
@@ -297,14 +297,18 @@ const LoginForm: React.FC = () => {
           className="w-full md:w-1/2 relative hidden md:flex flex-col justify-end order-1 md:order-2 bg-gray-200"
           variants={columnVariants(0.2)}
         >
-          <img
+          <video
+            className="w-full h-[620px] object-cover"
             src={loginBgImageUrl}
-            alt="Stylish background"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster="/placeholder-video-poster.jpg"
+          ></video>
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>{' '}
           {/* Adjusted gradient */}
-          <motion.div className="relative p-8 lg:p-12 text-white z-10" variants={textItemVariants}>
+          {/* <motion.div className="relative p-8 lg:p-12 text-white z-10" variants={textItemVariants}>
             <div className="flex gap-0.5 mb-3">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} size={20} fill="white" strokeWidth={0} />
@@ -316,7 +320,7 @@ const LoginForm: React.FC = () => {
             </blockquote>
             <p className="font-semibold text-lg">Sophie Hall</p>
             <p className="text-sm text-gray-200">Founder, Wearflare Catalog</p>
-          </motion.div>
+          </motion.div> */}
         </motion.div>
       </motion.div>
     </div>

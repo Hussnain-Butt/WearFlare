@@ -7,16 +7,15 @@ import { Loader2, ShoppingBag, Eye, XCircle } from 'lucide-react'
 
 interface Product {
   _id: string
-  image: string
   title: string
-  price: string | number
-  inStock: boolean
-  category?: string
-  gender?: string
+  price: string
+  category: string
+  gender: string
+  image: string
+  isInStock?: boolean
 }
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app'
 
 interface NewCollectionProps {
   genderFilter?: 'Men' | 'Women' | 'Unisex'
@@ -50,6 +49,11 @@ const productCardVariants = {
     scale: 1,
     transition: { type: 'spring', stiffness: 150, damping: 20, duration: 0.4 },
   },
+}
+// imageHoverVariants for product card image
+const imageHoverVariants = {
+  rest: { scale: 1 },
+  hover: { scale: 1.05, transition: { duration: 0.3, ease: [0.25, 1, 0.5, 1] } },
 }
 
 const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }) => {
@@ -190,95 +194,92 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
           {products.map((product) => (
             <motion.div
               key={product._id}
-              id={`new-collection-product-${product._id}`} // Unique ID
-              className="group flex flex-col bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+              id={`product-card-${product._id}`}
+              className="group flex flex-col bg-white rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden"
               variants={productCardVariants}
-              whileHover={{ y: -6, scale: 1.02 }}
-              transition={{ type: 'spring', stiffness: 250, damping: 15 }}
+              layout
+              whileHover={{
+                y: -6,
+                transition: { type: 'spring', stiffness: 300, damping: 15 },
+              }}
             >
-              <div
-                className="relative overflow-hidden cursor-pointer aspect-[3/4]" // Product image aspect ratio
-                onClick={() => product.inStock && handleViewDetails(product._id)}
+              <motion.div // Image container
+                className={`relative overflow-hidden aspect-[3/4] ${
+                  product.isInStock ? 'cursor-pointer' : 'cursor-default'
+                }`}
+                onClick={() => product.isInStock && handleViewDetails(product._id)}
+                variants={imageHoverVariants}
+                initial="rest"
+                whileHover={product.isInStock ? 'hover' : 'rest'}
               >
-                {!product.inStock && (
-                  <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full z-20 shadow">
+                {!product.isInStock && (
+                  <div className="absolute top-2.5 right-2.5 bg-red-500/90 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full z-20 shadow">
                     Out of Stock
                   </div>
                 )}
                 <motion.img
                   src={`${API_BASE_URL}${product.image.startsWith('/') ? '' : '/'}${product.image}`}
                   alt={product.title}
-                  className={`w-full h-full object-cover transition-transform duration-400 ease-in-out group-hover:scale-105 ${
-                    !product.inStock ? 'opacity-50 grayscale' : ''
+                  // MODIFIED LINE: Changed w-96 h-96 to w-full h-full
+                  className={`w-full h-full object-cover transition-opacity duration-300 ${
+                    !product.isInStock ? 'opacity-50 grayscale-[0.6]' : ''
                   }`}
                   loading="lazy"
                   onError={(e) => {
                     e.currentTarget.src = 'https://via.placeholder.com/400?text=No+Image'
                   }}
-                  initial={{ opacity: 0.8 }}
+                  initial={{ opacity: 0.7 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
+                  transition={{ duration: 0.4 }}
                 />
-                {product.inStock && (
+                {product.isInStock && (
                   <motion.div
                     className="absolute inset-0 flex items-center justify-center z-10"
-                    initial={{ opacity: 0 }}
-                    whileHover={{ opacity: 1, backgroundColor: 'rgba(0,0,0,0.05)' }}
+                    initial={{ opacity: 0, backgroundColor: 'rgba(0,0,0,0)' }}
+                    whileHover={{ opacity: 1, backgroundColor: 'rgba(0,0,0,0.15)' }}
                     transition={{ duration: 0.25 }}
                   >
-                    <motion.button
+                    <motion.div
                       aria-label="View product details"
-                      className="p-2.5 bg-white text-trendzone-dark-blue rounded-full shadow-md hover:bg-gray-100 scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-250"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleViewDetails(product._id)
-                      }}
+                      className="p-2.5 sm:p-3 bg-white text-trendzone-dark-blue rounded-full shadow-md scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-250"
                     >
-                      <Eye className="w-4 h-4" />
-                    </motion.button>
+                      <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </motion.div>
                   </motion.div>
                 )}
-              </div>
+              </motion.div>
 
-              <div className="p-4 flex flex-col flex-grow">
-                <h3
-                  className="text-sm md:text-base font-semibold text-trendzone-dark-blue truncate mb-0.5"
-                  title={product.title}
-                >
-                  {product.inStock ? (
-                    <Link
-                      to={`/product/${product._id}`}
-                      className="hover:text-trendzone-light-blue transition-colors"
-                    >
-                      {product.title}
-                    </Link>
-                  ) : (
-                    <span>{product.title}</span>
-                  )}
-                </h3>
-                <p className="text-xs md:text-sm font-medium text-trendzone-dark-blue/70 mb-3">
-                  PKR {Number(product.price).toLocaleString('en-PK')}
-                </p>
-                <div className="mt-auto">
-                  {product.inStock ? (
-                    <motion.button
-                      className="w-full px-4 py-2 bg-trendzone-dark-blue text-white text-xs sm:text-sm font-medium rounded-md hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 flex items-center justify-center gap-1.5"
-                      onClick={() => handleViewDetails(product._id)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      View Details
-                    </motion.button>
-                  ) : (
-                    <button
-                      className="w-full px-4 py-2 bg-gray-200 text-gray-500 text-xs sm:text-sm font-medium rounded-md cursor-not-allowed"
-                      disabled
-                    >
-                      Out of Stock
-                    </button>
-                  )}
+              {/* Product Info Section */}
+              {/* MODIFIED LINE: Changed padding from p-3 sm:p-4 to p-2.5 sm:p-3 */}
+              <div className="p-2.5 sm:p-3 flex flex-col flex-grow justify-between">
+                <div>
+                  <h3
+                    className="text-sm md:text-base font-semibold text-trendzone-dark-blue truncate mb-0.5"
+                    title={product.title}
+                  >
+                    {product.isInStock ? (
+                      <Link
+                        to={`/product/${product._id}`}
+                        className="hover:text-trendzone-light-blue transition-colors duration-200"
+                      >
+                        {product.title}
+                      </Link>
+                    ) : (
+                      <span>{product.title}</span>
+                    )}
+                  </h3>
+                  <p className="text-xs md:text-sm font-medium text-trendzone-dark-blue/70">
+                    PKR {Number(product.price).toLocaleString('en-PK')}
+                  </p>
                 </div>
+
+                {!product.isInStock && (
+                  <div className="pt-2 sm:pt-3">
+                    <p className="w-full text-center text-xs sm:text-sm px-3 py-2 bg-slate-100 text-slate-500 font-medium rounded-md">
+                      Currently Unavailable
+                    </p>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}

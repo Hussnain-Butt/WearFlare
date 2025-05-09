@@ -1,69 +1,54 @@
-// src/admin/pages/AdminLogin.jsx (or .js, ensure consistency with filename)
-
+// src/admin/pages/AdminLogin.jsx (or .tsx)
 import React, { useState } from 'react'
-// Import the configured Axios instance
 import apiClient from '../../api/axiosConfig' // Adjust the path as necessary
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff } from 'lucide-react' // Or your preferred icon library
+import { Eye, EyeOff } from 'lucide-react'
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false) // Optional: Add loading state
-  const [error, setError] = useState('') // Optional: Add error state for feedback
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    setLoading(true) // Start loading
-    setError('') // Clear previous errors
+    setLoading(true)
+    setError('')
 
     try {
-      // Use apiClient and relative path '/admin/login'
-      // The baseURL ('https://backend-production-c8ff.up.railway.app/api') is added by apiClient
       const response = await apiClient.post('/admin/login', {
         username,
         password,
       })
-
-      // Use consistent localStorage keys
       localStorage.setItem('authToken', response.data.token)
-      localStorage.setItem('userRole', 'admin') // Explicitly set role for admin
-
-      setLoading(false) // Stop loading
-      navigate('/admin/dashboard') // Navigate to admin dashboard
+      localStorage.setItem('userRole', 'admin')
+      setLoading(false)
+      navigate('/admin/dashboard')
     } catch (err) {
-      // Use 'err' consistently for error object
-      setLoading(false) // Stop loading on error
+      setLoading(false)
       console.error('Admin Login Failed:', err.response?.data || err.message)
-      // Set specific error message for user feedback
       const message = err.response?.data?.message || 'Invalid credentials or server error.'
-      setError(message) // Store error message in state
-      // Keep the alert or replace with state-based error display
-      // alert(message);
+      setError(message)
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
-      <div className="w-full max-w-md p-8 bg-white shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-2xl font-bold text-center text-[#c8a98a] mb-6">Admin Login</h2>
+    <div className="flex items-center justify-center min-h-screen bg-slate-100 px-4 py-12">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-xl rounded-xl">
+        <h2 className="text-3xl font-semibold text-center text-trendzone-dark-blue">Admin Login</h2>
 
-        {/* Optional: Display error message */}
         {error && (
-          <p className="mb-4 text-center text-sm text-red-600 bg-red-100 p-2 rounded border border-red-200">
-            {error}
-          </p>
+          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-center text-red-700">{error}</p>
+          </div>
         )}
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin} className="space-y-6">
           {/* Username Field */}
-          <div className="mb-4">
-            <label
-              htmlFor="admin-username"
-              /* Use unique id */ className="block text-sm font-medium text-gray-700"
-            >
+          <div>
+            <label htmlFor="admin-username" className="block text-sm font-medium text-gray-600">
               Username
             </label>
             <input
@@ -72,38 +57,38 @@ const AdminLogin = () => {
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required // Add basic validation
-              className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-[#c8a98a]
-                         focus:border-[#c8a98a]"
+              required
+              className={`w-full px-4 py-2.5 mt-1 border border-gray-300 rounded-lg
+                         placeholder-gray-400
+                         focus:outline-none focus:ring-2 focus:ring-trendzone-light-blue 
+                         focus:border-trendzone-light-blue transition-shadow duration-150 ease-in-out`}
             />
           </div>
 
           {/* Password Field */}
-          <div className="mb-6">
-            <label
-              htmlFor="admin-password"
-              /* Use unique id */ className="block text-sm font-medium text-gray-700"
-            >
+          <div>
+            <label htmlFor="admin-password" className="block text-sm font-medium text-gray-600">
               Password
             </label>
-            <div className="relative mt-2">
+            <div className="relative mt-1">
               <input
                 id="admin-password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required // Add basic validation
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-[#c8a98a]
-                           focus:border-[#c8a98a] pr-10" // Space for icon
+                required
+                className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg
+                           placeholder-gray-400 pr-10
+                           focus:outline-none focus:ring-2 focus:ring-trendzone-light-blue 
+                           focus:border-trendzone-light-blue transition-shadow duration-150 ease-in-out`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center text-sm
-                           text-gray-600 hover:text-gray-800 focus:outline-none px-3"
+                className={`absolute inset-y-0 right-0 flex items-center px-3
+                           text-gray-500 hover:text-trendzone-dark-blue focus:outline-none 
+                           transition-colors duration-150`}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -114,13 +99,14 @@ const AdminLogin = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading} // Disable button when loading
-            className={`w-full py-2 px-4 bg-[#c8a98a] text-white font-semibold
-                       rounded-lg shadow-md hover:bg-[#a1846b] focus:outline-none
-                       focus:ring-2 focus:ring-[#c8a98a] transition-colors
-                       ${loading ? 'opacity-70 cursor-not-allowed' : ''}`} // Style for disabled state
+            disabled={loading}
+            className={`w-full py-2.5 px-4 bg-trendzone-dark-blue text-white font-semibold 
+                       rounded-lg shadow-sm hover:bg-admin-primary-hover focus:outline-none {/* Kept admin-primary-hover for darker shade, or you can define trendzone-dark-blue-hover */}
+                       focus:ring-2 focus:ring-offset-2 focus:ring-trendzone-light-blue 
+                       transition-all duration-150 ease-in-out
+                       ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}`}
           >
-            {loading ? 'Logging in...' : 'Login'} {/* Change button text when loading */}
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>

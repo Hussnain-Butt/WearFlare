@@ -22,7 +22,7 @@ const staticImageGridData = [
   // Cell 2 (Central Large, Green Coat Style)
   {
     id: 'img2',
-    src: 'https://images.pexels.com/photos/9222744/pexels-photo-9222744.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
+    src: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=600',
     alt: 'Woman in a chic green overcoat',
     baseClassName: 'h-[400px] md:h-[520px]',
   },
@@ -36,14 +36,14 @@ const staticImageGridData = [
   // Cell 4 (Right of Center, White Outfit Style)
   {
     id: 'img4',
-    src: 'https://images.pexels.com/photos/31886201/pexels-photo-31886201/free-photo-of-black-and-white-fashion-portrait-on-nyc-rooftop.jpeg?auto=compress&cs=tinysrgb&w=600',
+    src: 'https://images.pexels.com/photos/20755907/pexels-photo-20755907/free-photo-of-model-in-blue-denim-jacket-and-jeans.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
     alt: 'Man in a crisp all-white outfit',
     baseClassName: 'h-[380px] md:h-[480px]',
   },
   // Cell 5 (Top-Right Taller, Heart Sunglasses Style)
   {
     id: 'img5',
-    src: 'https://images.pexels.com/photos/1855864/pexels-photo-1855864.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
+    src: 'https://images.pexels.com/photos/17334651/pexels-photo-17334651/free-photo-of-young-man-posing-in-city.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
     alt: 'Woman wearing heart-shaped sunglasses',
     baseClassName: 'h-[300px] md:h-[380px]',
   },
@@ -311,7 +311,7 @@ const StyleHere: React.FC = () => {
           <motion.div className="relative" variants={itemVariants}>
             <Quote className="w-10 h-10 text-gray-300 absolute -top-3 -left-3 transform -translate-x-1/2" />
             <p className="text-gray-700 text-base md:text-lg leading-relaxed mb-6">
-              TrendZone's styles are fresh, bold, and exactly what I needed to upgrade my wardrobe.
+              Wearflare styles are fresh, bold, and exactly what I needed to upgrade my wardrobe.
               Loved the quality and vibe!
             </p>
             <div className="text-right">

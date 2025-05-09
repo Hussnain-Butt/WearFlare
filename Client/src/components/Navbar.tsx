@@ -5,6 +5,7 @@ import { Search, ShoppingCart, Menu, X } from 'lucide-react'
 import AuthContext from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import SearchOverlay from './SearchOverlay'
+import Logo from '../assets/Logo.png'
 
 const NavLink: React.FC<{
   to: string
@@ -53,27 +54,29 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-white shadow-md w-full sticky top-0 z-40">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link
-              to="/"
-              onClick={closeMobileMenu}
-              className="text-2xl md:text-3xl font-bold text-trendzone-dark-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm"
-            >
-              WearFlare
-            </Link>
-          </div>
+        {/* Main flex container for navbar items */}
+        <div className="relative flex items-center justify-between h-16 md:h-20">
+          {/* ---- DESKTOP VIEW ITEMS ---- */}
 
-          {/* Desktop Menu - Centered */}
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8 flex-grow justify-center">
+          {/* Navlinks (Left on Desktop) */}
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             <NavLink to="/">Home</NavLink>
             <NavLink to="/men">Men</NavLink>
             <NavLink to="/women">Women</NavLink>
             <NavLink to="/contact">Contact</NavLink>
           </div>
 
-          {/* Icons & Auth Button (Desktop) */}
+          {/* Logo (Center on Desktop - Absolutely Positioned) */}
+          <div className="hidden md:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <Link
+              to="/"
+              className="text-2xl md:text-3xl font-bold text-trendzone-dark-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm"
+            >
+              <img src={Logo} alt="Logo" className="w-14" />
+            </Link>
+          </div>
+
+          {/* Icons & Auth (Right on Desktop) */}
           <div className="hidden md:flex items-center space-x-4 lg:space-x-5">
             <button
               onClick={() => setShowSearchOverlay(true)}
@@ -112,8 +115,21 @@ const Navbar: React.FC = () => {
               </Link>
             )}
           </div>
+          {/* ---- END DESKTOP VIEW ITEMS ---- */}
 
-          {/* Mobile Menu Button & Cart */}
+          {/* ---- MOBILE VIEW ITEMS ---- */}
+          {/* Logo (Left on Mobile) */}
+          <div className="md:hidden flex-shrink-0">
+            <Link
+              to="/"
+              onClick={closeMobileMenu}
+              className="text-2xl font-bold text-trendzone-dark-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm"
+            >
+              WearFlare
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button & Cart (Right on Mobile) */}
           <div className="md:hidden flex items-center">
             <Link
               to="/cart"
@@ -137,10 +153,11 @@ const Navbar: React.FC = () => {
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
+          {/* ---- END MOBILE VIEW ITEMS ---- */}
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - unchanged */}
       <div
         id="mobile-menu"
         className={`
@@ -149,7 +166,7 @@ const Navbar: React.FC = () => {
           ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible'}
         `}
       >
-        {isOpen && ( // Conditional rendering can help if content is heavy, or for accessibility
+        {isOpen && (
           <div className="px-4 space-y-3">
             <NavLink to="/" onClick={closeMobileMenu} isMobile>
               Home
