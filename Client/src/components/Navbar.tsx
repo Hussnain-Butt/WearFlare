@@ -5,7 +5,7 @@ import { Search, ShoppingCart, Menu, X } from 'lucide-react'
 import AuthContext from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import SearchOverlay from './SearchOverlay'
-import Logo from '../assets/Logo.png'
+import Logo from '../assets/Logo.jpg'
 
 const NavLink: React.FC<{
   to: string
@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
               to="/"
               className="text-2xl md:text-3xl font-bold text-trendzone-dark-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm"
             >
-              <img src={Logo} alt="Logo" className="w-14" />
+              <img src={Logo} alt="Logo" className="w-80" />
             </Link>
           </div>
 

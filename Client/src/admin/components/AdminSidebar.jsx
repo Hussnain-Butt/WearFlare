@@ -1,6 +1,6 @@
 // src/admin/components/AdminSidebar.jsx
-import React from 'react' // Removed useState, useEffect as state is now managed by parent
-import { NavLink, useLocation } from 'react-router-dom'
+import React from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom' // Added useNavigate
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -10,6 +10,7 @@ import {
   PanelLeft,
   ChevronLeft,
   Menu as MenuIcon,
+  LogOut, // Added LogOut icon
 } from 'lucide-react'
 
 // Color constants
@@ -17,7 +18,7 @@ const activeBgColor = 'bg-trendzone-light-blue'
 const activeTextColor = 'text-white'
 const defaultTextColor = 'text-trendzone-dark-blue'
 const hoverBgColor = 'hover:bg-trendzone-light-blue/10'
-const logoColor = 'text-trendzone-dark-blue'
+const logoColor = 'text-trendzone-dark-blue' // Used for Admin Panel text
 const logoIconColor = 'text-trendzone-light-blue'
 
 const navItems = [
@@ -66,8 +67,22 @@ const SidebarNavLink = ({ to, icon: Icon, label, isSidebarExpanded }) => {
   )
 }
 
-// AdminSidebar now receives isExpanded and toggleSidebar as props
 const AdminSidebar = ({ isExpanded, toggleSidebar }) => {
+  const navigate = useNavigate() // Hook for navigation
+
+  const handleLogout = () => {
+    // Implement your actual logout logic here
+    // e.g., clearing tokens from localStorage, calling a logout API endpoint
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('userRole') // If you store user role
+    // Add any other cleanup needed
+
+    navigate('/admin/login') // Redirect to admin login page
+    // Optionally, you might want to show a toast notification for successful logout
+    // import { toast } from 'react-hot-toast';
+    // toast.success('Logged out successfully!');
+  }
+
   const sidebarVariants = {
     expanded: { width: '260px' },
     collapsed: { width: '80px' },
@@ -94,36 +109,50 @@ const AdminSidebar = ({ isExpanded, toggleSidebar }) => {
     },
   }
 
+  const logoutTextVariants = {
+    // Specific for logout text animation
+    expanded: {
+      opacity: 1,
+      width: 'auto',
+      marginLeft: '0.75rem',
+      transition: { delay: 0.1, duration: 0.2 },
+    },
+    collapsed: { opacity: 0, width: 0, marginLeft: 0, transition: { duration: 0.1 } },
+  }
+
   return (
     <motion.aside
       variants={sidebarVariants}
-      initial={false} // Respect the initial state from parent
+      initial={false}
       animate={isExpanded ? 'expanded' : 'collapsed'}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className={`bg-white text-trendzone-dark-blue 
                   fixed left-0 
                   z-30 
                   top-16 md:top-20 
-                  h-full md:h-full 
+                  h-full md:h-full /* Corrected height calculation */
                   flex flex-col shadow-lg border-r border-slate-200`}
     >
       {/* Header / Brand */}
       <div
         className={`flex items-center shrink-0 ${
-          isExpanded ? 'pl-6 pr-4 py-4 pt-10 h-[72px]' : 'justify-center h-[72px]'
+          isExpanded ? 'pl-6 pr-4 h-[72px] mt-10' : 'justify-center h-[72px]'
         }`}
       >
-        <PanelLeft size={isExpanded ? 28 : 32} className={`${logoIconColor} shrink-0`} />
+        <PanelLeft size={isExpanded ? 28 : 32} className={`${logoIconColor} shrink-0 `} />
         <AnimatePresence>
           {isExpanded && (
-            <motion.h1 variants={logoTextVariants} className="pl-11 text-xl font-bold ">
+            <motion.h1
+              variants={logoTextVariants}
+              className={`ml-2.5 text-xl font-bold ${logoColor} whitespace-nowrap`} // Applied logoColor
+            >
               Admin Panel
             </motion.h1>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Toggle Button and "MAIN MENU" Label section - Now directly uses toggleSidebar from props */}
+      {/* Toggle Button and "MAIN MENU" Label section */}
       <motion.div
         variants={mainMenuSectionVariants}
         animate={isExpanded ? 'expanded' : 'collapsed'}
@@ -131,8 +160,8 @@ const AdminSidebar = ({ isExpanded, toggleSidebar }) => {
       >
         {isExpanded && (
           <button
-            onClick={toggleSidebar} // Use prop
-            className="p-2 pt-5 rounded-full hover:bg-slate-200 transition-colors mr-2"
+            onClick={toggleSidebar}
+            className="p-2 rounded-full hover:bg-slate-200 transition-colors mr-2"
             aria-label="Collapse sidebar"
           >
             <ChevronLeft size={22} />
@@ -148,8 +177,8 @@ const AdminSidebar = ({ isExpanded, toggleSidebar }) => {
       {!isExpanded && (
         <div className="flex justify-center items-center py-3 shrink-0">
           <button
-            onClick={toggleSidebar} // Use prop
-            className="p-2  rounded-full hover:bg-slate-100 transition-colors"
+            onClick={toggleSidebar}
+            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
             aria-label="Expand sidebar"
           >
             <MenuIcon size={24} />
@@ -157,6 +186,7 @@ const AdminSidebar = ({ isExpanded, toggleSidebar }) => {
         </div>
       )}
 
+      {/* Navigation Links */}
       <nav
         className={`flex-grow overflow-y-auto overflow-x-hidden ${isExpanded ? 'px-3.5' : 'px-2'}`}
       >
@@ -167,12 +197,40 @@ const AdminSidebar = ({ isExpanded, toggleSidebar }) => {
                 to={item.path}
                 icon={item.icon}
                 label={item.name}
-                isSidebarExpanded={isExpanded} // Pass prop
+                isSidebarExpanded={isExpanded}
               />
             </li>
           ))}
         </ul>
       </nav>
+
+      {/* Logout Section - Added at the bottom */}
+      <div className={`mt-auto shrink-0 border-t border-slate-200 ${isExpanded ? 'p-3.5' : 'p-2'}`}>
+        <button
+          onClick={handleLogout}
+          className={`w-full flex items-center rounded-md text-red-600 hover:bg-red-500/10 transition-colors duration-150 group
+            ${isExpanded ? 'px-4 py-2.5' : 'p-3 justify-center'}`}
+          title={!isExpanded ? 'Log out' : undefined}
+        >
+          <LogOut
+            size={isExpanded ? 20 : 24}
+            className="flex-shrink-0 group-hover:text-red-700 transition-colors"
+          />
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.span
+                variants={logoutTextVariants} // Using specific variant for logout text
+                initial="collapsed"
+                animate="expanded"
+                exit="collapsed"
+                className="whitespace-nowrap text-sm font-medium group-hover:text-red-700 transition-colors"
+              >
+                Log out
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
+      </div>
     </motion.aside>
   )
 }

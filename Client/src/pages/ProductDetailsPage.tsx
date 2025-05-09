@@ -346,13 +346,26 @@ const ProductDetailsPage: React.FC = () => {
 
             {/* Color Selection (If implemented) */}
             {/* ... similar styling to sizes ... */}
+            {product.description?.trim() && (
+              <motion.div
+                className="mt-8 pt-6 pb-5 border-t border-gray-200"
+                variants={itemVariants(0.15)}
+              >
+                <h3 className="text-sm font-semibold text-trendzone-dark-blue uppercase tracking-wide mb-2.5">
+                  Description
+                </h3>
+                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+                  {product.description.trim()}
+                </p>
+              </motion.div>
+            )}
 
             <motion.div
               className="mt-auto pt-6 border-t border-gray-200"
               variants={itemVariants(0.2)}
             >
               {product.isInStock && !isAddingToCart && !showAddedMessage && (
-                <div className="mb-3 text-left h-5">
+                <div className="mb-1 text-left h-5">
                   {' '}
                   {/* Reserve space */}
                   {hasSizes && !selectedSize && (
@@ -365,6 +378,7 @@ const ProductDetailsPage: React.FC = () => {
                   )}
                 </div>
               )}
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <motion.button
                   onClick={handleAddToCart}
@@ -407,20 +421,6 @@ const ProductDetailsPage: React.FC = () => {
                 </motion.button>
               </div>
             </motion.div>
-
-            {product.description?.trim() && (
-              <motion.div
-                className="mt-8 pt-6 border-t border-gray-200"
-                variants={itemVariants(0.15)}
-              >
-                <h3 className="text-sm font-semibold text-trendzone-dark-blue uppercase tracking-wide mb-2.5">
-                  Description
-                </h3>
-                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
-                  {product.description.trim()}
-                </p>
-              </motion.div>
-            )}
           </motion.div>
         </div>
       </div>

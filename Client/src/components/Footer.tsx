@@ -150,23 +150,6 @@ const Footer: React.FC = () => {
             >
               WearFlare {/* Changed to TrendZone to match Navbar */}
             </Link>
-            <p className="text-sm mb-3 text-gray-400">Follow us</p>
-            <div className="flex space-x-4">
-              {socialLinks.map((social, index) => (
-                <motion.a
-                  key={index}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.label}
-                  className="text-gray-400 hover:text-trendzone-light-blue transition-colors duration-200"
-                  whileHover={{ scale: 1.2, y: -2 }}
-                  transition={{ type: 'spring', stiffness: 300 }}
-                >
-                  <social.icon size={20} strokeWidth={1.5} />
-                </motion.a>
-              ))}
-            </div>
           </motion.div>
         </div>
 

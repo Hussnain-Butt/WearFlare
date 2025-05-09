@@ -38,7 +38,7 @@ const Index = () => {
       <div className="my-10">
         <FashionShowcase />
       </div>
-      <img src={autoumnPic2} alt="" className="my-8 w-full" />
+      {/* <img src={autoumnPic2} alt="" className="my-8 w-full" /> */}
 
       <Features />
       <SubscriptionPopup />

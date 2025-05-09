@@ -346,7 +346,7 @@ const AdminDashboard = () => {
       {/* Charts Section Grid */}
       <motion.div
         variants={containerVariants}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6"
       >
         <motion.div
           variants={itemVariants}
@@ -360,24 +360,12 @@ const AdminDashboard = () => {
             <Bar data={barChartData} options={barChartOptions} />
           )}
         </motion.div>
-        <motion.div
-          variants={itemVariants}
-          className="bg-white rounded-xl shadow-lg p-5 hover:shadow-xl transition-shadow duration-300 min-h-[380px] md:min-h-[420px] flex flex-col"
-        >
-          {isLoading ? (
-            <div className="flex-grow flex justify-center items-center">
-              <Loader2 className="animate-spin h-12 w-12 text-slate-400" />
-            </div>
-          ) : (
-            <Pie data={pieChartData} options={pieChartOptions} />
-          )}
-        </motion.div>
       </motion.div>
 
       {/* Extra Info Cards Grid */}
       <motion.div
         variants={containerVariants}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6"
+        className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-5 md:gap-6"
       >
         <InfoCard title="Recent Transactions" icon={TrendingUp} isLoading={isLoading}>
           {recentTransactions.length > 0 ? (
@@ -422,41 +410,6 @@ const AdminDashboard = () => {
               {isLoading ? 'Loading transactions...' : 'No recent transactions found.'}
             </p>
           )}
-        </InfoCard>
-
-        <InfoCard
-          title="Support Tickets"
-          icon={HelpCircle}
-          isLoading={isLoading /* Replace with actual loading state for tickets */}
-        >
-          <p>
-            <strong className={`text-[${primaryColor}]`}>3 new tickets</strong> require attention.
-            Prioritize critical issues first for better customer satisfaction.
-            <a
-              href="#"
-              className={`block mt-3 text-[${accentColor}] hover:underline font-medium text-sm`}
-            >
-              Go to support center →
-            </a>
-          </p>
-        </InfoCard>
-
-        <InfoCard
-          title="User Demographics"
-          icon={MapPin}
-          isLoading={isLoading /* Replace with actual loading state for demographics */}
-        >
-          <p>
-            Current insights show a primary user base in{' '}
-            <strong className={`text-[${primaryColor}]`}>North America (65%)</strong>, followed by{' '}
-            <strong className={`text-[${primaryColor}]`}>Europe (25%)</strong>.
-            <a
-              href="#"
-              className={`block mt-3 text-[${accentColor}] hover:underline font-medium text-sm`}
-            >
-              View detailed report →
-            </a>
-          </p>
         </InfoCard>
       </motion.div>
     </motion.div>
