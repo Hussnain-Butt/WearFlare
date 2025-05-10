@@ -3,16 +3,14 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
-import video1 from '../assets/video 1.mp4'
-import video2 from '../assets/video 2.mp4'
+import video1 from '../assets/video 1.mp4' // Path check karein
+import video2 from '../assets/video 2.mp4' // Path check karein
 
-// Placeholder image URLs - Replace with your actual high-quality images
 const centralImageUrl =
-  'https://images.pexels.com/photos/6626903/pexels-photo-6626903.jpeg?auto=compress&cs=tinysrgb&w=600' // Smiling woman
-const topRightImageUrl = video1 // Woman with handbag
-const leftImageUrl = video2
+  'https://images.pexels.com/photos/6626903/pexels-photo-6626903.jpeg?auto=compress&cs=tinysrgb&w=600'
+const topRightVideoUrl = video1
+const leftVideoUrl = video2
 
-// Animation Variants
 const sectionVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -35,7 +33,7 @@ const imageVariants = (delay: number = 0) => ({
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.7, ease: 'easeOut', delay }, // CORRECTED: Using "easeOut" string
+    transition: { duration: 0.7, ease: 'easeOut', delay },
   },
 })
 
@@ -46,35 +44,33 @@ const contentBlockVariants = (fromRight: boolean = false) => ({
 
 const overlayTextVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.5 } }, // Delay after image loads
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.5 } },
 }
 
 const PerfectOutfitSection: React.FC = () => {
   return (
     <motion.section
-      className="bg-slate-100 py-16 md:py-24 px-4 sm:px-6 lg:px-8 min-h-screen flex flex-col items-center justify-center font-inter"
+      // CHANGED: bg-muted/10 to bg-background for consistent dark theme background
+      className="bg-background py-16 md:py-24 px-4 sm:px-6 lg:px-8 min-h-screen flex flex-col items-center justify-center font-inter"
       variants={sectionVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.1 }}
     >
       <div className="max-w-6xl w-full mx-auto">
-        {/* Top-Left Header Text */}
         <motion.div
           className="mb-12 md:mb-16 lg:mb-20 text-left md:text-left lg:pl-4"
           variants={titleTextVariants}
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-wider uppercase text-trendzone-dark-blue">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-wider uppercase text-primary">
             Choose The
           </h2>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-wider uppercase text-trendzone-dark-blue mt-1">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-wider uppercase text-primary mt-1">
             Perfect Outfit
           </h1>
         </motion.div>
 
-        {/* Main Collage Area */}
         <div className="relative grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center">
-          {/* Left Small Image */}
           <motion.div
             className="md:col-span-3 lg:col-span-3 order-2 md:order-1 self-center md:mt-20 lg:mt-32 z-10"
             variants={imageVariants(0.2)}
@@ -84,7 +80,7 @@ const PerfectOutfitSection: React.FC = () => {
             <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-xl">
               <video
                 className="w-full h-full object-cover"
-                src={leftImageUrl}
+                src={leftVideoUrl}
                 autoPlay
                 loop
                 muted
@@ -94,7 +90,6 @@ const PerfectOutfitSection: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Central Image & Overlay */}
           <motion.div
             className="md:col-span-6 lg:col-span-5 order-1 md:order-2 relative z-0 mx-auto"
             variants={imageVariants(0)}
@@ -104,7 +99,7 @@ const PerfectOutfitSection: React.FC = () => {
             <div className="aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl">
               <img
                 src={centralImageUrl}
-                alt="Stylish woman for spring collection"
+                alt="Stylish woman for autumn collection"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
@@ -128,20 +123,19 @@ const PerfectOutfitSection: React.FC = () => {
             </motion.div>
           </motion.div>
 
-          {/* Right Content Block */}
           <motion.div
             className="md:col-span-3 lg:col-span-4 order-3 md:order-3 self-start md:self-auto space-y-6 z-10"
             variants={contentBlockVariants(true)}
           >
             <motion.div
               className="aspect-[16/10] rounded-2xl overflow-hidden shadow-xl"
-              variants={imageVariants(0.4)} // This will now use "easeOut"
+              variants={imageVariants(0.4)}
               whileHover={{ scale: 1.05, zIndex: 15 }}
               transition={{ type: 'spring', stiffness: 300 }}
             >
               <video
                 className="w-full h-full object-cover"
-                src={topRightImageUrl}
+                src={topRightVideoUrl}
                 autoPlay
                 loop
                 muted
@@ -151,16 +145,16 @@ const PerfectOutfitSection: React.FC = () => {
             </motion.div>
 
             <div className="p-1">
-              <h3 className="text-xl sm:text-2xl font-semibold text-trendzone-dark-blue mb-3 tracking-wide">
+              <h3 className="text-xl sm:text-2xl font-semibold text-primary mb-3 tracking-wide">
                 THE COLLECTION
               </h3>
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-4">
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-4">
                 Discover curated styles designed to inspire. Our latest collection blends timeless
                 elegance with modern trends, ensuring you always look your best.
               </p>
               <Link
                 to="/men"
-                className="inline-flex items-center text-sm font-medium text-trendzone-dark-blue hover:text-trendzone-light-blue group transition-colors duration-300"
+                className="inline-flex items-center text-sm font-medium text-primary hover:text-accent group transition-colors duration-300"
               >
                 Discover More
                 <ArrowRight className="w-4 h-4 ml-2 transform transition-transform duration-200 group-hover:translate-x-1" />

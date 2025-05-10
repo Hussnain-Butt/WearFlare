@@ -1,28 +1,27 @@
+// src/components/FashionShowcase.tsx
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom' // Link is not used in the current JSX, can be removed if not planned
 import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 // Assuming these UI components are from shadcn/ui or similar
-import { Button } from './ui/button' // Assuming standard shadcn button import (check path if needed)
+import { Button } from './ui/button' // Check path if needed. Button is currently commented out in JSX.
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@/components/ui/carousel' // Assuming standard shadcn carousel import (check path if needed)
+} from '@/components/ui/carousel' // Check path if needed
 
-// --- CORRECTED: Use import instead of require ---
 // Make sure these paths are correct relative to FashionShowcase.tsx
-import Jackets from '../assets/mens jackets/jacket-1.jpg'
-import Shirts from '../assets/mens shirts/shirt-1.jpg'
-import Pants from '../assets/men pents/pant-1.jpg'
-import SweatShirt from '../assets/men sweatshirts/sweatshirt-1.jpg'
-import ExtraImage from '../assets/men sweatshirts/sweatshirt-2.jpg'
-// --- END CORRECTION ---
+import Jackets from '../assets/mens jackets/jacket-1.jpg' // Path check
+import Shirts from '../assets/mens shirts/shirt-1.jpg' // Path check
+import Pants from '../assets/men pents/pant-1.jpg' // Path check
+import SweatShirt from '../assets/men sweatshirts/sweatshirt-1.jpg' // Path check
+import ExtraImage from '../assets/men sweatshirts/sweatshirt-2.jpg' // Path check
 
-// Animation Variants (remain the same)
+// Animation Variants
 const sectionVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -73,18 +72,20 @@ const FashionShowcase: React.FC = () => {
 
   return (
     <motion.section
-      className="relative w-full bg-white sm:py-24 px-4 overflow-hidden font-inter" // Using white background as requested
+      // bg-white -> bg-background
+      className="relative w-full bg-background sm:py-24 px-4 overflow-hidden font-inter"
       variants={sectionVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.1 }}
     >
       {/* Background Circles */}
+      {/* border-trendzone-light-blue/15 -> border-accent/15 (or border-primary/15) */}
       <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
-        <div className="w-[70vw] h-[70vw] max-w-[800px] max-h-[800px] border border-trendzone-light-blue/15 rounded-full" />
+        <div className="w-[70vw] h-[70vw] max-w-[800px] max-h-[800px] border border-accent/15 rounded-full" />
       </div>
       <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
-        <div className="w-[85vw] h-[85vw] max-w-[1000px] max-h-[1000px] border border-trendzone-light-blue/10 rounded-full" />
+        <div className="w-[85vw] h-[85vw] max-w-[1000px] max-h-[1000px] border border-accent/10 rounded-full" />
       </div>
 
       {/* Main Content Container */}
@@ -94,11 +95,13 @@ const FashionShowcase: React.FC = () => {
           className="absolute inset-x-0 top-[40%] sm:top-[15%] md:top-[20%] text-center z-20 pointer-events-none mt-32"
           variants={titleVariants}
         >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-trendzone-dark-blue/80 tracking-[0.15em] uppercase">
+          {/* text-trendzone-dark-blue/80 -> text-primary/80 (or text-foreground/80) */}
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-primary/80 tracking-[0.15em] uppercase">
             STUDIO
           </h1>
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-trendzone-dark-blue tracking-[0.15em] uppercase -mt-1 sm:-mt-2 md:-mt-3">
-            SHODWE
+          {/* text-trendzone-dark-blue -> text-primary (or text-foreground) */}
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-primary tracking-[0.15em] uppercase -mt-1 sm:-mt-2 md:-mt-3">
+            SHODWE {/* Assuming SHODWE is intentional, might be SHOWCASE or similar */}
           </h1>
         </motion.div>
 
@@ -109,7 +112,7 @@ const FashionShowcase: React.FC = () => {
             loop: true,
             startIndex: startIndex,
           }}
-          className="w-full pt-16 sm:pt-24 md:pt-32" // Added padding-top
+          className="w-full pt-16 sm:pt-24 md:pt-32"
         >
           <CarouselContent className="-ml-2 md:-ml-4 items-center">
             {carouselItems.map((item, index) => (
@@ -117,7 +120,10 @@ const FashionShowcase: React.FC = () => {
                 key={index}
                 className={`
                   pl-2 md:pl-4 flex flex-col
-                  motion-safe:animate-fadeIn
+                  motion-safe:animate-fadeIn 
+                  ${
+                    /* Using animate-fadeIn from tailwindcss-animate if you have it, otherwise remove */ ''
+                  }
                   ${
                     item.type === 'feature'
                       ? 'basis-1/2 sm:basis-2/5 md:basis-[45%] lg:basis-2/5'
@@ -131,16 +137,18 @@ const FashionShowcase: React.FC = () => {
                     className="flex flex-col h-full p-2 sm:p-3"
                     variants={carouselItemVariants}
                   >
-                    <div className="overflow-hidden rounded-lg shadow-md mb-3 bg-white">
+                    {/* bg-white -> bg-card */}
+                    <div className="overflow-hidden rounded-lg shadow-md mb-3 bg-card">
                       <img
-                        src={item.imgSrc} // Use the imported variable directly
+                        src={item.imgSrc}
                         alt={item.alt}
                         className="w-full h-48 sm:h-56 md:h-64 object-cover transition-transform duration-300 hover:scale-105"
                         loading="lazy"
                       />
                     </div>
                     <motion.div className="flex flex-col mt-auto" variants={textVariants}>
-                      <span className="text-trendzone-dark-blue uppercase text-xs sm:text-sm font-medium tracking-wider">
+                      {/* text-trendzone-dark-blue -> text-foreground (or text-card-foreground) */}
+                      <span className="text-foreground uppercase text-xs sm:text-sm font-medium tracking-wider">
                         {item.title}
                       </span>
                     </motion.div>
@@ -153,9 +161,10 @@ const FashionShowcase: React.FC = () => {
                     className="flex flex-col items-center h-full relative p-1"
                     variants={carouselItemVariants}
                   >
-                    <div className="overflow-hidden rounded-lg shadow-xl w-full flex-grow mb-10 bg-white">
+                    {/* bg-white -> bg-card */}
+                    <div className="overflow-hidden rounded-lg shadow-xl w-full flex-grow mb-10 bg-card">
                       <img
-                        src={item.imgSrc} // Use the imported variable directly
+                        src={item.imgSrc}
                         alt={item.alt}
                         className="w-full h-64 sm:h-80 md:h-96 lg:h-[30rem] object-cover transition-transform duration-300 hover:scale-105"
                         loading="lazy"
@@ -170,16 +179,18 @@ const FashionShowcase: React.FC = () => {
                     className="flex flex-col h-full p-2 sm:p-3"
                     variants={carouselItemVariants}
                   >
-                    <div className="overflow-hidden rounded-lg shadow-md mb-3 bg-white">
+                    {/* bg-white -> bg-card */}
+                    <div className="overflow-hidden rounded-lg shadow-md mb-3 bg-card">
                       <img
-                        src={item.imgSrc} // Use the imported variable directly
+                        src={item.imgSrc}
                         alt={item.alt}
                         className="w-full h-48 sm:h-56 md:h-64 object-cover transition-transform duration-300 hover:scale-105"
                         loading="lazy"
                       />
                     </div>
                     <motion.p
-                      className="text-xs sm:text-sm text-gray-700 mt-auto leading-relaxed mb-1"
+                      // text-gray-700 -> text-muted-foreground (or text-secondary-foreground)
+                      className="text-xs sm:text-sm text-muted-foreground mt-auto leading-relaxed mb-1"
                       variants={textVariants}
                     >
                       {item.description}
@@ -189,12 +200,13 @@ const FashionShowcase: React.FC = () => {
 
                 {/* Simple Image Item */}
                 {item.type === 'image_only' && (
+                  // bg-white -> bg-card
                   <motion.div
-                    className="overflow-hidden rounded-lg shadow-md h-full p-1 bg-white"
+                    className="overflow-hidden rounded-lg shadow-md h-full p-1 bg-card"
                     variants={carouselItemVariants}
                   >
                     <img
-                      src={item.imgSrc} // Use the imported variable directly
+                      src={item.imgSrc}
                       alt={item.alt}
                       className="w-full h-48 sm:h-56 md:h-64 object-cover transition-transform duration-300 hover:scale-105"
                       loading="lazy"
@@ -207,18 +219,26 @@ const FashionShowcase: React.FC = () => {
 
           {/* Navigation Buttons */}
           <CarouselPrevious
+            // bg-trendzone-dark-blue -> bg-primary
+            // text-white -> text-primary-foreground
+            // hover:bg-trendzone-light-blue -> hover:bg-primary/80 (or hover:bg-accent)
+            // focus-visible:ring-trendzone-light-blue -> focus-visible:ring-ring
             className="absolute left-0 sm:left-2 md:left-4 top-1/2 -translate-y-1/2
-                       bg-trendzone-dark-blue text-white rounded-md shadow-md
+                       bg-primary text-primary-foreground rounded-md shadow-md
                        w-8 h-8 sm:w-9 sm:h-9 border-none
-                       hover:bg-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue
+                       hover:bg-primary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring
                        transition-colors duration-200 z-10"
             icon={<ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />}
           />
           <CarouselNext
+            // bg-trendzone-dark-blue -> bg-primary
+            // text-white -> text-primary-foreground
+            // hover:bg-trendzone-light-blue -> hover:bg-primary/80 (or hover:bg-accent)
+            // focus-visible:ring-trendzone-light-blue -> focus-visible:ring-ring
             className="absolute right-0 sm:right-2 md:right-4 top-1/2 -translate-y-1/2
-                       bg-trendzone-dark-blue text-white rounded-md shadow-md
+                       bg-primary text-primary-foreground rounded-md shadow-md
                        w-8 h-8 sm:w-9 sm:h-9 border-none
-                       hover:bg-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue
+                       hover:bg-primary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring
                        transition-colors duration-200 z-10"
             icon={<ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />}
           />
@@ -232,15 +252,16 @@ const FashionShowcase: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.5 }}
       >
-        {/* Uncomment and style if needed
-         <Link to="/shop">
+        {/* "See More Collection" button ko bhi themeable banayein agar uncomment karte hain */}
+        {/* Example: */}
+        {/* <Link to="/shop">
           <Button
-            variant="outline"
-            className="rounded-full border-trendzone-light-blue text-trendzone-dark-blue hover:bg-trendzone-light-blue/10 hover:text-trendzone-dark-blue px-6 py-2 text-sm font-medium tracking-wider"
+            variant="outline" // Outline variant often uses border color
+            className="rounded-full border-primary text-primary hover:bg-accent hover:text-accent-foreground px-6 py-2 text-sm font-medium tracking-wider"
           >
             See More Collection
           </Button>
-         </Link> */}
+        </Link> */}
       </motion.div>
     </motion.section>
   )

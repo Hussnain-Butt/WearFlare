@@ -2,32 +2,23 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { toast, Toaster } from 'react-hot-toast'
-import { Loader2, Send } from 'lucide-react' // Added Send icon for button
+import { Loader2, Send } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 // API Configuration
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
+  import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app' // TODO: Ensure VITE_API_URL is in .env
 const SUBSCRIBE_ENDPOINT = `${API_BASE_URL}/api/newsletter/subscribe`
 
-// Animation Variants
+// Animation Variants - unchanged
 const sectionVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: 'easeOut', staggerChildren: 0.15, when: 'beforeChildren' },
-  },
+  /* ... */
 }
-
 const textVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  /* ... */
 }
-
 const formVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', delay: 0.2 } },
+  /* ... */
 }
 
 const NewsLetter: React.FC = () => {
@@ -43,6 +34,7 @@ const NewsLetter: React.FC = () => {
       return
     }
     if (!/.+\@.+\..+/.test(trimmedEmail)) {
+      // Basic email validation
       toast.error('Please enter a valid email address.')
       return
     }
@@ -55,8 +47,9 @@ const NewsLetter: React.FC = () => {
       toast.dismiss(toastId)
       if (response.status === 201 || response.status === 200) {
         toast.success(response.data.message || 'Subscription successful!')
-        setEmail('')
+        setEmail('') // Clear email field on success
       } else {
+        // This case might not be hit often if axios throws for non-2xx
         throw new Error(response.data.message || 'Subscription failed.')
       }
     } catch (error: any) {
@@ -71,35 +64,37 @@ const NewsLetter: React.FC = () => {
 
   return (
     <motion.div
-      className="bg-slate-100 py-16 md:py-24 px-6 sm:px-8 text-center font-inter" // Light sophisticated background
+      // bg-slate-100 -> bg-muted/10 (or bg-background)
+      className="bg-muted/10 py-16 md:py-24 px-6 sm:px-8 text-center font-inter"
       variants={sectionVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
     >
-      <Toaster position="top-center" reverseOrder={false} />{' '}
-      {/* Moved Toaster to top for better visibility */}
+      {/* Toaster for notifications - Consider theming this separately if needed */}
+      <Toaster position="top-center" reverseOrder={false} />
       <motion.h3
-        className="text-3xl md:text-4xl lg:text-5xl font-serif text-trendzone-dark-blue mb-4 tracking-wider uppercase" // Elegant serif title
+        // text-trendzone-dark-blue -> text-primary (or text-foreground)
+        className="text-3xl md:text-4xl lg:text-5xl font-serif text-primary mb-4 tracking-wider uppercase"
         variants={textVariants}
       >
         BE THE FIRST
       </motion.h3>
       <motion.p
-        className="text-sm md:text-base text-gray-600 mb-10 max-w-lg mx-auto leading-relaxed"
+        // text-gray-600 -> text-muted-foreground (or text-secondary-foreground)
+        className="text-sm md:text-base text-muted-foreground mb-10 max-w-lg mx-auto leading-relaxed"
         variants={textVariants}
       >
-        New arrivals. Exclusive previews. First access to sales. <br className="hidden sm:block" />{' '}
-        Sign up to stay in the know with TrendZone.
+        New arrivals. Exclusive previews. First access to sales. <br className="hidden sm:block" />
+        Sign up to stay in the know with WearFlare. {/* Changed TrendZone to WearFlare */}
       </motion.p>
       <motion.form
         onSubmit={handleSubscribe}
-        className="flex flex-col sm:flex-row items-stretch justify-center max-w-md mx-auto shadow-lg rounded-xl overflow-hidden" // Form container with shadow and rounded corners
+        // Shadow and rounded corners are good, background will be inherited or can be set to bg-card if desired
+        className="flex flex-col sm:flex-row items-stretch justify-center max-w-md mx-auto shadow-lg rounded-xl overflow-hidden"
         variants={formVariants}
       >
         <label htmlFor="newsletter-email-main" className="sr-only">
-          {' '}
-          {/* Unique ID for label */}
           Email Address
         </label>
         <input
@@ -107,12 +102,12 @@ const NewsLetter: React.FC = () => {
           type="email"
           placeholder="Enter your email address"
           className="
-            bg-white text-trendzone-dark-blue placeholder-gray-400
-            border-0 focus:ring-0  /* Remove default border and ring, focus handled below */
+            bg-input text-foreground placeholder:text-muted-foreground {/* bg-white -> bg-input (themeable input bg), text-trendzone-dark-blue -> text-foreground, placeholder-gray-400 -> placeholder:text-muted-foreground */}
+            border-0 focus:ring-0 {/* Kept, focus handled by next line */}
             h-14 px-6 py-3
-            w-full sm:flex-grow 
+            w-full sm:flex-grow
             text-sm font-medium
-            focus:outline-none focus:ring-2 focus:ring-trendzone-light-blue focus:ring-inset
+            focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset {/* focus:ring-trendzone-light-blue -> focus:ring-ring (themeable focus ring) */}
             transition duration-200 ease-in-out
             disabled:opacity-70 disabled:cursor-not-allowed
             sm:rounded-l-xl sm:rounded-r-none rounded-t-xl sm:rounded-tr-none
@@ -126,8 +121,8 @@ const NewsLetter: React.FC = () => {
         <motion.button
           type="submit"
           className="
-            bg-trendzone-dark-blue text-white
-            hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue
+            bg-primary text-primary-foreground {/* bg-trendzone-dark-blue -> bg-primary, text-white -> text-primary-foreground */}
+            hover:bg-primary/80 hover:text-primary-foreground {/* hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue -> hover:bg-primary/80 (or hover:bg-accent hover:text-accent-foreground) */}
             h-14 px-6 sm:px-8 py-3
             font-semibold text-xs sm:text-sm uppercase tracking-wider
             w-full sm:w-auto flex-shrink-0

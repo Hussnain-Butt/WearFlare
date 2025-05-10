@@ -20,10 +20,12 @@ import banner2 from '../../public/banner-2.jpg'
 import banner3 from '../../public/banner-3.jpg'
 import PerfectOutfitSection from '@/components/PerfectOutfitSection'
 import SubscriptionPopup from '@/components/SubscriptionPopup'
+import ThemeSwitcher from '@/components/ThemeSwitcher'
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="min-h-screen bg-background my-10">
+      <ThemeSwitcher />
       <StyleHere />
 
       {/* Most Popular Section */}

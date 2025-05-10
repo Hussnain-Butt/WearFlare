@@ -1,10 +1,9 @@
 // src/components/Faqs.tsx
-import React, { useState } from 'react' // Removed useEffect if not needed
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Minus } from 'lucide-react'
+import { Plus } from 'lucide-react' // Minus icon not used with this Plus rotate logic
 
-// Placeholder for the image - replace with your actual image import or URL
-import faqImage from '../assets/faq-image.jpg' // Example import path
+import faqImage from '../assets/faq-image.jpg' // Example import path - Path check karein
 
 const faqsData = [
   {
@@ -56,8 +55,8 @@ const answerVariants = {
   visible: {
     opacity: 1,
     height: 'auto',
-    marginTop: '1rem',
-    marginBottom: '1rem',
+    marginTop: '1rem', // Consider using theme spacing if available
+    marginBottom: '1rem', // Consider using theme spacing if available
     transition: { duration: 0.3, ease: 'easeIn' },
   },
 }
@@ -71,7 +70,8 @@ const Faqs: React.FC = () => {
 
   return (
     <motion.section
-      className="bg-white py-16 md:py-24 px-4 sm:px-6 lg:px-8 font-inter"
+      // bg-white -> bg-background
+      className="bg-background py-16 md:py-24 px-4 sm:px-6 lg:px-8 font-inter"
       variants={sectionVariants}
       initial="hidden"
       whileInView="visible"
@@ -80,25 +80,32 @@ const Faqs: React.FC = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-start">
         {/* Left Column: Title and FAQs */}
         <motion.div variants={itemVariants} className="md:order-1">
-          <h2 className="text-3xl md:text-4xl font-bold text-Wearflare-dark-blue mb-8 md:mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-primary mb-8 md:mb-10">
+            {/* text-Wearflare-dark-blue -> text-primary (assuming Wearflare-dark-blue is your primary) */}
             Got Questions? <br className="hidden sm:block" /> We Have Answers
           </h2>
           <div className="space-y-4">
             {faqsData.map((faq, index) => (
               <motion.div
                 key={index}
-                className="bg-gray-50/70 rounded-xl overflow-hidden border border-gray-200/80"
-                variants={itemVariants} // Staggered entry for each FAQ item
+                // bg-gray-50/70 -> bg-card/50 or bg-muted/30 (a very light version of card/muted)
+                // border-gray-200/80 -> border-border/80
+                className="bg-card/50 rounded-xl overflow-hidden border border-border/80"
+                variants={itemVariants}
               >
                 <motion.button
-                  className="w-full flex justify-between items-center px-5 py-4 sm:px-6 sm:py-5 text-left text-base sm:text-lg font-semibold text-Wearflare-dark-blue hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-Wearflare-light-blue focus-visible:ring-offset-2 rounded-t-xl"
+                  // text-Wearflare-dark-blue -> text-foreground (or text-card-foreground if card bg is distinct)
+                  // hover:bg-gray-100 -> hover:bg-muted/50
+                  // focus-visible:ring-Wearflare-light-blue -> focus-visible:ring-ring (general focus ring)
+                  className="w-full flex justify-between items-center px-5 py-4 sm:px-6 sm:py-5 text-left text-base sm:text-lg font-semibold text-foreground hover:bg-muted/50 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-xl"
                   onClick={() => toggleFAQ(index)}
                   aria-expanded={openIndex === index}
                   aria-controls={`faq-answer-${index}`}
                 >
                   {faq.question}
                   <motion.div animate={{ rotate: openIndex === index ? 45 : 0 }}>
-                    <Plus className="w-5 h-5 text-Wearflare-light-blue flex-shrink-0" />
+                    {/* text-Wearflare-light-blue -> text-accent (or text-primary for icon color) */}
+                    <Plus className="w-5 h-5 text-accent flex-shrink-0" />
                   </motion.div>
                 </motion.button>
 
@@ -106,13 +113,13 @@ const Faqs: React.FC = () => {
                   {openIndex === index && (
                     <motion.div
                       id={`faq-answer-${index}`}
-                      className="px-5 sm:px-6 text-sm sm:text-base text-gray-700 overflow-hidden" // Base styling, height/opacity controlled by variants
-                      key="content" // Important for AnimatePresence
+                      // text-gray-700 -> text-muted-foreground (or text-secondary-foreground)
+                      className="px-5 sm:px-6 text-sm sm:text-base text-muted-foreground overflow-hidden"
+                      key="content"
                       variants={answerVariants}
                       initial="hidden"
                       animate="visible"
                       exit="hidden"
-                      // No transition prop here, it's defined in variants
                     >
                       {faq.answer}
                     </motion.div>
@@ -126,12 +133,12 @@ const Faqs: React.FC = () => {
         {/* Right Column: Image */}
         <motion.div
           className="md:order-2 flex justify-center md:justify-end items-start mt-8 md:mt-0"
-          variants={itemVariants} // Staggered entry for the image block
+          variants={itemVariants}
         >
           <div className="w-full max-w-md lg:max-w-lg aspect-[4/5] rounded-2xl overflow-hidden shadow-xl">
             <img
-              src={faqImage} // Use the imported image or direct URL
-              alt="Stylish person answering questions"
+              src={faqImage}
+              alt="Stylish person related to FAQs" // Updated alt text
               className="w-full h-full object-cover"
               loading="lazy"
             />

@@ -322,7 +322,7 @@ const AdminDashboard = () => {
       >
         <StatCard
           title="Current MRR"
-          value={`$${(keyMetrics.currentMRR || 0).toLocaleString()}`}
+          value={`PKR ${(keyMetrics.currentMRR || 0).toLocaleString()}`}
           icon={DollarSign}
           isLoading={isLoading}
           iconColor="#27AE60"

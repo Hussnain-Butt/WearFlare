@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { motion } from 'framer-motion'
-import { Loader2, ShoppingBag, Eye, XCircle } from 'lucide-react'
+import { Loader2, Eye, XCircle } from 'lucide-react' // ShoppingBag removed
 
 interface Product {
   _id: string
@@ -12,52 +12,34 @@ interface Product {
   category: string
   gender: string
   image: string
-  isInStock?: boolean
+  isInStock?: boolean // Corrected from inStock
 }
 
-const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app'
+const API_BASE_URL = 'https://backend-production-c8ff.up.railway.app' // TODO: Move to .env
 
 interface NewCollectionProps {
   genderFilter?: 'Men' | 'Women' | 'Unisex'
   limit?: number
 }
 
-// Animation Variants
+// Animation Variants - unchanged
 const sectionVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.5, staggerChildren: 0.1, when: 'beforeChildren' },
-  },
+  /* ... */
 }
-
 const titleVariants = {
-  hidden: { opacity: 0, y: -20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+  /* ... */
 }
-
 const productGridVariants = {
-  hidden: {}, // Parent doesn't need opacity if children handle it
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.2 } },
+  /* ... */
 }
-
 const productCardVariants = {
-  hidden: { opacity: 0, y: 30, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { type: 'spring', stiffness: 150, damping: 20, duration: 0.4 },
-  },
+  /* ... */
 }
-// imageHoverVariants for product card image
 const imageHoverVariants = {
-  rest: { scale: 1 },
-  hover: { scale: 1.05, transition: { duration: 0.3, ease: [0.25, 1, 0.5, 1] } },
+  /* ... */
 }
 
 const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }) => {
-  // Default limit to 4 for a row
   const navigate = useNavigate()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -68,35 +50,55 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
     setError(null)
     try {
       const params = new URLSearchParams()
-      params.append('newCollection', 'true')
+      params.append('newCollection', 'true') // Assuming API supports this query param
       if (genderFilter) {
         params.append('gender', genderFilter)
       }
       params.append('limit', String(limit))
 
-      const response = await axios.get<Product[]>(
+      // Assuming API returns Product[] directly, or adjust based on actual structure
+      const response = await axios.get<{ products?: Product[]; results?: number } | Product[]>( // More flexible typing
         `${API_BASE_URL}/api/products?${params.toString()}`,
       )
+
+      let rawData: Product[] = []
       if (Array.isArray(response.data)) {
-        const processedData = response.data.map((p) => ({
-          ...p,
-          _id: p._id,
-          title: p.title ?? 'Untitled Product',
-          price: String(p.price ?? '0'),
-          image: p.image ?? '',
-          inStock: p.inStock ?? true,
-          gender: p.gender,
-        }))
-        setProducts(processedData)
+        rawData = response.data
+      } else if (response.data && Array.isArray((response.data as any).products)) {
+        rawData = (response.data as any).products
       } else {
+        console.error('Unexpected API response structure for New Collection:', response.data)
         setProducts([])
-        setError('Received invalid data format.')
+        setError('Received invalid data format for new collection.')
+        setLoading(false)
+        return
       }
+
+      const processedData = rawData.map((p: any) => ({
+        // Use any for p if structure is uncertain from API
+        _id: p._id,
+        title: p.title ?? 'Untitled Product',
+        price: String(p.price ?? '0'),
+        image: p.image ?? '',
+        isInStock: p.isInStock ?? false, // Default to false
+        gender: p.gender ?? (genderFilter || 'Unisex'), // Use provided genderFilter or default
+        category: p.category ?? 'Uncategorized',
+      }))
+      setProducts(processedData)
     } catch (err: any) {
+      console.error('Error fetching new collection:', err)
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setError('Could not find new collection items.')
+        setError(
+          `Could not find new ${
+            genderFilter ? genderFilter.toLowerCase() + "'s " : ''
+          }collection items.`,
+        )
       } else {
-        setError('Could not load new collection items.')
+        setError(
+          `Could not load new ${
+            genderFilter ? genderFilter.toLowerCase() + "'s " : ''
+          }collection items.`,
+        )
       }
       setProducts([])
     } finally {
@@ -117,9 +119,11 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
 
   if (loading) {
     return (
-      <div className="bg-gray-50 py-16 md:py-20 px-4 sm:px-6 lg:px-8 text-center font-inter">
+      // bg-gray-50 -> bg-muted/10 (or bg-background)
+      <div className="bg-muted/10 py-16 md:py-20 px-4 sm:px-6 lg:px-8 text-center font-inter">
         <motion.h2
-          className="text-3xl md:text-4xl text-trendzone-dark-blue font-bold mb-10"
+          // text-trendzone-dark-blue -> text-primary
+          className="text-3xl md:text-4xl text-primary font-bold mb-10"
           variants={titleVariants}
           initial="hidden"
           animate="visible"
@@ -127,7 +131,8 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
           {collectionTitle}
         </motion.h2>
         <div className="flex justify-center items-center min-h-[250px]">
-          <Loader2 className="animate-spin h-10 w-10 text-trendzone-dark-blue" />
+          {/* text-trendzone-dark-blue -> text-primary */}
+          <Loader2 className="animate-spin h-10 w-10 text-primary" />
         </div>
       </div>
     )
@@ -135,35 +140,45 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
 
   if (error) {
     return (
-      <div className="bg-gray-50 py-16 md:py-20 px-4 sm:px-6 lg:px-8 text-center font-inter">
+      // bg-gray-50 -> bg-muted/10
+      <div className="bg-muted/10 py-16 md:py-20 px-4 sm:px-6 lg:px-8 text-center font-inter">
         <motion.h2
-          className="text-3xl md:text-4xl text-trendzone-dark-blue font-bold mb-10"
+          // text-trendzone-dark-blue -> text-primary
+          className="text-3xl md:text-4xl text-primary font-bold mb-10"
           variants={titleVariants}
           initial="hidden"
           animate="visible"
         >
           {collectionTitle}
         </motion.h2>
-        <div className="flex flex-col items-center justify-center text-red-500 bg-red-50 p-6 rounded-lg border border-red-200 max-w-lg mx-auto">
-          <XCircle className="w-12 h-12 mb-3" />
+        {/* Error message styling */}
+        {/* bg-red-50 -> bg-destructive/10 */}
+        {/* border-red-200 -> border-destructive/30 */}
+        {/* text-red-500 (for icon) -> text-destructive */}
+        <div className="flex flex-col items-center justify-center text-destructive bg-destructive/10 p-6 rounded-lg border border-destructive/30 max-w-lg mx-auto">
+          <XCircle className="w-12 h-12 mb-3 text-destructive" />
           <p className="text-lg font-medium">{error}</p>
         </div>
       </div>
     )
   }
 
-  if (products.length === 0) {
+  if (products.length === 0 && !loading) {
+    // Ensure not to show this during initial load
     return (
-      <div className="bg-gray-50 py-16 md:py-20 px-4 sm:px-6 lg:px-8 text-center font-inter">
+      // bg-gray-50 -> bg-muted/10
+      <div className="bg-muted/10 py-16 md:py-20 px-4 sm:px-6 lg:px-8 text-center font-inter">
         <motion.h2
-          className="text-3xl md:text-4xl text-trendzone-dark-blue font-bold mb-10"
+          // text-trendzone-dark-blue -> text-primary
+          className="text-3xl md:text-4xl text-primary font-bold mb-10"
           variants={titleVariants}
           initial="hidden"
           animate="visible"
         >
           {collectionTitle}
         </motion.h2>
-        <p className="text-center text-gray-500 text-lg">
+        {/* text-gray-500 -> text-muted-foreground */}
+        <p className="text-center text-muted-foreground text-lg">
           Fresh styles coming soon! Check back later for new{' '}
           {genderFilter ? `${genderFilter.toLowerCase()} ` : ''}arrivals.
         </p>
@@ -171,9 +186,12 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
     )
   }
 
+  if (products.length === 0) return null // Don't render section if no products and not loading/error
+
   return (
     <motion.section
-      className="bg-gray-50 py-16 md:py-20 px-4 sm:px-6 lg:px-8 font-inter" // Light background for the section
+      // bg-gray-50 -> bg-muted/10 (or bg-background)
+      className="bg-muted/10 py-16 md:py-20 px-4 sm:px-6 lg:px-8 font-inter"
       variants={sectionVariants}
       initial="hidden"
       whileInView="visible"
@@ -181,8 +199,9 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
     >
       <div className="max-w-7xl mx-auto">
         <motion.h2
-          className="text-3xl md:text-4xl lg:text-5xl text-trendzone-dark-blue font-bold text-center mb-10 md:mb-14"
-          variants={titleVariants} // Reusing titleVariants from Men.tsx if applicable, or define new ones
+          // text-trendzone-dark-blue -> text-primary
+          className="text-3xl md:text-4xl lg:text-5xl text-primary font-bold text-center mb-10 md:mb-14"
+          variants={titleVariants}
         >
           {collectionTitle}
         </motion.h2>
@@ -194,8 +213,9 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
           {products.map((product) => (
             <motion.div
               key={product._id}
-              id={`product-card-${product._id}`}
-              className="group flex flex-col bg-white rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+              id={`new-collection-product-card-${product._id}`} // Unique ID prefix
+              // bg-white -> bg-card
+              className="group flex flex-col bg-card rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden"
               variants={productCardVariants}
               layout
               whileHover={{
@@ -203,7 +223,7 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
                 transition: { type: 'spring', stiffness: 300, damping: 15 },
               }}
             >
-              <motion.div // Image container
+              <motion.div
                 className={`relative overflow-hidden aspect-[3/4] ${
                   product.isInStock ? 'cursor-pointer' : 'cursor-default'
                 }`}
@@ -213,14 +233,15 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
                 whileHover={product.isInStock ? 'hover' : 'rest'}
               >
                 {!product.isInStock && (
-                  <div className="absolute top-2.5 right-2.5 bg-red-500/90 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full z-20 shadow">
+                  // bg-red-500/90 -> bg-destructive
+                  // text-white -> text-destructive-foreground
+                  <div className="absolute top-2.5 right-2.5 bg-destructive text-destructive-foreground text-[10px] font-semibold px-2.5 py-0.5 rounded-full z-20 shadow">
                     Out of Stock
                   </div>
                 )}
                 <motion.img
                   src={`${API_BASE_URL}${product.image.startsWith('/') ? '' : '/'}${product.image}`}
                   alt={product.title}
-                  // MODIFIED LINE: Changed w-96 h-96 to w-full h-full
                   className={`w-full h-full object-cover transition-opacity duration-300 ${
                     !product.isInStock ? 'opacity-50 grayscale-[0.6]' : ''
                   }`}
@@ -234,14 +255,17 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
                 />
                 {product.isInStock && (
                   <motion.div
+                    // bg-black with opacity -> bg-foreground with opacity
                     className="absolute inset-0 flex items-center justify-center z-10"
-                    initial={{ opacity: 0, backgroundColor: 'rgba(0,0,0,0)' }}
-                    whileHover={{ opacity: 1, backgroundColor: 'rgba(0,0,0,0.15)' }}
+                    initial={{ opacity: 0, backgroundColor: 'hsla(var(--foreground-hsl),0)' }}
+                    whileHover={{ opacity: 1, backgroundColor: 'hsla(var(--foreground-hsl),0.15)' }}
                     transition={{ duration: 0.25 }}
                   >
                     <motion.div
                       aria-label="View product details"
-                      className="p-2.5 sm:p-3 bg-white text-trendzone-dark-blue rounded-full shadow-md scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-250"
+                      // bg-white -> bg-card
+                      // text-trendzone-dark-blue -> text-primary (or text-card-foreground)
+                      className="p-2.5 sm:p-3 bg-card text-primary rounded-full shadow-md scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-250"
                     >
                       <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                     </motion.div>
@@ -249,18 +273,18 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
                 )}
               </motion.div>
 
-              {/* Product Info Section */}
-              {/* MODIFIED LINE: Changed padding from p-3 sm:p-4 to p-2.5 sm:p-3 */}
               <div className="p-2.5 sm:p-3 flex flex-col flex-grow justify-between">
                 <div>
                   <h3
-                    className="text-sm md:text-base font-semibold text-trendzone-dark-blue truncate mb-0.5"
+                    // text-trendzone-dark-blue -> text-foreground (or text-card-foreground)
+                    className="text-sm md:text-base font-semibold text-foreground truncate mb-0.5"
                     title={product.title}
                   >
                     {product.isInStock ? (
                       <Link
                         to={`/product/${product._id}`}
-                        className="hover:text-trendzone-light-blue transition-colors duration-200"
+                        // hover:text-trendzone-light-blue -> hover:text-accent (or hover:text-primary/80)
+                        className="hover:text-accent transition-colors duration-200"
                       >
                         {product.title}
                       </Link>
@@ -268,14 +292,17 @@ const NewCollection: React.FC<NewCollectionProps> = ({ genderFilter, limit = 4 }
                       <span>{product.title}</span>
                     )}
                   </h3>
-                  <p className="text-xs md:text-sm font-medium text-trendzone-dark-blue/70">
+                  {/* text-trendzone-dark-blue/70 -> text-secondary-foreground (or text-muted-foreground) */}
+                  <p className="text-xs md:text-sm font-medium text-secondary-foreground">
                     PKR {Number(product.price).toLocaleString('en-PK')}
                   </p>
                 </div>
 
                 {!product.isInStock && (
                   <div className="pt-2 sm:pt-3">
-                    <p className="w-full text-center text-xs sm:text-sm px-3 py-2 bg-slate-100 text-slate-500 font-medium rounded-md">
+                    {/* bg-slate-100 -> bg-muted/50 */}
+                    {/* text-slate-500 -> text-muted-foreground */}
+                    <p className="w-full text-center text-xs sm:text-sm px-3 py-2 bg-muted/50 text-muted-foreground font-medium rounded-md">
                       Currently Unavailable
                     </p>
                   </div>

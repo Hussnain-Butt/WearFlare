@@ -1,10 +1,10 @@
 // src/components/Features.tsx
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Lock, Truck, RotateCcw, MapPin } from 'lucide-react' // Import relevant icons
+import { Lock, Truck, RotateCcw } from 'lucide-react' // MapPin not used, removed
 
 interface FeatureItem {
-  icon: React.ElementType // Function component type for Lucide icons
+  icon: React.ElementType
   title: string
   description: string
 }
@@ -37,7 +37,7 @@ const sectionVariants = {
     opacity: 1,
     transition: {
       duration: 0.5,
-      staggerChildren: 0.15, // Stagger feature item animations
+      staggerChildren: 0.15,
       when: 'beforeChildren',
     },
   },
@@ -54,37 +54,40 @@ const itemVariants = {
 
 const Features: React.FC = () => {
   return (
-    <motion.section // Use motion.section for animations
-      className="bg-white py-16 md:py-24" // White background, increased padding
+    <motion.section
+      // bg-white -> bg-background
+      className="bg-background py-16 md:py-24"
       variants={sectionVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }} // Trigger animation when 20% is visible
+      viewport={{ once: true, amount: 0.2 }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-8">
           {featuresData.map((feature, index) => (
             <motion.div
               key={index}
-              className="flex flex-col items-center text-center p-4" // Center content for all sizes initially
-              variants={itemVariants} // Apply item animation variant
-              whileHover={{ y: -5, scale: 1.03 }} // Subtle lift and scale on hover
-              transition={{ type: 'spring', stiffness: 300 }} // Hover transition
+              className="flex flex-col items-center text-center p-4"
+              variants={itemVariants}
+              whileHover={{ y: -5, scale: 1.03 }}
+              transition={{ type: 'spring', stiffness: 300 }}
             >
               {/* Styled Icon Container */}
-              <div className="mb-4 p-3 bg-trendzone-light-blue/15 rounded-full">
-                {' '}
-                {/* Light blue background circle */}
+              {/* bg-trendzone-light-blue/15 -> bg-accent/15 (or bg-primary/15) */}
+              <div className="mb-4 p-3 bg-accent/15 rounded-full">
                 <feature.icon
-                  className="w-7 h-7 md:w-8 md:h-8 text-trendzone-dark-blue"
+                  // text-trendzone-dark-blue -> text-accent (or text-primary)
+                  className="w-7 h-7 md:w-8 md:h-8 text-accent"
                   strokeWidth={1.5}
                 />
               </div>
               {/* Text Content */}
-              <h3 className="font-semibold text-lg md:text-xl text-trendzone-dark-blue mb-2">
+              {/* text-trendzone-dark-blue -> text-foreground (or text-primary) */}
+              <h3 className="font-semibold text-lg md:text-xl text-foreground mb-2">
                 {feature.title}
               </h3>
-              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
+              {/* text-gray-600 -> text-muted-foreground (or text-secondary-foreground) */}
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
             </motion.div>

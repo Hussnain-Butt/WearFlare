@@ -2,14 +2,15 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Edit3 } from 'lucide-react'
+import { ArrowRight, Edit3 } from 'lucide-react' // ArrowRight agar kahin use nahi ho raha toh hata sakte hain
 
-import modelVideo from '../assets/model.mp4'
+import modelVideo from '../assets/model.mp4' // Path check karein
 
-const professionalDiscoverImageUrl =
-  'https://images.pexels.com/photos/13466292/pexels-photo-13466292.png?auto=compress&cs=tinysrgb&w=600&lazy=load'
+// professionalDiscoverImageUrl is not used in this component, can be removed if not needed elsewhere
+// const professionalDiscoverImageUrl =
+//   'https://images.pexels.com/photos/13466292/pexels-photo-13466292.png?auto=compress&cs=tinysrgb&w=600&lazy=load'
 
-// Animation Variants
+// Animation Variants - No changes needed here
 const sectionVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -23,7 +24,6 @@ const sectionVariants = {
 }
 
 const textBlockVariants = (fromLeft: boolean = true, delay: number = 0) => ({
-  // Added delay parameter
   hidden: { opacity: 0, x: fromLeft ? -50 : 50 },
   visible: {
     opacity: 1,
@@ -46,39 +46,23 @@ const buttonVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', delay: 0.3 } },
 }
 
-const overlayContentVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: 'easeOut', staggerChildren: 0.15, delayChildren: 0.2 },
-  },
-}
-
-// New variants for the animated headline text
-const headlineWordVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    // Custom function to access index for staggered delay
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.15, // Stagger each word
-      duration: 0.5,
-      ease: 'easeOut',
-    },
-  }),
-}
+// overlayContentVariants and headlineWordVariants are not used in this component based on the provided code.
+// If they are intended for another part of this component or a different component, keep them.
+// Otherwise, they can be removed for cleanliness.
 
 const FashionRevolution: React.FC = () => {
-  const animatedHeadlineText = 'Unveil Your Signature Look'
-  const words = animatedHeadlineText.split(' ')
+  // animatedHeadlineText and words are not used in the JSX, can be removed if not planned for use.
+  // const animatedHeadlineText = 'Unveil Your Signature Look'
+  // const words = animatedHeadlineText.split(' ')
 
   return (
-    <div className="font-inter overflow-x-hidden">
-      {/* Top Section - Join the Revolution (remains the same) */}
+    // Removed overflow-x-hidden from here as it's usually better on the body or main app container
+    // if needed globally, otherwise individual sections can handle their own overflow if necessary.
+    <div className="font-inter">
+      {/* Top Section - Join the Revolution */}
       <motion.section
-        className="w-full min-h-[80vh] md:min-h-screen flex flex-col md:flex-row items-center bg-white"
+        // bg-white -> bg-background
+        className="w-full min-h-[80vh] md:min-h-screen flex flex-col md:flex-row items-center bg-background"
         variants={sectionVariants}
         initial="hidden"
         whileInView="visible"
@@ -86,19 +70,24 @@ const FashionRevolution: React.FC = () => {
       >
         <motion.div
           className="md:w-1/2 w-full p-8 sm:p-12 md:p-16 lg:p-24 flex flex-col justify-center text-left order-2 md:order-1"
-          variants={textBlockVariants(true)}
+          variants={textBlockVariants(true)} // Delay can be added here if needed, e.g., textBlockVariants(true, 0.2)
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-trendzone-dark-blue mb-4 md:mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary mb-4 md:mb-6">
+            {/* text-trendzone-dark-blue -> text-primary (or text-foreground) */}
             Join the Revolution
           </h2>
-          <p className="text-gray-700 text-base sm:text-lg lg:text-xl leading-relaxed mb-8 md:mb-10">
+          {/* text-gray-700 -> text-muted-foreground (or text-secondary-foreground) */}
+          <p className="text-muted-foreground text-base sm:text-lg lg:text-xl leading-relaxed mb-8 md:mb-10">
             Don't just wear clothes; wear your personality! Join the WearFlare revolution and
             express yourself like never before. Let's make fashion fun again!
           </p>
           <motion.div variants={buttonVariants} className="self-start">
             <Link
-              to="/avatar-creation"
-              className="inline-flex items-center justify-center px-8 py-3 sm:px-10 sm:py-3.5 bg-trendzone-dark-blue text-white text-sm sm:text-base font-semibold rounded-full hover:bg-trendzone-light-blue transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              to="/avatar-creation" // Ensure this route exists
+              // bg-trendzone-dark-blue -> bg-primary
+              // text-white -> text-primary-foreground
+              // hover:bg-trendzone-light-blue -> hover:bg-primary/80 (or hover:bg-accent)
+              className="inline-flex items-center justify-center px-8 py-3 sm:px-10 sm:py-3.5 bg-primary text-primary-foreground text-sm sm:text-base font-semibold rounded-full hover:bg-primary/80 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               <Edit3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2.5" />
               Create Now
@@ -106,7 +95,9 @@ const FashionRevolution: React.FC = () => {
           </motion.div>
         </motion.div>
         <motion.div
-          className="md:w-1/2 w-full h-[50vh] md:h-auto md:min-h-screen relative overflow-hidden order-1 md:order-2 bg-gray-100"
+          // bg-gray-100 -> bg-muted or bg-card if you want a distinct fallback color for video container
+          // Using bg-background makes it blend with the section if video fails to load and poster is transparent
+          className="md:w-1/2 w-full h-[50vh] md:h-auto md:min-h-screen relative overflow-hidden order-1 md:order-2 bg-muted"
           variants={videoVariants}
         >
           <video
@@ -116,7 +107,7 @@ const FashionRevolution: React.FC = () => {
             loop
             muted
             playsInline
-            poster="/placeholder-video-poster.jpg"
+            poster="/placeholder-video-poster.jpg" // Ensure this poster is theme-neutral or looks good on dark/light muted backgrounds
           />
         </motion.div>
       </motion.section>

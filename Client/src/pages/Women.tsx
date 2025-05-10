@@ -80,11 +80,23 @@ const Women: React.FC = () => {
     setLoading(true)
     setError(null)
     axios
-      .get<Product[]>(`${API_BASE_URL}/api/products?gender=Women`)
+      .get<Product[]>(`${API_BASE_URL}/api/products?gender=Women`) // Assuming API returns Product[] directly
       .then((res) => {
-        const processedProducts = res.data.map((p) => ({
-          ...p,
-          isInStock: p.isInStock ?? false, // Default to false if not provided by backend
+        const rawData = Array.isArray(res.data) ? res.data : (res.data as any)?.products
+        if (!Array.isArray(rawData)) {
+          console.error("Unexpected API response structure for Women's products:", res.data)
+          setError('Failed to load products due to unexpected data format.')
+          setProducts([])
+          return
+        }
+        const processedProducts = rawData.map((p: any) => ({
+          _id: p._id,
+          title: p.title ?? 'Untitled Product',
+          price: String(p.price ?? '0'),
+          image: p.image ?? '',
+          gender: p.gender ?? 'Women',
+          category: p.category ?? 'Uncategorized',
+          isInStock: p.isInStock ?? false,
         }))
         setProducts(processedProducts)
       })
@@ -95,7 +107,7 @@ const Women: React.FC = () => {
       .finally(() => {
         setLoading(false)
       })
-  }, []) // API_BASE_URL is stable, no need in deps if not changing
+  }, [])
 
   useEffect(() => {
     if (!loading && products.length > 0 && location.hash && location.hash.startsWith('#product-')) {
@@ -126,7 +138,8 @@ const Women: React.FC = () => {
 
   return (
     <motion.div
-      className="min-h-screen bg-slate-50 font-inter" // Using a very light gray
+      // bg-slate-50 -> bg-background
+      className="min-h-screen bg-background font-inter"
       variants={pageVariants}
       initial="hidden"
       animate="visible"
@@ -135,7 +148,8 @@ const Women: React.FC = () => {
       <section className="w-full py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <motion.h1
-            className="text-3xl sm:text-4xl font-bold text-trendzone-dark-blue text-center mb-8 md:mb-10"
+            // text-trendzone-dark-blue -> text-primary (or text-foreground)
+            className="text-3xl sm:text-4xl font-bold text-primary text-center mb-8 md:mb-10"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -156,16 +170,22 @@ const Women: React.FC = () => {
                 whileTap={{ scale: 0.97 }}
                 className={`relative px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
                   selectedCategory === category
-                    ? 'text-white focus-visible:ring-trendzone-light-blue'
-                    : 'text-trendzone-dark-blue hover:bg-slate-200/70 focus-visible:ring-trendzone-dark-blue'
+                    ? // text-white -> text-primary-foreground
+                      // focus-visible:ring-trendzone-light-blue -> focus-visible:ring-ring
+                      'text-primary-foreground focus-visible:ring-ring'
+                    : // text-trendzone-dark-blue -> text-foreground
+                      // hover:bg-slate-200/70 -> hover:bg-muted/70
+                      // focus-visible:ring-trendzone-dark-blue -> focus-visible:ring-ring
+                      'text-foreground hover:bg-muted/70 focus-visible:ring-ring'
                 }`}
                 onClick={() => setSelectedCategory(category)}
               >
                 <span className="relative z-10">{category}</span>
                 {selectedCategory === category && (
                   <motion.div
-                    className="absolute inset-0 bg-trendzone-dark-blue rounded-md z-0"
-                    layoutId="activeWomenCategoryPill"
+                    // bg-trendzone-dark-blue -> bg-primary
+                    className="absolute inset-0 bg-primary rounded-md z-0"
+                    layoutId="activeWomenCategoryPill" // Unique layoutId for Women's page
                     transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   />
                 )}
@@ -175,14 +195,18 @@ const Women: React.FC = () => {
 
           {loading && (
             <div className="text-center py-20 flex flex-col items-center justify-center">
-              <Loader2 className="h-10 w-10 animate-spin text-trendzone-dark-blue mb-3" />
-              <p className="text-md text-slate-600">Loading products...</p>
+              {/* text-trendzone-dark-blue -> text-primary */}
+              <Loader2 className="h-10 w-10 animate-spin text-primary mb-3" />
+              {/* text-slate-600 -> text-muted-foreground */}
+              <p className="text-md text-muted-foreground">Loading products...</p>
             </div>
           )}
           {error && (
             <div className="text-center py-20 flex flex-col items-center justify-center">
-              <XCircle className="h-10 w-10 text-red-500 mb-3" />
-              <p className="text-md text-red-600 font-medium">{error}</p>
+              {/* text-red-500 -> text-destructive */}
+              <XCircle className="h-10 w-10 text-destructive mb-3" />
+              {/* text-red-600 -> text-destructive */}
+              <p className="text-md text-destructive font-medium">{error}</p>
             </div>
           )}
 
@@ -195,8 +219,9 @@ const Women: React.FC = () => {
                 filteredProducts.map((product) => (
                   <motion.div
                     key={product._id}
-                    id={`product-card-${product._id}`}
-                    className="group flex flex-col bg-white rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+                    id={`product-card-${product._id}`} // Ensure ID is unique if multiple product lists are on one page
+                    // bg-white -> bg-card
+                    className="group flex flex-col bg-card rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden"
                     variants={productCardVariants}
                     layout
                     whileHover={{
@@ -204,7 +229,7 @@ const Women: React.FC = () => {
                       transition: { type: 'spring', stiffness: 300, damping: 15 },
                     }}
                   >
-                    <motion.div // Image container
+                    <motion.div
                       className={`relative overflow-hidden aspect-[3/4] ${
                         product.isInStock ? 'cursor-pointer' : 'cursor-default'
                       }`}
@@ -214,7 +239,9 @@ const Women: React.FC = () => {
                       whileHover={product.isInStock ? 'hover' : 'rest'}
                     >
                       {!product.isInStock && (
-                        <div className="absolute top-2.5 right-2.5 bg-red-500/90 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full z-20 shadow">
+                        // bg-red-500/90 -> bg-destructive
+                        // text-white -> text-destructive-foreground
+                        <div className="absolute top-2.5 right-2.5 bg-destructive text-destructive-foreground text-[10px] font-semibold px-2.5 py-0.5 rounded-full z-20 shadow">
                           Out of Stock
                         </div>
                       )}
@@ -223,7 +250,6 @@ const Women: React.FC = () => {
                           product.image
                         }`}
                         alt={product.title}
-                        // MODIFIED LINE: Changed w-96 h-96 to w-full h-full
                         className={`w-full h-full object-cover transition-opacity duration-300 ${
                           !product.isInStock ? 'opacity-50 grayscale-[0.6]' : ''
                         }`}
@@ -237,14 +263,20 @@ const Women: React.FC = () => {
                       />
                       {product.isInStock && (
                         <motion.div
+                          // bg-black with opacity -> bg-foreground with opacity
                           className="absolute inset-0 flex items-center justify-center z-10"
-                          initial={{ opacity: 0, backgroundColor: 'rgba(0,0,0,0)' }}
-                          whileHover={{ opacity: 1, backgroundColor: 'rgba(0,0,0,0.15)' }}
+                          initial={{ opacity: 0, backgroundColor: 'hsla(var(--foreground-hsl),0)' }}
+                          whileHover={{
+                            opacity: 1,
+                            backgroundColor: 'hsla(var(--foreground-hsl),0.15)',
+                          }}
                           transition={{ duration: 0.25 }}
                         >
                           <motion.div
                             aria-label="View product details"
-                            className="p-2.5 sm:p-3 bg-white text-trendzone-dark-blue rounded-full shadow-md scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-250"
+                            // bg-white -> bg-card
+                            // text-trendzone-dark-blue -> text-primary (or text-card-foreground)
+                            className="p-2.5 sm:p-3 bg-card text-primary rounded-full shadow-md scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-250"
                           >
                             <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                           </motion.div>
@@ -252,18 +284,18 @@ const Women: React.FC = () => {
                       )}
                     </motion.div>
 
-                    {/* Product Info Section */}
-                    {/* MODIFIED LINE: Changed padding from p-3 sm:p-4 to p-2.5 sm:p-3 */}
                     <div className="p-2.5 sm:p-3 flex flex-col flex-grow justify-between">
                       <div>
                         <h3
-                          className="text-sm md:text-base font-semibold text-trendzone-dark-blue truncate mb-0.5"
+                          // text-trendzone-dark-blue -> text-foreground (or text-card-foreground)
+                          className="text-sm md:text-base font-semibold text-foreground truncate mb-0.5"
                           title={product.title}
                         >
                           {product.isInStock ? (
                             <Link
                               to={`/product/${product._id}`}
-                              className="hover:text-trendzone-light-blue transition-colors duration-200"
+                              // hover:text-trendzone-light-blue -> hover:text-accent (or hover:text-primary/80)
+                              className="hover:text-accent transition-colors duration-200"
                             >
                               {product.title}
                             </Link>
@@ -271,14 +303,17 @@ const Women: React.FC = () => {
                             <span>{product.title}</span>
                           )}
                         </h3>
-                        <p className="text-xs md:text-sm font-medium text-trendzone-dark-blue/70">
+                        {/* text-trendzone-dark-blue/70 -> text-secondary-foreground (or text-muted-foreground) */}
+                        <p className="text-xs md:text-sm font-medium text-secondary-foreground">
                           PKR {Number(product.price).toLocaleString('en-PK')}
                         </p>
                       </div>
 
                       {!product.isInStock && (
                         <div className="pt-2 sm:pt-3">
-                          <p className="w-full text-center text-xs sm:text-sm px-3 py-2 bg-slate-100 text-slate-500 font-medium rounded-md">
+                          {/* bg-slate-100 -> bg-muted/50 */}
+                          {/* text-slate-500 -> text-muted-foreground */}
+                          <p className="w-full text-center text-xs sm:text-sm px-3 py-2 bg-muted/50 text-muted-foreground font-medium rounded-md">
                             Currently Unavailable
                           </p>
                         </div>
@@ -288,7 +323,8 @@ const Women: React.FC = () => {
                 ))
               ) : (
                 <motion.p
-                  className="text-center text-slate-500 col-span-full py-16 text-lg"
+                  // text-slate-500 -> text-muted-foreground
+                  className="text-center text-muted-foreground col-span-full py-16 text-lg"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
@@ -302,10 +338,12 @@ const Women: React.FC = () => {
       </section>
 
       {/* Other sections (Banner, NewCollection, Newsletter) */}
+      {/* Inka background bhi `bg-background` hona chahiye agar yeh full-width sections hain, */}
+      {/* ya phir unke apne components mein theming handle hogi */}
       {selectedCategory === 'All' && !loading && !error && (
         <>
           <motion.div
-            className="my-12 md:my-16 w-full px-4 sm:px-6 lg:px-8"
+            className="my-12 md:my-16 w-full px-4 sm:px-6 lg:px-8" // No specific background, will inherit
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -316,10 +354,12 @@ const Women: React.FC = () => {
               className="w-full h-auto object-cover rounded-xl shadow-lg"
             />
           </motion.div>
+          {/* NewCollection component should have its own theming updates */}
           <NewCollection genderFilter="Women" limit={4} />
         </>
       )}
 
+      {/* NewsLetter component should have its own theming updates */}
       {!loading && !error && <NewsLetter />}
     </motion.div>
   )

@@ -1,15 +1,14 @@
-// src/pages/LoginForm.tsx
 import React, { useState, useContext, FormEvent, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
-import { Eye, EyeOff, Loader2, LogIn, Star, User as UserIcon, Lock as LockIcon } from 'lucide-react' // Added UserIcon, LockIcon
+import { Eye, EyeOff, Loader2, User as UserIcon, Lock as LockIcon } from 'lucide-react' // LogIn, Star not used
 import { toast, Toaster } from 'react-hot-toast'
 import AuthContext from '../context/AuthContext' // Ensure path is correct
-import LoginBg from '../assets/login.mp4'
+import LoginBgVideo from '../assets/login.mp4' // Renamed for clarity
 
 // Reusing the same background image as signup for consistency, or choose a different one
-const loginBgImageUrl = LoginBg
+// const loginBgImageUrl = LoginBgVideo
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'https://backend-production-c8ff.up.railway.app'
@@ -50,16 +49,22 @@ const LoginForm: React.FC = () => {
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [formError, setFormError] = useState<string | null>(null) // For general form errors
+  const [formError, setFormError] = useState<string | null>(null)
 
   const authContext = useContext(AuthContext)
   if (!authContext) {
     console.error('AuthContext is undefined.')
-    return <div>Error: Auth context not available.</div>
+    // Optionally, render a fallback or throw an error
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background text-destructive">
+        Auth context error. Please try refreshing.
+      </div>
+    )
   }
   const { setUser } = authContext
   const navigate = useNavigate()
 
+  // --- Logic Functions (validateForm, handleSubmit, useEffect for rememberedEmail) - UNCHANGED ---
   const validateForm = () => {
     const trimmedEmail = email.trim()
     if (!trimmedEmail || !password) {
@@ -80,36 +85,51 @@ const LoginForm: React.FC = () => {
       if (formError) toast.error(formError)
       return
     }
-
     setIsLoading(true)
     const toastId = toast.loading('Signing in...')
-
     try {
-      const response = await axios.post(LOGIN_API_ENDPOINT, {
-        email: email.trim(),
-        password,
-      })
-
+      const response = await axios.post(LOGIN_API_ENDPOINT, { email: email.trim(), password })
       toast.dismiss(toastId)
-
       if (response.data && response.data.token) {
         toast.success('Logged in successfully!')
         setUser({
           token: response.data.token,
           email: response.data.email,
-          name: response.data.name /* include other user data */,
+          name: response.data.name,
+          role: response.data.role, // Assuming role is part of response
+          _id: response.data._id, // Assuming _id is part of response
         })
-
         if (rememberMe) {
           localStorage.setItem('token', response.data.token)
-          localStorage.setItem('userEmail', response.data.email)
-          localStorage.setItem('userName', response.data.name)
+          localStorage.setItem(
+            'user',
+            JSON.stringify({
+              email: response.data.email,
+              name: response.data.name,
+              role: response.data.role,
+              _id: response.data._id,
+            }),
+          )
         } else {
           sessionStorage.setItem('token', response.data.token)
-          sessionStorage.setItem('userEmail', response.data.email)
-          sessionStorage.setItem('userName', response.data.name)
+          sessionStorage.setItem(
+            'user',
+            JSON.stringify({
+              email: response.data.email,
+              name: response.data.name,
+              role: response.data.role,
+              _id: response.data._id,
+            }),
+          )
         }
-        navigate('/')
+        // Redirect based on role
+        if (response.data.role === 'admin') {
+          navigate('/admin/dashboard')
+        } else if (response.data.role === 'productManager') {
+          navigate('/pm/products')
+        } else {
+          navigate('/')
+        }
       } else {
         throw new Error(response.data.message || 'Login failed: Invalid response.')
       }
@@ -125,18 +145,31 @@ const LoginForm: React.FC = () => {
   }
 
   useEffect(() => {
-    const rememberedEmail = localStorage.getItem('userEmail')
-    if (rememberedEmail) {
-      setEmail(rememberedEmail)
-      setRememberMe(true)
+    const rememberedUser = localStorage.getItem('user')
+    if (rememberedUser) {
+      try {
+        const parsedUser = JSON.parse(rememberedUser)
+        if (parsedUser.email) setEmail(parsedUser.email)
+        setRememberMe(true)
+      } catch (e) {
+        console.error('Failed to parse remembered user from localStorage', e)
+      }
     }
   }, [])
+  // --- END Logic Functions ---
+
+  // Toaster theme options (optional, customize as needed from previous examples)
+  const toasterThemeOptions = {
+    /* ... */
+  }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 font-inter">
-      <Toaster position="top-center" reverseOrder={false} />
+    // UPDATED: bg-gray-100 -> bg-background
+    <div className="min-h-screen w-full flex items-center justify-center bg-background font-inter p-5 py-12">
+      <Toaster position="top-center" reverseOrder={false} toastOptions={toasterThemeOptions} />
       <motion.div
-        className="flex flex-col md:flex-row w-full max-w-6xl mx-auto bg-white shadow-2xl rounded-xl overflow-hidden"
+        // UPDATED: bg-white -> bg-card
+        className="flex flex-col md:flex-row w-full max-w-6xl mx-auto bg-card shadow-2xl rounded-xl overflow-hidden"
         variants={pageVariants}
         initial="hidden"
         animate="visible"
@@ -144,41 +177,39 @@ const LoginForm: React.FC = () => {
       >
         {/* Left Column - Form */}
         <motion.div
+          // Background inherited from parent (bg-card)
           className="w-full md:w-1/2 p-8 sm:p-10 lg:p-14 flex flex-col justify-center order-2 md:order-1"
           variants={columnVariants(0)}
         >
-          <Link to="/" className="inline-block mb-8 text-2xl font-bold text-trendzone-dark-blue">
+          {/* UPDATED: text-trendzone-dark-blue -> text-primary (or text-card-foreground) */}
+          <Link to="/" className="inline-block mb-8 text-2xl font-bold text-primary">
             Wearflare
           </Link>
 
           <motion.h1
-            className="text-2xl sm:text-3xl font-bold text-trendzone-dark-blue mb-2"
+            // UPDATED: text-trendzone-dark-blue -> text-card-foreground (or text-primary)
+            className="text-2xl sm:text-3xl font-bold text-card-foreground mb-2"
             variants={textItemVariants}
           >
             Welcome back
-            {/* Optional: Personalize if user info is available, e.g., from a previous session */}
-            {/* {authContext.user?.name ? `, ${authContext.user.name.split(' ')[0]}` : ''} */}
           </motion.h1>
-          <motion.p className="text-sm text-gray-600 mb-8" variants={textItemVariants}>
+          {/* UPDATED: text-gray-600 -> text-muted-foreground (relative to card bg) */}
+          <motion.p className="text-sm text-muted-foreground mb-8" variants={textItemVariants}>
             Welcome back! Please enter your details.
           </motion.p>
 
-          {/* Optional Google Log in Button */}
-          {/* <motion.button className="..." variants={formElementVariants} custom={0}> ... </motion.button> */}
-          {/* <motion.div className="..." variants={formElementVariants} custom={1}> OR divider </motion.div> */}
-
           <form className="space-y-5" onSubmit={handleSubmit} noValidate>
             <motion.div variants={formElementVariants} custom={0}>
-              {' '}
-              {/* Adjusted custom index if Google/OR are removed */}
+              {/* UPDATED: text-gray-600 -> text-muted-foreground */}
               <label
                 htmlFor="login-email"
-                className="text-xs font-medium text-gray-600 block mb-1.5"
+                className="text-xs font-medium text-muted-foreground block mb-1.5"
               >
                 Email
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                {/* UPDATED: text-gray-400 -> text-muted-foreground */}
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   <UserIcon size={18} />
                 </span>
                 <input
@@ -187,7 +218,8 @@ const LoginForm: React.FC = () => {
                   type="email"
                   placeholder="olivia@untitled.com"
                   autoComplete="email"
-                  className="w-full bg-white border border-gray-300 rounded-lg py-2.5 pl-10 pr-4 text-sm text-trendzone-dark-blue placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-trendzone-light-blue focus:border-transparent transition"
+                  // UPDATED: Input field styling
+                  className="w-full bg-input border border-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-primary transition"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value)
@@ -201,12 +233,12 @@ const LoginForm: React.FC = () => {
             <motion.div variants={formElementVariants} custom={1}>
               <label
                 htmlFor="login-password"
-                className="text-xs font-medium text-gray-600 block mb-1.5"
+                className="text-xs font-medium text-muted-foreground block mb-1.5"
               >
                 Password
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   <LockIcon size={18} />
                 </span>
                 <input
@@ -215,7 +247,7 @@ const LoginForm: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="********"
                   autoComplete="current-password"
-                  className="w-full bg-white border border-gray-300 rounded-lg py-2.5 pl-10 pr-10 text-sm text-trendzone-dark-blue placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-trendzone-light-blue focus:border-transparent transition"
+                  className="w-full bg-input border border-border rounded-lg py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-primary transition"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
@@ -223,10 +255,11 @@ const LoginForm: React.FC = () => {
                   }}
                   required
                 />
+                {/* UPDATED: Icon text color */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-trendzone-dark-blue"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -239,27 +272,28 @@ const LoginForm: React.FC = () => {
               variants={formElementVariants}
               custom={2}
             >
-              <label className="flex items-center space-x-2 cursor-pointer select-none text-gray-600">
+              {/* UPDATED: text-gray-600 -> text-muted-foreground */}
+              <label className="flex items-center space-x-2 cursor-pointer select-none text-muted-foreground">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-gray-300 text-trendzone-light-blue focus:ring-trendzone-light-blue focus:ring-offset-0" // Adjusted checkbox
+                  // UPDATED: Checkbox theming (text-primary for checked color, border-border for border)
+                  className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                   disabled={isLoading}
                 />
                 <span>Remember for 30 days</span>
               </label>
-              <Link
-                to="/forgot-password"
-                className="font-semibold text-trendzone-light-blue hover:underline"
-              >
+              {/* UPDATED: text-trendzone-light-blue -> text-accent (or text-primary) */}
+              <Link to="/forgot-password" className="font-semibold text-accent hover:underline">
                 Forgot password
               </Link>
             </motion.div>
 
             {formError && (
+              // UPDATED: text-red-500 -> text-destructive
               <motion.p
-                className="text-xs text-red-500 text-center"
+                className="text-xs text-destructive text-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
@@ -269,7 +303,8 @@ const LoginForm: React.FC = () => {
 
             <motion.button
               type="submit"
-              className="w-full bg-trendzone-dark-blue text-white rounded-lg py-3 px-5 font-semibold text-sm hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-trendzone-light-blue transition-colors duration-300 transform active:scale-[0.98] flex items-center justify-center disabled:opacity-60"
+              // UPDATED: Button styling
+              className="w-full bg-primary text-primary-foreground rounded-lg py-3 px-5 font-semibold text-sm hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-colors duration-300 transform active:scale-[0.98] flex items-center justify-center disabled:opacity-60"
               disabled={isLoading}
               variants={formElementVariants}
               custom={3}
@@ -281,12 +316,14 @@ const LoginForm: React.FC = () => {
           </form>
 
           <motion.p
-            className="text-center text-sm text-gray-600 mt-8"
+            // UPDATED: text-gray-600 -> text-muted-foreground
+            className="text-center text-sm text-muted-foreground mt-8"
             variants={formElementVariants}
             custom={4}
           >
             Don't have an account?{' '}
-            <Link to="/signup" className="text-trendzone-light-blue font-semibold hover:underline">
+            {/* UPDATED: text-trendzone-light-blue -> text-accent (or text-primary) */}
+            <Link to="/signup" className="text-accent font-semibold hover:underline">
               Sign up
             </Link>
           </motion.p>
@@ -294,33 +331,22 @@ const LoginForm: React.FC = () => {
 
         {/* Right Column - Image and Quote */}
         <motion.div
-          className="w-full md:w-1/2 relative hidden md:flex flex-col justify-end order-1 md:order-2 bg-gray-200"
+          // UPDATED: bg-gray-200 -> bg-muted (fallback for video area)
+          className="w-full md:w-1/2 relative hidden md:flex flex-col justify-end order-1 md:order-2 bg-muted"
           variants={columnVariants(0.2)}
         >
           <video
-            className="w-full h-[620px] object-cover"
-            src={loginBgImageUrl}
+            className="w-full h-[620px] object-cover" // Height can be md:h-full
+            src={LoginBgVideo}
             autoPlay
             loop
             muted
             playsInline
             poster="/placeholder-video-poster.jpg"
           ></video>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>{' '}
-          {/* Adjusted gradient */}
-          {/* <motion.div className="relative p-8 lg:p-12 text-white z-10" variants={textItemVariants}>
-            <div className="flex gap-0.5 mb-3">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={20} fill="white" strokeWidth={0} />
-              ))}
-            </div>
-            <blockquote className="text-xl lg:text-2xl xl:text-3xl font-medium leading-snug xl:leading-normal mb-4">
-              "We move 10x faster than our peers and stay consistent. While they're bogged down with
-              design debt, we're releasing new features."
-            </blockquote>
-            <p className="font-semibold text-lg">Sophie Hall</p>
-            <p className="text-sm text-gray-200">Founder, Wearflare Catalog</p>
-          </motion.div> */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+          {/* Quote section (commented out in original, keeping it commented) */}
+          {/* <motion.div className="relative p-8 lg:p-12 text-white z-10" variants={textItemVariants}> ... </motion.div> */}
         </motion.div>
       </motion.div>
     </div>

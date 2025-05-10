@@ -1,33 +1,24 @@
+// src/pages/PrivacyPolicy.tsx
 import React from 'react'
-
-// --- Define Color Palette (Same as Terms & Conditions) ---
-const palette = {
-  darkBrown: '#433E3F', // Main text, headings
-  mediumBrown: '#8E6E53', // Secondary text/accents
-  lightTan: '#C69C72', // Highlight accent (optional)
-  lightGreyBeige: '#C0B7B1', // Main page background
-  mutedGreenGrey: '#7A7265', // Border/subtle accent
-  white: '#FFFFFF', // Content area background
-}
 
 const PrivacyPolicy: React.FC = () => {
   return (
     // Overall Page Container
-    <div className={`min-h-screen bg-[${palette.lightGreyBeige}] py-16 md:py-24 font-sans`}>
+    <div className={`min-h-screen bg-background py-16 md:py-24 font-sans`}>
       {/* Content Area Container */}
       <div
         className={`
-          max-w-4xl mx-auto bg-[${palette.white}] rounded-lg shadow-lg
+          max-w-4xl mx-auto bg-card rounded-lg shadow-lg
           p-8 md:p-12 lg:p-16
-          text-[${palette.darkBrown}] // Default text color for the content area
+          text-card-foreground // Default text color for the content area
         `}
       >
         {/* Main Title */}
         <h1
           className={`
             text-3xl md:text-4xl lg:text-5xl font-bold
-            text-[${palette.darkBrown}]
-            mb-10 md:mb-14 // Increased bottom margin
+            text-card-foreground {/* CORRECTED: Ensure only this class is active for text color */}
+            mb-10 md:mb-14
           `}
         >
           Privacy Policy
@@ -35,11 +26,9 @@ const PrivacyPolicy: React.FC = () => {
 
         {/* Introductory Section */}
         <div className="mb-8 md:mb-10">
-          {' '}
-          {/* Added margin below intro */}
           <p className={`text-base leading-relaxed`}>
             This Privacy Policy describes how your personal information is collected, used, and
-            shared when you visit or make a purchase from [Your Website URL] (the "Site").
+            shared when you visit or make a purchase from WearFlare (the "Site").
           </p>
         </div>
 
@@ -48,10 +37,10 @@ const PrivacyPolicy: React.FC = () => {
           <h2
             className={`
               text-xl md:text-2xl font-semibold
-              text-[${palette.darkBrown}]
-              mb-4 // Margin below heading
-              pb-2 // Padding below heading
-              border-b border-[${palette.mutedGreenGrey}]/50 // Subtle bottom border for heading
+              text-card-foreground
+              mb-4
+              pb-2
+              border-b border-border/50
             `}
           >
             Personal Information We Collect
@@ -68,12 +57,12 @@ const PrivacyPolicy: React.FC = () => {
           <p className={`text-base leading-relaxed mb-4`}>
             We collect Device Information using the following technologies:
           </p>
-          {/* Use ul/li for the list of technologies */}
           <ul className="list-disc list-outside ml-6 space-y-2 text-base leading-relaxed">
             <li>
               <strong className="font-medium">"Cookies"</strong> are data files that are placed on
-              your device or computer and often include an anonymous unique identifier...{' '}
-              {/* Add full description */}
+              your device or computer and often include an anonymous unique identifier. For more
+              information about cookies, and how to disable cookies, visit
+              http://www.allaboutcookies.org.
             </li>
             <li>
               <strong className="font-medium">"Log files"</strong> track actions occurring on the
@@ -85,7 +74,6 @@ const PrivacyPolicy: React.FC = () => {
               <strong className="font-medium">"pixels"</strong> are electronic files used to record
               information about how you browse the Site.
             </li>
-            {/* Add other technologies if applicable */}
           </ul>
         </section>
 
@@ -94,10 +82,10 @@ const PrivacyPolicy: React.FC = () => {
           <h2
             className={`
               text-xl md:text-2xl font-semibold
-              text-[${palette.darkBrown}]
+              text-card-foreground
               mb-4
               pb-2
-              border-b border-[${palette.mutedGreenGrey}]/50
+              border-b border-border/50
             `}
           >
             How Do We Use Your Personal Information?
@@ -108,7 +96,6 @@ const PrivacyPolicy: React.FC = () => {
             and providing you with invoices and/or order confirmations). Additionally, we use this
             Order Information to:
           </p>
-          {/* Use ul/li for lists */}
           <ul className="list-disc list-outside ml-6 space-y-2 text-base leading-relaxed">
             <li>Communicate with you;</li>
             <li>Screen our orders for potential risk or fraud; and</li>
@@ -123,7 +110,6 @@ const PrivacyPolicy: React.FC = () => {
             Site (for example, by generating analytics about how our customers browse and interact
             with the Site, and to assess the success of our marketing and advertising campaigns).
           </p>
-          {/* Add more content */}
         </section>
 
         {/* Sharing Your Personal Information Section */}
@@ -131,10 +117,10 @@ const PrivacyPolicy: React.FC = () => {
           <h2
             className={`
               text-xl md:text-2xl font-semibold
-              text-[${palette.darkBrown}]
+              text-card-foreground
               mb-4
               pb-2
-              border-b border-[${palette.mutedGreenGrey}]/50
+              border-b border-border/50
             `}
           >
             Sharing Your Personal Information
@@ -142,11 +128,11 @@ const PrivacyPolicy: React.FC = () => {
           <p className={`text-base leading-relaxed mb-4`}>
             We share your Personal Information with third parties to help us use your Personal
             Information, as described above. For example, we use Shopify to power our online
-            store--you can read more about how Shopify uses your Personal Information here: [Shopify
-            Privacy Policy Link]. We also use Google Analytics to help us understand how our
+            store--you can read more about how Shopify uses your Personal Information here: [Link to
+            Shopify Privacy Policy]. We also use Google Analytics to help us understand how our
             customers use the Site--you can read more about how Google uses your Personal
-            Information here: [Google Privacy Policy Link]. You can also opt-out of Google Analytics
-            here: [Google Analytics Opt-out Link].
+            Information here: [Link to Google Privacy Policy]. You can also opt-out of Google
+            Analytics here: [Link to Google Analytics Opt-out].
           </p>
           <p className={`text-base leading-relaxed`}>
             Finally, we may also share your Personal Information to comply with applicable laws and
@@ -155,17 +141,73 @@ const PrivacyPolicy: React.FC = () => {
           </p>
         </section>
 
-        {/* Add More Sections (e.g., Behavioural Advertising, Your Rights, Data Retention, Changes, Contact Us) following the same pattern */}
+        {/* Data Retention Section */}
+        <section className="mb-8 md:mb-10">
+          <h2
+            className={`
+              text-xl md:text-2xl font-semibold
+              text-card-foreground
+              mb-4
+              pb-2
+              border-b border-border/50
+            `}
+          >
+            Data Retention
+          </h2>
+          <p className={`text-base leading-relaxed`}>
+            When you place an order through the Site, we will maintain your Order Information for
+            our records unless and until you ask us to delete this information.
+          </p>
+        </section>
 
-        {/* Optional: Last Updated Date */}
-        <div className="mt-12 md:mt-16 pt-6 border-t border-[${palette.mutedGreenGrey}]/30">
-          <p className={`text-sm text-[${palette.mediumBrown}] text-center`}>
-            Last Updated: October 26, 2023 {/* Replace with actual date */}
+        {/* Changes Section */}
+        <section className="mb-8 md:mb-10">
+          <h2
+            className={`
+              text-xl md:text-2xl font-semibold
+              text-card-foreground
+              mb-4
+              pb-2
+              border-b border-border/50
+            `}
+          >
+            Changes
+          </h2>
+          <p className={`text-base leading-relaxed`}>
+            We may update this privacy policy from time to time in order to reflect, for example,
+            changes to our practices or for other operational, legal or regulatory reasons.
+          </p>
+        </section>
+
+        {/* Contact Us Section */}
+        <section className="mb-8 md:mb-10">
+          <h2
+            className={`
+              text-xl md:text-2xl font-semibold
+              text-card-foreground
+              mb-4
+              pb-2
+              border-b border-border/50
+            `}
+          >
+            Contact Us
+          </h2>
+          <p className={`text-base leading-relaxed`}>
+            For more information about our privacy practices, if you have questions, or if you would
+            like to make a complaint, please contact us by e-mail at [Your Contact Email] or by mail
+            using the details provided below: <br />
+            [Your Company Address]
+          </p>
+        </section>
+
+        {/* Last Updated Date */}
+        <div className="mt-12 md:mt-16 pt-6 border-t border-border/30">
+          <p className={`text-sm text-muted-foreground text-center`}>
+            Last Updated: May 10, 2024 {/* Replace with actual date */}
           </p>
         </div>
-      </div>{' '}
-      {/* End Content Area Container */}
-    </div> // End Overall Page Container
+      </div>
+    </div>
   )
 }
 

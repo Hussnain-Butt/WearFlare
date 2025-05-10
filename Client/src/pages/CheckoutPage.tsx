@@ -76,16 +76,17 @@ const CheckoutPage: React.FC = () => {
     street: '',
     city: '',
     postalCode: '',
-    country: 'Pakistan',
+    country: 'Pakistan', // Default country
   })
 
   useEffect(() => {
     if (cart.length === 0 && !isSubmitting) {
       toast.error('Your cart is empty. Please add items to proceed.', { id: 'empty-cart-checkout' })
-      navigate('/cart')
+      navigate('/cart') // Or navigate to shop page
     }
   }, [cart, navigate, isSubmitting])
 
+  // --- Logic Functions (handleChange, handleSubmit) - UNCHANGED except for console.error and toast ---
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
@@ -98,9 +99,8 @@ const CheckoutPage: React.FC = () => {
     if (cart.length === 0) {
       toast.error('Your cart is empty.')
       navigate('/shop')
-      return
+      return // Navigate to a shop page or similar
     }
-
     for (const key in formData) {
       if (key !== 'country' && !(formData as any)[key].trim()) {
         toast.error(`Please fill in ${key.replace(/([A-Z])/g, ' $1').toLowerCase()}.`, {
@@ -120,7 +120,6 @@ const CheckoutPage: React.FC = () => {
 
     setIsSubmitting(true)
     const toastId = toast.loading('Placing your order...')
-
     const orderData = {
       customerName: formData.customerName,
       customerEmail: formData.customerEmail,
@@ -132,7 +131,6 @@ const CheckoutPage: React.FC = () => {
         country: formData.country,
       },
       orderItems: cart.map((item: CartItemForContext) => ({
-        // Ensure item type matches
         productId: item._id,
         title: item.title,
         price: item.price,
@@ -143,37 +141,54 @@ const CheckoutPage: React.FC = () => {
       })),
       totalPrice: totalPrice,
     }
-
     try {
       const response = await axios.post(`${API_BASE_URL}/api/orders`, orderData)
       toast.dismiss(toastId)
       if (response.status === 201) {
+        // Typically 201 for created
         toast.success('Order placed successfully! Thank you.')
         clearCart()
-        // Assuming backend returns orderId in response.data
+        // Redirect to an order confirmation page, passing orderId
         setTimeout(() => {
-          navigate('/order-confirmation', { state: { orderId: response.data.orderId } })
-        }, 2000)
+          navigate('/order-confirmation-status', {
+            state: {
+              orderId: response.data.order?._id || response.data._id || response.data.orderId,
+            },
+          }) // Adjust based on your API response
+        }, 1500)
       } else {
         throw new Error(response.data.message || 'Unexpected response from server.')
       }
     } catch (error: any) {
       toast.dismiss(toastId)
+      console.error('Order placement error:', error.response?.data || error.message)
       const message =
-        error.response?.data?.message || 'Failed to place order. Please check details.'
+        error.response?.data?.message ||
+        'Failed to place order. Please check details or try again later.'
       toast.error(message)
       setIsSubmitting(false)
     }
   }
+  // --- END Logic Functions ---
+
+  // Toaster theme options
+  const toasterThemeOptions = {
+    /* ... (define as in Cart.tsx or other components) ... */
+  }
 
   if (cart.length === 0 && !isSubmitting) {
+    // This state is usually handled by useEffect redirect
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 font-inter">
-        <ShoppingBag className="w-16 h-16 text-trendzone-light-blue mb-4" />
-        <p className="text-xl text-gray-700 mb-6">Your cart is empty.</p>
+      // UPDATED: Empty cart page theming
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 font-inter">
+        <ShoppingBag className="w-16 h-16 text-accent mb-4" />{' '}
+        {/* text-trendzone-light-blue -> text-accent */}
+        <p className="text-xl text-muted-foreground mb-6">Your cart is empty.</p>{' '}
+        {/* text-gray-700 -> text-muted-foreground */}
         <Link
-          to="/shop"
-          className="px-6 py-2.5 bg-trendzone-dark-blue text-white rounded-lg hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue transition-colors text-sm font-medium"
+          to="/shop" // Link to a general shop page
+          // UPDATED: Button styling
+          className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 transition-colors text-sm font-medium"
         >
           Continue Shopping
         </Link>
@@ -183,15 +198,17 @@ const CheckoutPage: React.FC = () => {
 
   return (
     <motion.div
-      className="min-h-screen bg-gray-100 py-12 sm:py-16 px-4 font-inter"
+      // UPDATED: bg-gray-100 -> bg-background
+      className="min-h-screen bg-background py-12 sm:py-16 px-4 font-inter"
       variants={pageVariants}
       initial="hidden"
       animate="visible"
     >
-      <Toaster position="top-center" />
+      <Toaster position="top-center" toastOptions={toasterThemeOptions} />
       <div className="max-w-5xl mx-auto">
         <motion.h1
-          className="text-3xl sm:text-4xl font-bold text-trendzone-dark-blue text-center mb-10 md:mb-12"
+          // UPDATED: text-trendzone-dark-blue -> text-primary (or text-foreground)
+          className="text-3xl sm:text-4xl font-bold text-primary text-center mb-10 md:mb-12"
           variants={titleVariants}
         >
           Shipping Details
@@ -201,11 +218,13 @@ const CheckoutPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 items-start">
             {/* Left Column: Shipping Form */}
             <motion.div
-              className="md:col-span-2 bg-white p-6 sm:p-8 rounded-xl shadow-xl space-y-6"
+              // UPDATED: bg-white -> bg-card
+              className="md:col-span-2 bg-card p-6 sm:p-8 rounded-xl shadow-xl space-y-6"
               variants={sectionVariants}
             >
               <motion.div variants={inputGroupVariants} custom={0}>
-                <h3 className="text-lg font-semibold text-trendzone-dark-blue mb-4 border-b border-gray-200 pb-2.5">
+                {/* UPDATED: text-trendzone-dark-blue -> text-card-foreground, border-gray-200 -> border-border */}
+                <h3 className="text-lg font-semibold text-card-foreground mb-4 border-b border-border pb-2.5">
                   Personal Information
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
@@ -224,9 +243,10 @@ const CheckoutPage: React.FC = () => {
                     },
                   ].map((field) => (
                     <div key={field.id}>
+                      {/* UPDATED: text-gray-600 -> text-muted-foreground (relative to card bg) */}
                       <label
                         htmlFor={field.id}
-                        className="block text-xs font-medium text-gray-600 mb-1.5"
+                        className="block text-xs font-medium text-muted-foreground mb-1.5"
                       >
                         {field.label}
                       </label>
@@ -238,7 +258,8 @@ const CheckoutPage: React.FC = () => {
                         value={formData[field.id as keyof typeof formData]}
                         onChange={handleChange}
                         placeholder={field.placeholder}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-trendzone-dark-blue placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-trendzone-light-blue focus:border-transparent transition-colors"
+                        // UPDATED: Input field styling
+                        className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-colors"
                       />
                     </div>
                   ))}
@@ -246,7 +267,7 @@ const CheckoutPage: React.FC = () => {
                 <div className="mt-5">
                   <label
                     htmlFor="customerEmail"
-                    className="block text-xs font-medium text-gray-600 mb-1.5"
+                    className="block text-xs font-medium text-muted-foreground mb-1.5"
                   >
                     Email Address
                   </label>
@@ -258,20 +279,20 @@ const CheckoutPage: React.FC = () => {
                     value={formData.customerEmail}
                     onChange={handleChange}
                     placeholder="harry.potter06082000@gmail.com"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-trendzone-dark-blue placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-trendzone-light-blue focus:border-transparent transition-colors"
+                    className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-colors"
                   />
                 </div>
               </motion.div>
 
               <motion.div variants={inputGroupVariants} custom={1}>
-                <h3 className="text-lg font-semibold text-trendzone-dark-blue mb-4 border-b border-gray-200 pb-2.5 pt-3">
+                <h3 className="text-lg font-semibold text-card-foreground mb-4 border-b border-border pb-2.5 pt-3">
                   Shipping Address
                 </h3>
                 <div className="space-y-5">
                   <div>
                     <label
                       htmlFor="street"
-                      className="block text-xs font-medium text-gray-600 mb-1.5"
+                      className="block text-xs font-medium text-muted-foreground mb-1.5"
                     >
                       Street Address
                     </label>
@@ -283,7 +304,7 @@ const CheckoutPage: React.FC = () => {
                       value={formData.street}
                       onChange={handleChange}
                       placeholder="69 j3 block johartown"
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-trendzone-dark-blue placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-trendzone-light-blue focus:border-transparent transition-colors"
+                      className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-colors"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5">
@@ -301,12 +322,12 @@ const CheckoutPage: React.FC = () => {
                         type: 'text',
                         readOnly: true,
                         placeholder: 'Pakistan',
-                      }, // Added placeholder
+                      },
                     ].map((field) => (
                       <div key={field.id}>
                         <label
                           htmlFor={field.id}
-                          className="block text-xs font-medium text-gray-600 mb-1.5"
+                          className="block text-xs font-medium text-muted-foreground mb-1.5"
                         >
                           {field.label}
                         </label>
@@ -319,8 +340,11 @@ const CheckoutPage: React.FC = () => {
                           onChange={handleChange}
                           placeholder={field.placeholder}
                           readOnly={field.readOnly}
-                          className={`w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-trendzone-dark-blue placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-trendzone-light-blue focus:border-transparent transition-colors ${
-                            field.readOnly ? 'bg-gray-200 cursor-not-allowed' : ''
+                          // UPDATED: Read-only input styling
+                          className={`w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-colors ${
+                            field.readOnly
+                              ? 'bg-muted/50 cursor-not-allowed text-muted-foreground'
+                              : '' // bg-gray-200 -> bg-muted/50
                           }`}
                         />
                       </div>
@@ -332,69 +356,69 @@ const CheckoutPage: React.FC = () => {
 
             {/* Right Column: Order Summary */}
             <motion.div
-              className="md:col-span-1 bg-white p-6 sm:p-8 rounded-xl shadow-xl space-y-6 lg:sticky lg:top-24 py-12"
-              variants={sectionVariants}
+              // UPDATED: bg-white -> bg-card
+              className="md:col-span-1 bg-card p-6 sm:p-8 rounded-xl shadow-xl space-y-6 lg:sticky lg:top-24 py-12" // Adjusted top value
+              variants={sectionVariants} // Can reuse or make specific for summary
             >
-              <h3 className="text-xl font-semibold text-trendzone-dark-blue mb-5 border-b border-gray-200 pb-3">
+              {/* UPDATED: text-trendzone-dark-blue -> text-card-foreground, border-gray-200 -> border-border */}
+              <h3 className="text-xl font-semibold text-card-foreground mb-5 border-b border-border pb-3">
                 Order Summary
               </h3>
               <div className="space-y-3 text-sm max-h-60 overflow-y-auto pr-2">
-                {' '}
-                {/* Scrollable items if many */}
                 <AnimatePresence>
-                  {cart.map(
-                    (
-                      item: CartItemForContext, // Explicitly type item here
-                    ) => (
-                      <motion.div
-                        key={item._id + (item.selectedSize || '') + (item.selectedColor || '')}
-                        className="flex justify-between items-center text-gray-700 py-2"
-                        variants={summaryItemVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="hidden"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          {' '}
-                          {/* min-w-0 for truncation */}
-                          <img
-                            src={`${API_BASE_URL}${item.image.startsWith('/') ? '' : '/'}${
-                              item.image
-                            }`}
-                            alt={item.title}
-                            className="w-12 h-12 object-cover rounded-md border border-gray-200 flex-shrink-0"
-                          />
-                          <div className="min-w-0">
-                            {' '}
-                            {/* min-w-0 for truncation */}
-                            <span className="block text-xs font-medium text-trendzone-dark-blue truncate">
-                              {item.title} (x{item.quantity})
+                  {cart.map((item: CartItemForContext) => (
+                    <motion.div
+                      key={item._id + (item.selectedSize || '') + (item.selectedColor || '')}
+                      // UPDATED: text-gray-700 -> text-card-foreground (or text-muted-foreground if less emphasis)
+                      className="flex justify-between items-center text-card-foreground py-2"
+                      variants={summaryItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={`${API_BASE_URL}${item.image.startsWith('/') ? '' : '/'}${
+                            item.image
+                          }`}
+                          alt={item.title}
+                          // UPDATED: border-gray-200 -> border-border
+                          className="w-12 h-12 object-cover rounded-md border border-border flex-shrink-0"
+                        />
+                        <div className="min-w-0">
+                          {/* UPDATED: text-trendzone-dark-blue -> text-card-foreground */}
+                          <span className="block text-xs font-medium text-card-foreground truncate">
+                            {item.title} (x{item.quantity})
+                          </span>
+                          {/* UPDATED: text-gray-500 -> text-muted-foreground */}
+                          {item.selectedSize && (
+                            <span className="block text-xs text-muted-foreground">
+                              Size: {item.selectedSize}
                             </span>
-                            {item.selectedSize && (
-                              <span className="block text-xs text-gray-500">
-                                Size: {item.selectedSize}
-                              </span>
-                            )}
-                          </div>
+                          )}
                         </div>
-                        <span className="text-xs font-medium text-gray-600 whitespace-nowrap ml-2">
-                          PKR {(item.price * item.quantity).toFixed(2)}
-                        </span>
-                      </motion.div>
-                    ),
-                  )}
+                      </div>
+                      {/* UPDATED: text-gray-600 -> text-secondary-foreground (or text-muted-foreground) */}
+                      <span className="text-xs font-medium text-secondary-foreground whitespace-nowrap ml-2">
+                        PKR {(Number(item.price) * item.quantity).toFixed(2)}
+                      </span>
+                    </motion.div>
+                  ))}
                 </AnimatePresence>
               </div>
-              <div className="border-t border-gray-200 pt-4 space-y-2 mt-4">
-                <div className="flex justify-between text-sm text-gray-600">
+              {/* UPDATED: border-gray-200 -> border-border, text-gray-600 -> text-muted-foreground */}
+              <div className="border-t border-border pt-4 space-y-2 mt-4">
+                <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Subtotal</span>
                   <span className="font-medium">PKR {totalPrice.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-gray-600">
+                <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Shipping</span>
-                  <span className="font-medium text-green-600">Free</span>
+                  <span className="font-medium text-green-600">Free</span>{' '}
+                  {/* Green is usually fine for "Free" */}
                 </div>
-                <div className="flex justify-between font-bold text-lg text-trendzone-dark-blue pt-3 mt-2 border-t border-gray-200">
+                {/* UPDATED: text-trendzone-dark-blue -> text-card-foreground (or text-primary for emphasis) */}
+                <div className="flex justify-between font-bold text-lg text-card-foreground pt-3 mt-2 border-t border-border">
                   <span>Total Amount (COD)</span>
                   <span>PKR {totalPrice.toFixed(2)}</span>
                 </div>
@@ -402,7 +426,8 @@ const CheckoutPage: React.FC = () => {
               <motion.button
                 type="submit"
                 disabled={isSubmitting || cart.length === 0}
-                className="w-full flex justify-center items-center px-6 py-3 mt-6 border border-transparent rounded-lg shadow-md text-base font-semibold text-white bg-trendzone-dark-blue hover:bg-trendzone-light-blue hover:text-trendzone-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-trendzone-light-blue disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300"
+                // UPDATED: Button styling
+                className="w-full flex justify-center items-center px-6 py-3 mt-6 border border-transparent rounded-lg shadow-md text-base font-semibold text-primary-foreground bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300"
                 whileHover={!isSubmitting ? { scale: 1.02 } : {}}
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}
               >

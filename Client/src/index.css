@@ -1,208 +1,298 @@
+/* Client/src/index.css */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Base styles */
-body {
-  font-family: 'Inter', sans-serif;
-  margin: 0;
-  padding: 0;
-}
-
-.font-serif {
-  font-family: 'Cormorant Garamond', serif;
-}
-
-/* Background styles */
-.background {
-  position: relative;
-  min-height: 100vh;
-  width: 100%;
-  overflow: hidden;
-  background: #17112a;
-}
-
-.gradient-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom right, #17112a, #321b5a, black);
-  animation: gradientShift 15s ease infinite;
-  background-size: 200% 200%;
-  z-index: 0;
-}
-
-.corner-dark-top {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 30vw;
-  height: 30vw;
-  border-bottom-left-radius: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  filter: blur(50px);
-  z-index: 0;
-}
-
-.corner-dark-bottom {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 30vw;
-  height: 30vw;
-  border-top-right-radius: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  filter: blur(50px);
-  z-index: 0;
-}
-
-.glow-effect {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 40vw;
-  height: 40vw;
-  border-radius: 50%;
-  background: #5d4d8a;
-  opacity: 0.2;
-  filter: blur(120px);
-  animation: pulse 4s ease-in-out infinite;
-  z-index: 0;
-}
-
-.glass-card {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  background-color: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-}
-
-/* Toast styles */
-.toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 1rem;
-  border-radius: 8px;
-  animation: slideIn 0.3s ease-out;
-  z-index: 1000;
-  color: white;
-}
-
-.toast-success {
-  background-color: #10b981;
-}
-
-.toast-error {
-  background-color: #ef4444;
-}
-
-/* Animations */
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
+/* Base Variables (Default Light Theme) */
+/* :root ya html.theme-default se light theme HSL values define karein */
+/* Yeh values aapke current light theme se match hone chahiye */
+@layer base {
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    /* Aur bhi base styles yahan add kar sakte hain, jaise font-family */
+    /* Ensure smooth color transitions */
+    transition-property: background-color, color;
+    transition-duration: 300ms; /* Adjust duration as needed */
+    transition-timing-function: ease-in-out;
   }
-  50% {
-    background-position: 100% 50%;
+
+  /* Optional: Make sure links also use a themeable color */
+  a {
+    color: hsl(var(--primary)); /* Or var(--accent) */
   }
-  100% {
-    background-position: 0% 50%;
+  a:hover {
+    color: hsl(var(--accent)); /* Or a darker/lighter shade of primary/accent */
   }
 }
+:root,
+html.theme-default {
+  --background: 0 0% 100%; /* white */
+  --foreground: 222.2 84% 4.9%; /* near black */
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%; /* dark blue */
+  --primary-foreground: 210 40% 98%; /* light color for on-primary */
+  --secondary: 210 40% 96.1%; /* light gray */
+  --secondary-foreground: 222.2 47.4% 11.2%; /* dark blue for on-secondary */
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%; /* muted text color */
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%; /* red */
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%; /* light gray border */
+  --input: 214.3 31.8% 91.4%; /* input background/border */
+  --ring: 222.2 84% 4.9%; /* focus ring */
+  --radius: 0.5rem;
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.15;
-  }
+  /* Trendzone Themed Colors (HSL Values) */
+  /* #003049 -> hsl(205, 100%, 14%) */
+  /* #669BBC -> hsl(200, 38%, 60%) */
+  --trendzone-dark-blue-hsl: 205 100% 14%;
+  --trendzone-light-blue-hsl: 200 38% 60%;
+  --trendzone-dark-blue-text-hsl: 0 0% 100%; /* White text on dark blue */
+  --trendzone-light-blue-text-hsl: 205 100% 14%; /* Dark blue text on light blue */
+
+  /* Wearflare (direct hex or HSL if you prefer) */
+  --wearflare-purple: #5d4d8a;
+  --wearflare-darkPurple: #231539;
+  --wearflare-lightPurple: #7a68a6;
+  --wearflare-buttonPurple: #53387a;
+
+  /* Input Specific Styles */
+  --input-bg-actual: 0 0% 100%; /* White */
+  --input-text-actual: 222.2 84% 4.9%; /* Dark Gray */
+  --input-border-actual: 214.3 31.8% 91.4%; /* Gray 300 like */
+  --input-placeholder-actual: 220 8.9% 46.1%; /* Gray 400 like */
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+/* Dark Theme (Aapke tailwind.config.ts mein darkMode: ['class'] hai) */
+html.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 217.2 32.6% 17.5%;
+
+  /* Trendzone for Dark Mode */
+  --trendzone-dark-blue-hsl: 205 100% 18%; /* Thoda lighter for dark bg */
+  --trendzone-light-blue-hsl: 200 38% 70%;
+  --trendzone-dark-blue-text-hsl: 0 0% 100%;
+  --trendzone-light-blue-text-hsl: 205 100% 10%;
+
+  /* Input Specific for Dark Mode */
+  --input-bg-actual: 222.2 84% 4.9%;
+  --input-text-actual: 210 40% 98%;
+  --input-border-actual: 217.2 32.6% 17.5%;
+  --input-placeholder-actual: 215 20.2% 65.1%;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* --- Color Blind Friendly Themes --- */
+/* NOTE: Yeh HSL values examples hain. Aapko inhein test karke adjust karna hoga. */
+
+html.theme-protanopia {
+  /* Red-weak/blind */
+  --background: 50 80% 95%;
+  --foreground: 240 60% 10%;
+  --card: 50 70% 90%;
+  --card-foreground: 240 60% 10%;
+  --popover: 50 70% 90%;
+  --popover-foreground: 240 60% 10%;
+  --primary: 240 60% 50%;
+  --primary-foreground: 0 0% 100%; /* Blue */
+  --secondary: 220 40% 85%;
+  --secondary-foreground: 240 60% 10%;
+  --muted: 220 40% 90%;
+  --muted-foreground: 240 30% 40%;
+  --accent: 45 90% 60%;
+  --accent-foreground: 240 60% 10%; /* Yellow/Orange */
+  --destructive: 40 100% 45%;
+  --destructive-foreground: 0 0% 0%; /* Orange for error */
+  --border: 220 30% 80%;
+  --input: 220 30% 88%;
+  --ring: 240 60% 50%;
+  --trendzone-dark-blue-hsl: 240 70% 25%;
+  --trendzone-light-blue-hsl: 220 50% 75%;
+  --trendzone-dark-blue-text-hsl: 0 0% 100%;
+  --trendzone-light-blue-text-hsl: 240 70% 15%;
+  --input-bg-actual: 50 80% 95%;
+  --input-text-actual: 240 60% 10%;
+  --input-border-actual: 220 30% 80%;
+  --input-placeholder-actual: 220 30% 60%;
 }
 
-.animate-fade-in {
-  opacity: 0;
-  transform: translateY(10px);
-  animation: fadeIn 0.6s ease-out forwards;
+html.theme-deuteranopia {
+  /* Green-weak/blind */
+  --background: 45 70% 95%;
+  --foreground: 230 50% 10%;
+  --card: 45 60% 90%;
+  --card-foreground: 230 50% 10%;
+  --popover: 45 60% 90%;
+  --popover-foreground: 230 50% 10%;
+  --primary: 230 70% 55%;
+  --primary-foreground: 0 0% 100%; /* Distinct Blue */
+  --secondary: 210 30% 85%;
+  --secondary-foreground: 230 50% 10%;
+  --muted: 210 30% 90%;
+  --muted-foreground: 230 25% 40%;
+  --accent: 35 100% 60%;
+  --accent-foreground: 230 50% 10%; /* Vivid Orange */
+  --destructive: 30 100% 50%;
+  --destructive-foreground: 0 0% 0%; /* Orange-Red for error */
+  --border: 210 25% 80%;
+  --input: 210 25% 88%;
+  --ring: 230 70% 55%;
+  --trendzone-dark-blue-hsl: 230 60% 30%;
+  --trendzone-light-blue-hsl: 210 40% 70%;
+  --trendzone-dark-blue-text-hsl: 0 0% 100%;
+  --trendzone-light-blue-text-hsl: 230 60% 20%;
+  --input-bg-actual: 45 70% 95%;
+  --input-text-actual: 230 50% 10%;
+  --input-border-actual: 210 25% 80%;
+  --input-placeholder-actual: 210 25% 60%;
 }
 
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+html.theme-tritanopia {
+  /* Blue-weak/blind */
+  --background: 0 0% 97%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 95%;
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 95%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 0 70% 50%;
+  --primary-foreground: 0 0% 100%; /* Red */
+  --secondary: 180 50% 85%;
+  --secondary-foreground: 0 0% 10%; /* Cyan */
+  --muted: 180 50% 90%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 180 70% 45%;
+  --accent-foreground: 0 0% 100%; /* Strong Cyan/Teal */
+  --destructive: 0 80% 45%;
+  --destructive-foreground: 0 0% 100%; /* Darker Red for error */
+  --border: 0 0% 85%;
+  --input: 0 0% 90%;
+  --ring: 0 70% 50%;
+  --trendzone-dark-blue-hsl: 180 60% 20%;
+  --trendzone-light-blue-hsl: 0 50% 70%; /* Teal & Pinkish-Red */
+  --trendzone-dark-blue-text-hsl: 0 0% 100%;
+  --trendzone-light-blue-text-hsl: 0 0% 10%;
+  --input-bg-actual: 0 0% 97%;
+  --input-text-actual: 0 0% 10%;
+  --input-border-actual: 0 0% 85%;
+  --input-placeholder-actual: 0 0% 50%;
+}
+
+html.theme-high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%; /* Black & White */
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 5%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 60 100% 50%;
+  --primary-foreground: 0 0% 0%; /* Yellow */
+  --secondary: 0 0% 80%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 70%;
+  --accent: 200 100% 50%;
+  --accent-foreground: 0 0% 0%; /* Cyan */
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 0%; /* Bright Red */
+  --border: 0 0% 70%;
+  --input: 0 0% 15%;
+  --ring: 60 100% 50%;
+  --trendzone-dark-blue-hsl: 60 100% 50%;
+  --trendzone-light-blue-hsl: 200 100% 50%; /* Yellow & Cyan */
+  --trendzone-dark-blue-text-hsl: 0 0% 0%;
+  --trendzone-light-blue-text-hsl: 0 0% 0%;
+  --input-bg-actual: 0 0% 0%;
+  --input-text-actual: 0 0% 100%;
+  --input-border-actual: 0 0% 100%;
+  --input-placeholder-actual: 0 0% 70%;
 }
 
 /* --- Global Form Field Style Override --- */
+/* Aapke existing overrides ab CSS variables use karenge */
 input[type='text'],
 input[type='password'],
-input[type='number'], /* Add other input types if needed */
+input[type='number'],
 input[type='email'],
-select,          /* Target <select> elements */
-textarea,        /* Target <textarea> elements */
-input {
-  /* Keep the general input rule for others, but be careful */
-  background-color: white !important; /* Force white background */
-  color: #1f2937 !important; /* Force a dark text color (like Tailwind's gray-800) */
-  /* Remove border-radius: 0; if you want Tailwind's rounded-lg to work */
-  /* border-radius: 0; */
-  border: 1px solid #d1d5db !important; /* Ensure a default border (like Tailwind's border-gray-300) */
+select,
+textarea {
+  background-color: hsl(var(--input-bg-actual)) !important;
+  color: hsl(var(--input-text-actual)) !important;
+  border: 1px solid hsl(var(--input-border-actual)) !important;
 }
 
-/* Optional: Style the placeholder text */
 input::placeholder,
 textarea::placeholder {
-  color: #9ca3af !important; /* Lighter gray for placeholder (like Tailwind's gray-400) */
-  opacity: 1; /* Ensure placeholder is visible */
+  color: hsl(var(--input-placeholder-actual)) !important;
+  opacity: 1;
 }
 
-/* Optional: Style the select dropdown arrow (might need browser prefixes) */
+/* Select arrow - iski stroke color ko themeable banana thoda mushkil hai agar SVG hardcoded hai */
+/* Aapko shayad multiple SVGs (har theme ke liye ek) ya JavaScript se SVG manipulate karna padega */
 select {
-  appearance: none; /* Remove default system appearance */
-  /* Corrected and URL-encoded SVG */
+  appearance: none;
   background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E');
+  /* TODO: Is arrow ko bhi themeable banayein agar possible ho. Abhi yeh fixed color #6b7280 use kar raha hai. */
+  /* Ek tareeka: `filter` property se color badalne ki koshish karein ya SVG ko JS se inject karein. */
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
-  padding-right: 2.5rem; /* Make space for the arrow */
+  padding-right: 2.5rem;
 }
 
-/* Round the slider track */
+/* Slider styles - inhe bhi themeable banayein */
 .slider-root {
   width: 100%;
-  height: 10px; /* Adjust thickness */
-  background: #24043a; /* Blue background */
-  border-radius: 9999px; /* Fully rounded */
+  height: 10px;
+  background: hsl(var(--primary)); /* Primary color ka track */
+  border-radius: 9999px;
 }
 
-/* Round the slider thumb */
 .slider-thumb {
   width: 16px;
   height: 16px;
-  background: black; /* Thumb color */
-  border-radius: 50%; /* Fully circular */
-  border: 2px solid white;
+  background: hsl(var(--primary-foreground)); /* Thumb color (contrast with primary) */
+  border-radius: 50%;
+  border: 2px solid hsl(var(--primary)); /* Border same as track or slightly different */
+  box-shadow: 0 0 0 2px hsl(var(--background)); /* Optional: Ring effect using background */
+}
+
+/* Sidebar specific variables (agar aap use karte hain) */
+html.theme-default,
+html.dark,
+html.theme-protanopia,
+html.theme-deuteranopia,
+html.theme-tritanopia,
+html.theme-high-contrast {
+  /* Aapko har theme ke liye --sidebar-* variables bhi define karne honge, primary, card etc. ki tarah */
+  /* Example: (Yeh aapko har theme mein define karna hoga) */
+  --sidebar-background: hsl(var(--muted)); /* Ya koi specific color */
+  --sidebar-foreground: hsl(var(--muted-foreground));
+  --sidebar-primary: hsl(var(--primary));
+  --sidebar-primary-foreground: hsl(var(--primary-foreground));
+  /* ... etc. */
 }

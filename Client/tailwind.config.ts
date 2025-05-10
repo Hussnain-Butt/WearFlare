@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss'
 
 export default {
-  darkMode: ['class'],
+  darkMode: ['class'], // Yeh zaroori hai theme classes ke liye <html> tag par
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -19,10 +19,15 @@ export default {
     },
     extend: {
       colors: {
+        // UPDATED: Trendzone colors ab HSL CSS variables use karenge
         trendzone: {
-          'dark-blue': '#003049',
-          'light-blue': '#669BBC',
+          'dark-blue': 'hsl(var(--trendzone-dark-blue-hsl))',
+          'light-blue': 'hsl(var(--trendzone-light-blue-hsl))',
+          // Agar aapne CSS mein text colors define kiye hain, toh woh bhi add karein:
+          'dark-blue-text': 'hsl(var(--trendzone-dark-blue-text-hsl))',
+          'light-blue-text': 'hsl(var(--trendzone-light-blue-text-hsl))',
         },
+        // Shadcn/UI like HSL variables (yeh pehle se sahi setup hain)
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -56,6 +61,7 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Sidebar colors (ensure --sidebar-* variables CSS mein defined hain har theme ke liye)
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',
           foreground: 'hsl(var(--sidebar-foreground))',
@@ -66,11 +72,12 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        // UPDATED: Wearflare colors bhi CSS variables use karenge
         wearflare: {
-          purple: '#5D4D8A',
-          darkPurple: '#231539',
-          lightPurple: '#7A68A6',
-          buttonPurple: '#53387A',
+          purple: 'var(--wearflare-purple)',
+          darkPurple: 'var(--wearflare-darkPurple)',
+          lightPurple: 'var(--wearflare-lightPurple)',
+          buttonPurple: 'var(--wearflare-buttonPurple)',
         },
       },
       borderRadius: {

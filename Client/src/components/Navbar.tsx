@@ -2,10 +2,10 @@
 import React, { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Menu, X } from 'lucide-react'
-import AuthContext from '../context/AuthContext'
-import { useCart } from '../context/CartContext'
-import SearchOverlay from './SearchOverlay'
-import Logo from '../assets/Logo.jpg'
+import AuthContext from '../context/AuthContext' // Path check karein
+import { useCart } from '../context/CartContext' // Path check karein
+import SearchOverlay from './SearchOverlay' // Path check karein
+import Logo from '../assets/Logo.jpg' // Path check karein
 
 const NavLink: React.FC<{
   to: string
@@ -14,15 +14,23 @@ const NavLink: React.FC<{
   isMobile?: boolean
 }> = ({ to, children, onClick, isMobile = false }) => {
   const baseDesktopClasses =
-    'relative text-sm lg:text-base font-medium text-trendzone-dark-blue hover:text-trendzone-light-blue transition-colors duration-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm'
+    // text-trendzone-dark-blue -> text-foreground (for general readability) or text-primary
+    // hover:text-trendzone-light-blue -> hover:text-accent (or hover:text-primary/80)
+    'relative text-sm lg:text-base font-medium text-foreground hover:text-trendzone-light-blue transition-colors duration-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm'
   const baseMobileClasses =
-    'block px-3 py-2 rounded-md text-base font-medium text-trendzone-dark-blue hover:text-trendzone-light-blue hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus-visible:bg-gray-200 focus-visible:text-trendzone-dark-blue'
+    // text-trendzone-dark-blue -> text-foreground
+    // hover:text-trendzone-light-blue -> hover:text-accent
+    // hover:bg-muted/50 - already good
+    // focus-visible:bg-muted - already good
+    // focus-visible:text-foreground - already good
+    'block px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-trendzone-light-blue hover:bg-muted/50 transition-colors duration-200 focus:outline-none focus-visible:bg-muted focus-visible:text-foreground'
 
   return (
     <Link to={to} className={isMobile ? baseMobileClasses : baseDesktopClasses} onClick={onClick}>
       {children}
       {!isMobile && (
-        <span className="absolute bottom-[-4px] left-0 w-0 h-[2px] bg-trendzone-light-blue group-hover:w-full transition-all duration-300"></span>
+        // bg-trendzone-light-blue -> bg-accent (or bg-primary)
+        <span className="absolute bottom-[-4px] left-0 w-0 h-[2px] bg-accent group-hover:w-full transition-all duration-300"></span>
       )}
     </Link>
   )
@@ -43,7 +51,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout()
-    setIsOpen(false) // Close mobile menu on logout
+    setIsOpen(false)
     navigate('/login')
   }
 
@@ -52,13 +60,10 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="bg-white shadow-md w-full sticky top-0 z-40">
+    <nav className="bg-background shadow-md w-full sticky top-0 z-40">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main flex container for navbar items */}
         <div className="relative flex items-center justify-between h-16 md:h-20">
           {/* ---- DESKTOP VIEW ITEMS ---- */}
-
-          {/* Navlinks (Left on Desktop) */}
           <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             <NavLink to="/">Home</NavLink>
             <NavLink to="/men">Men</NavLink>
@@ -66,21 +71,23 @@ const Navbar: React.FC = () => {
             <NavLink to="/contact">Contact</NavLink>
           </div>
 
-          {/* Logo (Center on Desktop - Absolutely Positioned) */}
           <div className="hidden md:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <Link
               to="/"
-              className="text-2xl md:text-3xl font-bold text-trendzone-dark-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm"
+              // text-trendzone-dark-blue -> text-primary (for brand color) or text-foreground
+              className="text-2xl md:text-3xl font-bold text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
             >
-              <img src={Logo} alt="Logo" className="w-80" />
+              <img src={Logo} alt="Logo" className="w-80" />{' '}
+              {/* Image logo is not themeable by CSS color */}
             </Link>
           </div>
 
-          {/* Icons & Auth (Right on Desktop) */}
           <div className="hidden md:flex items-center space-x-4 lg:space-x-5">
             <button
               onClick={() => setShowSearchOverlay(true)}
-              className="p-2 text-trendzone-dark-blue hover:text-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-full transition-all duration-200 hover:scale-110"
+              // text-trendzone-dark-blue -> text-foreground
+              // hover:text-trendzone-light-blue -> hover:text-accent
+              className="p-2 text-foreground hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full transition-all duration-200 hover:scale-110"
               aria-label="Search Products"
             >
               <Search className="h-5 w-5 lg:h-6 lg:w-6" />
@@ -88,12 +95,14 @@ const Navbar: React.FC = () => {
 
             <Link
               to="/cart"
-              className="relative p-2 text-trendzone-dark-blue hover:text-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-full transition-all duration-200 hover:scale-110"
+              // text-trendzone-dark-blue -> text-foreground
+              // hover:text-trendzone-light-blue -> hover:text-accent
+              className="relative p-2 text-foreground hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full transition-all duration-200 hover:scale-110"
               aria-label={`Shopping Cart with ${totalItems} items`}
             >
               <ShoppingCart className="h-5 w-5 lg:h-6 lg:w-6" />
               {totalItems > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-destructive-foreground transform translate-x-1/2 -translate-y-1/2 bg-destructive rounded-full">
                   {totalItems}
                 </span>
               )}
@@ -102,14 +111,21 @@ const Navbar: React.FC = () => {
             {user ? (
               <button
                 onClick={handleLogout}
-                className="bg-trendzone-dark-blue text-white px-4 py-2 lg:px-5 text-sm rounded-full hover:bg-trendzone-light-blue transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2"
+                // bg-trendzone-dark-blue -> bg-primary
+                // text-primary-foreground is good
+                // hover:bg-trendzone-light-blue -> hover:bg-primary/80 (or hover:bg-accent)
+                className="bg-primary text-primary-foreground px-4 py-2 lg:px-5 text-sm rounded-full hover:bg-primary/80 transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Logout
               </button>
             ) : (
               <Link
                 to="/login"
-                className="border border-trendzone-dark-blue text-trendzone-dark-blue px-4 py-2 lg:px-5 text-sm rounded-full hover:bg-trendzone-dark-blue hover:text-white transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-dark-blue focus-visible:ring-offset-1"
+                // border-trendzone-dark-blue -> border-primary
+                // text-trendzone-dark-blue -> text-primary
+                // hover:bg-trendzone-dark-blue -> hover:bg-primary
+                // hover:text-primary-foreground is good
+                className="border border-primary text-primary px-4 py-2 lg:px-5 text-sm rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
               >
                 Sign In
               </Link>
@@ -118,34 +134,37 @@ const Navbar: React.FC = () => {
           {/* ---- END DESKTOP VIEW ITEMS ---- */}
 
           {/* ---- MOBILE VIEW ITEMS ---- */}
-          {/* Logo (Left on Mobile) */}
           <div className="md:hidden flex-shrink-0">
             <Link
               to="/"
               onClick={closeMobileMenu}
-              className="text-2xl font-bold text-trendzone-dark-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2 rounded-sm"
+              // text-trendzone-dark-blue -> text-primary (brand color) or text-foreground
+              className="text-2xl font-bold text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
             >
               WearFlare
             </Link>
           </div>
 
-          {/* Mobile Menu Button & Cart (Right on Mobile) */}
           <div className="md:hidden flex items-center">
             <Link
               to="/cart"
               onClick={closeMobileMenu}
-              className="relative p-2 mr-2 text-trendzone-dark-blue hover:text-trendzone-light-blue transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-full"
+              // text-trendzone-dark-blue -> text-foreground
+              // hover:text-trendzone-light-blue -> hover:text-accent
+              className="relative p-2 mr-2 text-foreground hover:text-accent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
               aria-label={`Shopping Cart with ${totalItems} items`}
             >
               <ShoppingCart className="h-6 w-6" />
               {totalItems > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-destructive-foreground transform translate-x-1/2 -translate-y-1/2 bg-destructive rounded-full">
                   {totalItems}
                 </span>
               )}
             </Link>
             <button
-              className="p-2 inline-flex items-center justify-center text-trendzone-dark-blue hover:text-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-md"
+              // text-trendzone-dark-blue -> text-foreground
+              // hover:text-trendzone-light-blue -> hover:text-accent
+              className="p-2 inline-flex items-center justify-center text-foreground hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
               onClick={() => setIsOpen(!isOpen)}
               aria-expanded={isOpen}
               aria-controls="mobile-menu"
@@ -157,11 +176,11 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Menu - unchanged */}
+      {/* Mobile Menu */}
       <div
         id="mobile-menu"
         className={`
-          md:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-200 py-4 z-30
+          md:hidden absolute top-full left-0 w-full bg-background shadow-lg border-t border-border py-4 z-30
           transition-all duration-300 ease-in-out transform
           ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible'}
         `}
@@ -171,28 +190,25 @@ const Navbar: React.FC = () => {
             <NavLink to="/" onClick={closeMobileMenu} isMobile>
               Home
             </NavLink>
-            <NavLink to="/new-arrivals" onClick={closeMobileMenu} isMobile>
-              New Arrivals
+            <NavLink to="/men" onClick={closeMobileMenu} isMobile>
+              Men
             </NavLink>
-            <NavLink to="/shop" onClick={closeMobileMenu} isMobile>
-              Shop
+            <NavLink to="/women" onClick={closeMobileMenu} isMobile>
+              Women
             </NavLink>
             <NavLink to="/contact" onClick={closeMobileMenu} isMobile>
               Contact
             </NavLink>
-            <NavLink to="/about-us" onClick={closeMobileMenu} isMobile>
-              About Us
-            </NavLink>
-
-            <div className="border-t border-gray-200 pt-4 mt-4"></div>
-
+            <div className="border-t border-border pt-4 mt-4"></div>
             <div className="flex items-center justify-between px-3">
               <button
                 onClick={() => {
                   setShowSearchOverlay(true)
                   closeMobileMenu()
                 }}
-                className="p-2 text-trendzone-dark-blue hover:text-trendzone-light-blue transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue rounded-full"
+                // text-trendzone-dark-blue -> text-foreground
+                // hover:text-trendzone-light-blue -> hover:text-accent
+                className="p-2 text-foreground hover:text-accent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
                 aria-label="Search Products"
               >
                 <Search className="h-6 w-6" />
@@ -202,7 +218,10 @@ const Navbar: React.FC = () => {
                 {user ? (
                   <button
                     onClick={handleLogout}
-                    className="bg-trendzone-dark-blue text-white px-4 py-2 text-sm rounded-full hover:bg-trendzone-light-blue transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2"
+                    // bg-trendzone-dark-blue -> bg-primary
+                    // text-primary-foreground is good
+                    // hover:bg-trendzone-light-blue -> hover:bg-primary/80
+                    className="bg-primary text-primary-foreground px-4 py-2 text-sm rounded-full hover:bg-primary/80 transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     Logout
                   </button>
@@ -210,7 +229,10 @@ const Navbar: React.FC = () => {
                   <Link
                     to="/login"
                     onClick={closeMobileMenu}
-                    className="bg-trendzone-dark-blue text-white px-4 py-2 text-sm rounded-full hover:bg-trendzone-light-blue transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-trendzone-light-blue focus-visible:ring-offset-2"
+                    // bg-trendzone-dark-blue -> bg-primary
+                    // text-primary-foreground is good
+                    // hover:bg-trendzone-light-blue -> hover:bg-primary/80
+                    className="bg-primary text-primary-foreground px-4 py-2 text-sm rounded-full hover:bg-primary/80 transition-all duration-200 shadow-sm font-medium hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     Sign In
                   </Link>
