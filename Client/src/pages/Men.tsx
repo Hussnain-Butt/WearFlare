@@ -23,7 +23,7 @@ interface Product {
   isInStock?: boolean
 }
 
-const categories = ['All', 'Pants', 'Sweatshirt', 'Jackets', 'Shirts', 'Accessories'] // Adjusted categories
+const categories = ['All', 'Pants', 'Sweatshirt', 'Jackets', 'Shirts'] // Adjusted categories
 
 // Animation Variants
 const pageVariants = {

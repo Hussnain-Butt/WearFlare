@@ -229,29 +229,39 @@ const ContactUs: React.FC = () => {
             variants={textItemVariants}
           >
             <div className="flex items-center">
-              {/* UPDATED: text-trendzone-light-blue -> text-accent */}
-              <PhoneCall size={18} className="mr-3 text-accent flex-shrink-0" />
+              {/* UPDATED: text-trendzone-light-blue -> text-trendzone-dark-blue-text-hsl */}
+              <PhoneCall
+                size={18}
+                className="mr-3 text-trendzone-dark-blue-text-hsl flex-shrink-0"
+              />
               <span>
-                Phone: {/* UPDATED: hover:text-trendzone-light-blue -> hover:text-accent */}
-                <a href="tel:+2578365379" className="hover:text-accent transition-colors">
+                Phone:{' '}
+                {/* UPDATED: hover:text-trendzone-light-blue -> hover:text-trendzone-dark-blue-text-hsl */}
+                <a
+                  href="tel:+2578365379"
+                  className="hover:text-trendzone-dark-blue-text-hsl transition-colors"
+                >
                   + (2) 578-365-379
                 </a>
               </span>
             </div>
             <div className="flex items-center">
-              <Mail size={18} className="mr-3 text-accent flex-shrink-0" />
+              <Mail size={18} className="mr-3 text-trendzone-dark-blue-text-hsl flex-shrink-0" />
               <span>
                 Email:{' '}
                 <a
                   href="mailto:hello@wearflare.com"
-                  className="hover:text-accent transition-colors"
+                  className="hover:text-trendzone-dark-blue-text-hsl transition-colors"
                 >
                   hello@wearflare.com
                 </a>
               </span>
             </div>
             <div className="flex items-start">
-              <MapPin size={18} className="mr-3 mt-1 text-accent flex-shrink-0" />
+              <MapPin
+                size={18}
+                className="mr-3 mt-1 text-trendzone-dark-blue-text-hsl flex-shrink-0"
+              />
               <span>Office: 123 Fashion Ave, Style City, PK</span>
             </div>
           </motion.div>
@@ -344,7 +354,7 @@ const ContactUs: React.FC = () => {
               <motion.button
                 type="submit"
                 // UPDATED: Button styling
-                className="w-full bg-accent text-accent-foreground py-3 px-6 rounded-lg text-sm sm:text-base font-semibold hover:bg-accent/80 transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-card focus:ring-accent-foreground disabled:opacity-60 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-auto"
+                className="w-full bg-trendzone-dark-blue-text-hsl text-trendzone-dark-blue-text-hsl-foreground py-3 px-6 rounded-lg text-sm sm:text-base font-semibold hover:bg-trendzone-dark-blue-text-hsl/80 transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-card focus:ring-trendzone-dark-blue-text-hsl-foreground disabled:opacity-60 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-auto"
                 disabled={isLoading}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}

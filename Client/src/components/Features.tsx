@@ -77,7 +77,7 @@ const Features: React.FC = () => {
               <div className="mb-4 p-3 bg-accent/15 rounded-full">
                 <feature.icon
                   // text-trendzone-dark-blue -> text-accent (or text-primary)
-                  className="w-7 h-7 md:w-8 md:h-8 text-accent"
+                  className="w-7 h-7 md:w-8 md:h-8 text-trendzone-dark-blue-text-hsl"
                   strokeWidth={1.5}
                 />
               </div>

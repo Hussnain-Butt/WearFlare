@@ -85,11 +85,11 @@ const Footer: React.FC = () => {
               Company
             </h3>
             <ul className="space-y-3 text-sm">
-              <li>
+              {/* <li>
                 <Link to="/about-us" className="hover:text-accent transition-colors duration-200">
                   About Us
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link to="/contact" className="hover:text-accent transition-colors duration-200">
                   Contact
