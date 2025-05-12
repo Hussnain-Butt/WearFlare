@@ -45,7 +45,7 @@ const staticImageGridData = [
   },
   {
     id: 'img6',
-    src: 'https://images.pexels.com/photos/6765655/pexels-photo-6765655.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
+    src: 'https://images.pexels.com/photos/31976979/pexels-photo-31976979/free-photo-of-stylish-portrait-of-woman-in-leather-jacket.jpeg?auto=compress&cs=tinysrgb&w=600',
     alt: 'Man in a stylish green suit',
     baseClassName: 'h-[180px] md:h-[220px]',
   },

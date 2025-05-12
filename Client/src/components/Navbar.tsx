@@ -16,14 +16,14 @@ const NavLink: React.FC<{
   const baseDesktopClasses =
     // text-trendzone-dark-blue -> text-foreground (for general readability) or text-primary
     // hover:text-trendzone-light-blue -> hover:text-accent (or hover:text-primary/80)
-    'relative text-sm lg:text-base font-medium text-foreground hover:text-trendzone-dark-blue-text-hsl transition-colors duration-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm'
+    'relative text-sm lg:text-base font-medium text-foreground hover:text-trendzone-light-blue transition-colors duration-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm'
   const baseMobileClasses =
     // text-trendzone-dark-blue -> text-foreground
     // hover:text-trendzone-light-blue -> hover:text-accent
     // hover:bg-muted/50 - already good
     // focus-visible:bg-muted - already good
     // focus-visible:text-foreground - already good
-    'block px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-trendzone-dark-blue-text-hsl hover:bg-muted/50 transition-colors duration-200 focus:outline-none focus-visible:bg-muted focus-visible:text-foreground'
+    'block px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-trendzone-light-blue hover:bg-muted/50 transition-colors duration-200 focus:outline-none focus-visible:bg-muted focus-visible:text-foreground'
 
   return (
     <Link to={to} className={isMobile ? baseMobileClasses : baseDesktopClasses} onClick={onClick}>
@@ -87,7 +87,7 @@ const Navbar: React.FC = () => {
               onClick={() => setShowSearchOverlay(true)}
               // text-trendzone-dark-blue -> text-foreground
               // hover:text-trendzone-light-blue -> hover:text-accent
-              className="p-2 text-foreground hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full transition-all duration-200 hover:scale-110"
+              className="p-2 text-foreground hover:text-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full transition-all duration-200 hover:scale-110"
               aria-label="Search Products"
             >
               <Search className="h-5 w-5 lg:h-6 lg:w-6" />
@@ -97,7 +97,7 @@ const Navbar: React.FC = () => {
               to="/cart"
               // text-trendzone-dark-blue -> text-foreground
               // hover:text-trendzone-light-blue -> hover:text-accent
-              className="relative p-2 text-foreground hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full transition-all duration-200 hover:scale-110"
+              className="relative p-2 text-foreground hover:text-trendzone-light-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full transition-all duration-200 hover:scale-110"
               aria-label={`Shopping Cart with ${totalItems} items`}
             >
               <ShoppingCart className="h-5 w-5 lg:h-6 lg:w-6" />

@@ -69,6 +69,10 @@ html.theme-default {
   --input-text-actual: 222.2 84% 4.9%; /* Dark Gray */
   --input-border-actual: 214.3 31.8% 91.4%; /* Gray 300 like */
   --input-placeholder-actual: 220 8.9% 46.1%; /* Gray 400 like */
+  --success-bg-hsl: 134 61% 90%; /* Light green */
+  --success-text-hsl: 134 61% 21%; /* Darker green */
+  --destructive-bg-hsl: 200 38% 60%; /* Light red/pink */
+  /* --destructive-foreground is usually white/light for dark destructive backgrounds */
 }
 
 /* Dark Theme (Aapke tailwind.config.ts mein darkMode: ['class'] hai) */

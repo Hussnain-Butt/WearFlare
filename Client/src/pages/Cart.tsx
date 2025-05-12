@@ -127,7 +127,7 @@ const Cart: React.FC = () => {
           >
             {/* text-trendzone-light-blue -> text-accent (or text-primary) */}
             <ShoppingBag
-              className="w-16 h-16 md:w-20 md:h-20 text-accent mx-auto mb-6"
+              className="w-16 h-16 md:w-20 md:h-20 text-trendzone-light-blue-hsl mx-auto mb-6"
               strokeWidth={1.5}
             />
             {/* text-gray-700 -> text-card-foreground (or text-muted-foreground if on card) */}

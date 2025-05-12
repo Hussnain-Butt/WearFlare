@@ -105,7 +105,7 @@ const Faqs: React.FC = () => {
                   {faq.question}
                   <motion.div animate={{ rotate: openIndex === index ? 45 : 0 }}>
                     {/* text-Wearflare-light-blue -> text-accent (or text-primary for icon color) */}
-                    <Plus className="w-5 h-5 text-accent flex-shrink-0" />
+                    <Plus className="w-5 h-5 text-trendzone-light-blue flex-shrink-0" />
                   </motion.div>
                 </motion.button>
 

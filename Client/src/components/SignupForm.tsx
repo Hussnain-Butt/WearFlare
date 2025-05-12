@@ -329,7 +329,7 @@ const SignupForm: React.FC = () => {
           >
             Already have an account?{' '}
             {/* UPDATED: text-trendzone-light-blue -> text-accent (or text-primary) */}
-            <Link to="/login" className="text-accent font-semibold hover:underline">
+            <Link to="/login" className="text-trendzone-light-blue font-semibold hover:underline">
               Log in
             </Link>
           </motion.p>

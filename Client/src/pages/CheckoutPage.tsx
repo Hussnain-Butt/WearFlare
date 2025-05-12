@@ -150,7 +150,7 @@ const CheckoutPage: React.FC = () => {
         clearCart()
         // Redirect to an order confirmation page, passing orderId
         setTimeout(() => {
-          navigate('/order-confirmation-status', {
+          navigate('/', {
             state: {
               orderId: response.data.order?._id || response.data._id || response.data.orderId,
             },

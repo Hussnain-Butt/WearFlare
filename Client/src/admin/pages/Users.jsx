@@ -98,11 +98,6 @@ const Users = () => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      // *** UPDATED CLASSNAME FOR PADDING ***
-      // px-4 md:px-6 provides horizontal padding
-      // pb-4 md:pb-6 provides bottom padding
-      // space-y-6 provides vertical spacing between direct children
-      // NO pt- (top padding) specific class for the root element
       className="px-4 md:px-6 pb-4 md:pb-6 space-y-6"
     >
       <Toaster position="top-right" reverseOrder={false} />
@@ -110,9 +105,6 @@ const Users = () => {
       {/* Header Section */}
       <motion.div
         variants={itemVariants}
-        // Optional: Add a small top margin here if you want a little space *below* the main app navbar
-        // but *above* the "Users Management" title. E.g., className="mt-2 ..."
-        // For now, it will be flush with the top of the content area defined by DashboardLayout.
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
         <div>
@@ -122,8 +114,6 @@ const Users = () => {
           </h1>
           <p className={`mt-1 text-sm ${lightGrayText}`}>View, edit, or delete user accounts.</p>
         </div>
-        {/* Optional: Add New User Button can go here */}
-        {/* <button className={`...`}> <UserPlus size={18} className="mr-2"/> Add User </button> */}
       </motion.div>
 
       {/* Loading Indicator */}
@@ -224,7 +214,7 @@ const Users = () => {
                             <button
                               onClick={() => handleDelete(user._id)}
                               disabled={deletingId === user._id}
-                              className={`flex items-center justify-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 active:bg-red-700 transition-colors shadow-sm hover:shadow-md disabled:opacity-60 min-w-[80px]`}
+                              className={`flex items-center justify-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground hover:brightness-90 active:brightness-[.85] transition-all duration-150 shadow-sm hover:shadow-md disabled:opacity-60 min-w-[80px]`}
                             >
                               {deletingId === user._id ? (
                                 <Loader2 className="animate-spin h-4 w-4" />

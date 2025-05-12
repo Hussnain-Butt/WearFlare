@@ -77,7 +77,6 @@ const ContactUs: React.FC = () => {
   const [toast, setToast] = useState<ToastState | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
 
-  // --- Logic Functions (showToast, validateForm, handleChange, handleSubmit) - UNCHANGED ---
   const showToast = (message: string, type: 'success' | 'error') => {
     const newToast = { id: Date.now(), message, type }
     setToast(newToast)
@@ -90,17 +89,44 @@ const ContactUs: React.FC = () => {
   const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {}
     const { name, email, phone, subject, message } = formData
-    if (!name.trim()) newErrors.name = 'Name is required.'
-    else if (name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters.'
-    if (!email.trim()) newErrors.email = 'Email is required.'
-    else if (!/.+@.+\..+/.test(email.trim())) newErrors.email = 'Invalid email format.'
-    if (phone.trim() && !/^\+?[0-9\s-()]{7,20}$/.test(phone.trim()))
-      newErrors.phone = 'Invalid phone number format.'
-    if (!subject.trim()) newErrors.subject = 'Subject is required.'
-    else if (subject.trim().length < 3) newErrors.subject = 'Subject must be at least 3 characters.'
-    if (!message.trim()) newErrors.message = 'Message is required.'
-    else if (message.trim().length < 10)
-      newErrors.message = 'Message must be at least 10 characters.'
+
+    // Name validation
+    if (!name.trim()) {
+      newErrors.name = 'Name is required.'
+    } else if (name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters long.'
+    } else if (!/^[a-zA-ZÀ-ÖØ-öø-ÿ\s'-]+$/.test(name.trim())) {
+      newErrors.name = 'Name can only contain letters, spaces, hyphens, and apostrophes.'
+    }
+
+    // Email validation
+    if (!email.trim()) {
+      newErrors.email = 'Email is required.'
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim())) {
+      newErrors.email = 'Invalid email format. Please enter a valid email address.'
+    }
+
+    // Phone validation (NOW REQUIRED)
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone number is required.'
+    } else if (!/^\+?[\d\s\-().]{7,20}$/.test(phone.trim())) {
+      newErrors.phone = 'Invalid phone number. (e.g., +1 123-456-7890 or 03001234567)'
+    }
+
+    // Subject validation
+    if (!subject.trim()) {
+      newErrors.subject = 'Subject is required.'
+    } else if (subject.trim().length < 3) {
+      newErrors.subject = 'Subject must be at least 3 characters long.'
+    }
+
+    // Message validation
+    if (!message.trim()) {
+      newErrors.message = 'Message is required.'
+    } else if (message.trim().length < 10) {
+      newErrors.message = 'Message must be at least 10 characters long.'
+    }
+
     return newErrors
   }
 
@@ -120,52 +146,66 @@ const ContactUs: React.FC = () => {
     e.preventDefault()
     setErrors({})
     setToast(null)
+
     const validationErrors = validateForm()
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
-      showToast('Please correct the errors below.', 'error')
+      showToast('Please correct the errors highlighted below.', 'error')
       return
     }
+
     setIsLoading(true)
     try {
-      const [firstName, ...lastNameParts] = formData.name.trim().split(' ')
-      const lastName = lastNameParts.join(' ')
+      const trimmedName = formData.name.trim()
+      const nameParts = trimmedName.split(/\s+/)
+      const firstName = nameParts[0] || 'N/A'
+      const lastName = nameParts.slice(1).join(' ') || ''
+
       const payload = {
-        firstName: firstName || 'N/A',
-        lastName: lastName || '',
+        firstName: firstName,
+        lastName: lastName,
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         subject: formData.subject.trim(),
         message: formData.message.trim(),
       }
+
       const response = await axios.post(CONTACT_API_ENDPOINT, payload)
+
       if (response.status === 200 || response.status === 201) {
-        showToast("Message sent! We'll be in touch soon.", 'success')
+        showToast("Message sent successfully! We'll be in touch soon.", 'success')
         setFormData({ name: '', email: '', phone: '', subject: '', message: '' })
         setErrors({})
       } else {
-        throw new Error(response.data.message || 'Failed to send message.')
+        throw new Error(response.data.message || 'Failed to send message due to server response.')
       }
     } catch (error: any) {
+      console.error('Contact form submission error:', error)
       const errorMessage =
-        error.response?.data?.message || 'Message could not be sent. Please try again.'
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Your message could not be sent. Please try again later.'
       showToast(errorMessage, 'error')
     } finally {
       setIsLoading(false)
     }
   }
-  // --- END Logic Functions ---
 
   const formFields = [
-    { name: 'name', type: 'text', placeholder: 'Name', error: errors.name },
-    { name: 'email', type: 'email', placeholder: 'Email', error: errors.email },
-    { name: 'phone', type: 'tel', placeholder: 'Phone (Optional)', error: errors.phone },
-    { name: 'subject', type: 'text', placeholder: 'Subject', error: errors.subject },
+    { name: 'name', type: 'text', placeholder: 'Full Name', error: errors.name },
+    { name: 'email', type: 'email', placeholder: 'Email Address', error: errors.email },
+    { name: 'phone', type: 'tel', placeholder: 'Phone Number', error: errors.phone }, // Removed (Optional)
+    {
+      name: 'subject',
+      type: 'text',
+      placeholder: 'Subject of your message',
+      error: errors.subject,
+    },
   ]
 
   return (
     <motion.div
-      // UPDATED: bg-gray-50 -> bg-background
       className="min-h-screen bg-background flex flex-col font-inter overflow-x-hidden"
       variants={pageVariants}
       initial="hidden"
@@ -175,7 +215,6 @@ const ContactUs: React.FC = () => {
         {toast && (
           <motion.div
             key={toast.id}
-            // UPDATED: text-white and backgroundColor
             className={`fixed top-5 right-5 px-6 py-3 rounded-lg font-medium shadow-xl z-[100] text-sm
               ${
                 toast.type === 'success'
@@ -201,12 +240,10 @@ const ContactUs: React.FC = () => {
       <div className="w-full flex-grow grid grid-cols-1 md:grid-cols-2">
         {/* Left Column */}
         <motion.div
-          // UPDATED: bg-white -> bg-card, text-trendzone-dark-blue -> text-card-foreground (or primary)
           className="w-full bg-card text-card-foreground p-8 sm:p-12 md:p-16 lg:p-24 flex flex-col justify-center"
           variants={columnVariants(true)}
         >
           <motion.h1
-            // UPDATED: Main text color inherited from parent, or set to text-primary
             className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-none tracking-tighter mb-8 text-primary"
             variants={textItemVariants}
           >
@@ -216,7 +253,6 @@ const ContactUs: React.FC = () => {
           </motion.h1>
 
           <motion.h2
-            // UPDATED: text-gray-800 -> text-foreground (relative to card bg)
             className="text-xl sm:text-2xl font-semibold mb-6 text-foreground"
             variants={textItemVariants}
           >
@@ -224,44 +260,32 @@ const ContactUs: React.FC = () => {
           </motion.h2>
 
           <motion.div
-            // UPDATED: text-gray-700 -> text-muted-foreground (relative to card bg)
             className="space-y-5 text-sm sm:text-base text-muted-foreground"
             variants={textItemVariants}
           >
             <div className="flex items-center">
-              {/* UPDATED: text-trendzone-light-blue -> text-trendzone-dark-blue-text-hsl */}
-              <PhoneCall
-                size={18}
-                className="mr-3 text-trendzone-dark-blue-text-hsl flex-shrink-0"
-              />
+              <PhoneCall size={18} className="mr-3 text-primary flex-shrink-0" />
               <span>
                 Phone:{' '}
-                {/* UPDATED: hover:text-trendzone-light-blue -> hover:text-trendzone-dark-blue-text-hsl */}
-                <a
-                  href="tel:+2578365379"
-                  className="hover:text-trendzone-dark-blue-text-hsl transition-colors"
-                >
+                <a href="tel:+2578365379" className="hover:text-accent transition-colors">
                   + (2) 578-365-379
                 </a>
               </span>
             </div>
             <div className="flex items-center">
-              <Mail size={18} className="mr-3 text-trendzone-dark-blue-text-hsl flex-shrink-0" />
+              <Mail size={18} className="mr-3 text-primary flex-shrink-0" />
               <span>
                 Email:{' '}
                 <a
                   href="mailto:hello@wearflare.com"
-                  className="hover:text-trendzone-dark-blue-text-hsl transition-colors"
+                  className="hover:text-accent transition-colors"
                 >
                   hello@wearflare.com
                 </a>
               </span>
             </div>
             <div className="flex items-start">
-              <MapPin
-                size={18}
-                className="mr-3 mt-1 text-trendzone-dark-blue-text-hsl flex-shrink-0"
-              />
+              <MapPin size={18} className="mr-3 mt-1 text-primary flex-shrink-0" />
               <span>Office: 123 Fashion Ave, Style City, PK</span>
             </div>
           </motion.div>
@@ -269,29 +293,23 @@ const ContactUs: React.FC = () => {
 
         {/* Right Column */}
         <motion.div
-          // UPDATED: bg-white -> bg-background (to match overall page bg)
           className="w-full bg-background p-8 sm:p-12 md:p-16 lg:p-20 flex flex-col"
           variants={columnVariants(false)}
         >
           <motion.div className="flex items-start mb-10 md:mb-12" variants={textItemVariants}>
-            {/* UPDATED: text-gray-600 -> text-muted-foreground */}
             <motion.p className="text-sm text-muted-foreground mr-4 leading-relaxed max-w-xs pt-1">
               Great! We're excited to hear from you and let's start something special together. Call
               us for any inquiry.
             </motion.p>
-            {/* UPDATED: text-trendzone-dark-blue -> text-primary */}
             <ArrowRight size={28} className="text-primary flex-shrink-0 hidden sm:block mt-1" />
           </motion.div>
 
           <motion.div
-            // UPDATED: bg-trendzone-dark-blue -> bg-card (or bg-primary), text-white -> text-card-foreground (or text-primary-foreground)
-            // Using bg-card and text-card-foreground for a distinct form block
             className="bg-card p-8 sm:p-10 rounded-xl shadow-2xl text-card-foreground flex-grow flex flex-col"
             variants={formBlockVariants}
           >
-            {/* Text color inherited from parent (text-card-foreground) */}
             <h3 className="text-xl sm:text-2xl font-semibold mb-8 text-center sm:text-left">
-              Contact Us {/* Changed from "Contact" for clarity */}
+              Send Us A Message
             </h3>
             <form onSubmit={handleSubmit} className="space-y-5 flex-grow flex flex-col" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5">
@@ -307,16 +325,17 @@ const ContactUs: React.FC = () => {
                       placeholder={field.placeholder}
                       value={formData[field.name as keyof FormData]}
                       onChange={handleChange}
-                      // UPDATED: Input field styling
                       className={`w-full px-4 py-3 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-colors duration-200 ${
                         field.error
                           ? 'border-destructive focus:ring-destructive focus:border-destructive'
-                          : 'focus:ring-ring focus:border-primary' // Using primary for focus border color
+                          : 'focus:ring-ring focus:border-primary'
                       }`}
-                      required={field.name !== 'phone'}
+                      required // All fields are now required
                       aria-invalid={!!field.error}
+                      autoComplete={
+                        field.name === 'email' ? 'email' : field.name === 'phone' ? 'tel' : 'off'
+                      }
                     />
-                    {/* UPDATED: text-red-400 -> text-destructive */}
                     {field.error && (
                       <p className="mt-1.5 text-xs text-destructive">{field.error}</p>
                     )}
@@ -329,15 +348,14 @@ const ContactUs: React.FC = () => {
                 className="flex-grow flex flex-col"
               >
                 <label htmlFor="message" className="sr-only">
-                  Tell us about what you're interested in
+                  Your Message
                 </label>
                 <textarea
                   id="message"
                   name="message"
-                  placeholder="Tell us about what you're interested in"
+                  placeholder="Type your message here..."
                   value={formData.message}
                   onChange={handleChange}
-                  // UPDATED: Textarea styling (same as input)
                   className={`w-full px-4 py-3 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 resize-none transition-colors duration-200 flex-grow ${
                     errors.message
                       ? 'border-destructive focus:ring-destructive focus:border-destructive'
@@ -345,7 +363,7 @@ const ContactUs: React.FC = () => {
                   }`}
                   required
                   aria-invalid={!!errors.message}
-                  rows={4} // Retained rows
+                  rows={4}
                 ></textarea>
                 {errors.message && (
                   <p className="mt-1.5 text-xs text-destructive">{errors.message}</p>
@@ -353,14 +371,13 @@ const ContactUs: React.FC = () => {
               </motion.div>
               <motion.button
                 type="submit"
-                // UPDATED: Button styling
-                className="w-full bg-trendzone-dark-blue-text-hsl text-trendzone-dark-blue-text-hsl-foreground py-3 px-6 rounded-lg text-sm sm:text-base font-semibold hover:bg-trendzone-dark-blue-text-hsl/80 transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-card focus:ring-trendzone-dark-blue-text-hsl-foreground disabled:opacity-60 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-auto"
+                className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-lg text-sm sm:text-base font-semibold hover:bg-primary/80 transition-colors duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-card focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-auto"
                 disabled={isLoading}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: !isLoading ? 1.03 : 1 }}
+                whileTap={{ scale: !isLoading ? 0.97 : 1 }}
               >
-                {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Send Message'}{' '}
-                {/* Updated text */}
+                {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : <Send size={18} />}
+                {isLoading ? 'Sending...' : 'Send Message'}
               </motion.button>
             </form>
           </motion.div>

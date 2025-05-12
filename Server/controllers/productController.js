@@ -1,7 +1,40 @@
 // controllers/productController.js
 const path = require('path')
+const fs = require('node:fs') // For checking credentials file existence
+const fsp = require('node:fs/promises') // For async file operations like unlink
 const Product = require('../models/Product')
-const mongoose = require('mongoose') // Import mongoose for transactions (if needed later)
+const mongoose = require('mongoose') // Import mongoose for transactions
+
+// NEW: Import Google Cloud Vision client
+const { ImageAnnotatorClient } = require('@google-cloud/vision')
+
+// --- Initialize Google Cloud Vision Client ---
+let visionClient
+const credentialsPath = path.join(__dirname, '..', 'config', 'credentials.json')
+
+if (fs.existsSync(credentialsPath)) {
+  try {
+    visionClient = new ImageAnnotatorClient({ keyFilename: credentialsPath })
+    console.log('[VisionAPI] Client initialized using keyfile:', credentialsPath)
+  } catch (error) {
+    console.error('[VisionAPI] Error initializing client with keyfile:', error)
+    // Fallback or alternative initialization can be added here if needed
+  }
+} else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  try {
+    visionClient = new ImageAnnotatorClient()
+    console.log('[VisionAPI] Client initialized using GOOGLE_APPLICATION_CREDENTIALS env var.')
+  } catch (error) {
+    console.error(
+      '[VisionAPI] Error initializing client with GOOGLE_APPLICATION_CREDENTIALS:',
+      error,
+    )
+  }
+} else {
+  console.warn(
+    '[VisionAPI] Credentials not found (neither keyfile nor GOOGLE_APPLICATION_CREDENTIALS). Image search will be disabled.',
+  )
+}
 
 // --- Helper function to parse comma-separated sizes string ---
 const parseSizesString = (sizesString) => {
@@ -34,7 +67,6 @@ const parseStockDetailsString = (stockString) => {
           console.warn(
             `[parseStockDetailsString] Invalid quantity format for size "${size}": "${quantityStr}". Skipping.`,
           )
-          // Optionally throw an error here if strict validation is needed
         }
       }
     } else {
@@ -191,14 +223,14 @@ exports.updateProduct = async (req, res) => {
     let finalSizesArray // To store the array of sizes after potential update
 
     // Fetch current product to get existing sizes if not provided in request
-    const currentProduct = await Product.findById(id).select('sizes')
+    const currentProduct = await Product.findById(id).select('sizes image') // Also select image for potential deletion
     if (!currentProduct) {
       return res.status(404).json({ message: 'Product not found.' })
     }
 
     // Handle simple field updates
     if (title !== undefined) updatedFields.title = title.trim()
-    if (price !== undefined) updatedFields.price = String(price).trim()
+    if (price !== undefined) updatedFields.price = String(price).trim() // Keep as string for now, model handles type
     if (category !== undefined) updatedFields.category = category.trim()
     if (gender !== undefined) updatedFields.gender = gender
     if (description !== undefined) updatedFields.description = description.trim()
@@ -219,14 +251,11 @@ exports.updateProduct = async (req, res) => {
     if (stockDetailsString !== undefined) {
       const stockDetailsMap = parseStockDetailsString(stockDetailsString)
 
-      // --- Validation: Ensure stock map isn't empty if final sizes array is not empty ---
       if (finalSizesArray.length > 0 && stockDetailsMap.size === 0) {
         return res
           .status(400)
           .json({ message: 'Stock details cannot be empty when sizes are defined.' })
       }
-
-      // --- Validation: Stock sizes must match the final list of available sizes ---
       const finalSizesSet = new Set(finalSizesArray)
       for (const size of stockDetailsMap.keys()) {
         if (!finalSizesSet.has(size)) {
@@ -237,7 +266,6 @@ exports.updateProduct = async (req, res) => {
           })
         }
       }
-      // --- Validation: Ensure all final sizes have a stock entry ---
       for (const size of finalSizesArray) {
         if (!stockDetailsMap.has(size)) {
           return res.status(400).json({
@@ -247,51 +275,50 @@ exports.updateProduct = async (req, res) => {
           })
         }
       }
-
       updatedFields.stockDetails = stockDetailsMap
       console.log(`[UpdateProduct ${id}] Processing stockDetails update to:`, stockDetailsMap)
     }
 
     // Handle image update
     if (req.file) {
+      const oldImagePath = currentProduct.image
       updatedFields.image = `/uploads/${req.file.filename}`
-      console.log(`[UpdateProduct ${id}] Processing image update.`)
-      // Optional: Add logic here to delete the old image file
+      console.log(`[UpdateProduct ${id}] Processing image update to ${updatedFields.image}.`)
+      // Delete old image if it exists and is a local upload
+      if (oldImagePath && oldImagePath.startsWith('/uploads/')) {
+        const imagePathToDelete = path.join(__dirname, '..', 'public', oldImagePath) // Adjust 'public' if your uploads are served differently
+        try {
+          await fsp.unlink(imagePathToDelete)
+          console.log(`[UpdateProduct ${id}] Deleted old image file: ${imagePathToDelete}`)
+        } catch (err) {
+          console.error(
+            `[UpdateProduct ${id}] Failed to delete old image file ${imagePathToDelete}:`,
+            err,
+          )
+        }
+      }
     }
 
-    // Check if any fields were actually provided for update
     if (Object.keys(updatedFields).length === 0 && !req.file) {
       console.log(`[UpdateProduct ${id}] No fields provided for update.`)
-      // Return 304 Not Modified or the current product data? Or 400?
-      // Let's return the current data as no update was performed.
-      const product = await Product.findById(id)
-      return res.status(200).json(product) // Return current product
-      // return res.status(400).json({ message: 'No update fields provided.' });
+      const product = await Product.findById(id) // Fetch full product again
+      return res.status(200).json(product)
     }
 
     console.log(`[UpdateProduct ${id}] Updating with fields:`, JSON.stringify(updatedFields))
-
-    // Use findByIdAndUpdate with $set for partial updates
-    // Mongoose 'save' hooks (like our pre-save) DO NOT run on findByIdAndUpdate by default.
-    // If you need the pre-save hook to run for standardization, you'd need to:
-    // 1. Find the document: `const doc = await Product.findById(id);`
-    // 2. Apply updates: `Object.assign(doc, updatedFields);`
-    // 3. Save the document: `const updatedProduct = await doc.save();`
-    // However, this is less atomic. Let's rely on controller validation for now.
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
-      { $set: updatedFields }, // Use $set to only update provided fields
-      { new: true, runValidators: true, context: 'query' }, // Run schema validators on update
+      { $set: updatedFields },
+      { new: true, runValidators: true, context: 'query' },
     )
 
     if (!updatedProduct) {
-      // This case should be covered by the initial findById check, but keep for safety
       console.log(`[UpdateProduct ${id}] Product not found during update.`)
       return res.status(404).json({ message: 'Product not found' })
     }
 
     console.log(`[UpdateProduct ${id}] Update successful.`)
-    res.json(updatedProduct) // Returns updated product with virtuals
+    res.json(updatedProduct)
   } catch (error) {
     console.error(`[UpdateProduct ${req.params?.id}] Error:`, error)
     if (error.name === 'ValidationError') {
@@ -307,13 +334,31 @@ exports.updateProduct = async (req, res) => {
   }
 }
 
-// --- DELETE /api/products/:id (No changes needed regarding stock logic) ---
+// --- DELETE /api/products/:id ---
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params
     const deletedProduct = await Product.findByIdAndDelete(id)
     if (!deletedProduct) return res.status(404).json({ message: 'Product not found' })
-    // Optional: Delete associated image file
+
+    // Delete associated image file if it exists and is a local upload
+    if (deletedProduct.image && deletedProduct.image.startsWith('/uploads/')) {
+      // Assuming 'public' is your static serving folder and 'uploads' is inside it.
+      // Adjust this path if your 'uploads' folder is directly in the project root
+      // or served via a different static path configuration in your Express app.
+      const imagePathToDelete = path.join(__dirname, '..', 'public', deletedProduct.image)
+      // If your 'uploads' folder is in the Server root, it might be:
+      // const imagePathToDelete = path.join(__dirname, '..', deletedProduct.image);
+
+      try {
+        await fsp.unlink(imagePathToDelete)
+        console.log(`Deleted image file: ${imagePathToDelete}`)
+      } catch (err) {
+        // Log error but don't fail the entire delete operation if image deletion fails
+        console.error(`Failed to delete image file ${imagePathToDelete}:`, err)
+      }
+    }
+
     res.json({ message: 'Product deleted successfully' })
   } catch (error) {
     console.error('Error deleting product:', error)
@@ -329,9 +374,7 @@ exports.getProductById = async (req, res) => {
     const { id } = req.params
     const product = await Product.findById(id)
     if (!product) return res.status(404).json({ message: 'Product not found' })
-
-    // Return the full product details. Frontend (details page) can use stockDetails.
-    res.json(product) // Includes virtuals and stockDetails map
+    res.json(product)
   } catch (error) {
     console.error('Error fetching product by ID:', error)
     if (error.name === 'CastError' && error.path === '_id')
@@ -340,38 +383,86 @@ exports.getProductById = async (req, res) => {
   }
 }
 
-// --- GET /api/products/search (No changes needed) ---
+// --- GET /api/products/search ---
 exports.searchProducts = async (req, res) => {
-  // ... (Existing search logic - searches category, returns matching products with virtuals)
   try {
     const { query } = req.query
     if (!query || typeof query !== 'string' || query.trim() === '') {
       return res.status(400).json({ message: 'Search query required.' })
     }
     const trimmedQuery = query.trim()
+    // Search in category, title, or description
     const products = await Product.find({
-      category: { $regex: trimmedQuery, $options: 'i' },
-    })
-    res.json(products) // Includes virtuals
+      $or: [
+        { category: { $regex: trimmedQuery, $options: 'i' } },
+        { title: { $regex: trimmedQuery, $options: 'i' } },
+        { description: { $regex: trimmedQuery, $options: 'i' } },
+      ],
+    }).limit(20) // Added a limit for performance
+    res.json(products)
   } catch (error) {
     console.error('Error searching products:', error)
     res.status(500).json({ message: `Failed to search products: ${error.message}` })
   }
 }
 
-// --- POST /api/products/search-by-image (No changes needed) ---
+// --- POST /api/products/search-by-image (FUNCTIONAL WITH GOOGLE CLOUD VISION) ---
 exports.searchProductsByImage = async (req, res) => {
-  // ... (Existing image search logic)
-  // Returns products found based on image labels - includes virtuals
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image uploaded' })
+  }
+  if (!visionClient) {
+    console.error(
+      '[VisionAPI Search] Vision API client not initialized. Cannot perform image search.',
+    )
+    return res.status(500).json({ message: 'Image search service is not configured or available.' })
+  }
+
+  const imagePath = req.file.path // Path to the uploaded image by multer
   try {
-    if (!req.file) return res.status(400).json({ message: 'No image uploaded' })
-    // Placeholder for image analysis
-    const labels = ['ExampleLabel1', 'ExampleLabel2'] // Replace with actual labels
+    console.log(`[VisionAPI Search] Analyzing image: ${imagePath}`)
+
+    // Performs label detection and object localization on the local file
+    const [result] = await visionClient.labelDetection(imagePath)
+    const detectedAnnotations = result.labelAnnotations || []
+
+    // Optionally, you can also use objectLocalization for more specific items
+    // const [objectResult] = await visionClient.objectLocalization(imagePath);
+    // const localizedObjects = objectResult.localizedObjectAnnotations || [];
+    // console.log('[VisionAPI Search] Localized Objects:', localizedObjects.map(obj => obj.name));
+
+    // Filter labels: by score, and take top N.
+    const labels = detectedAnnotations
+      .filter((label) => label.score && label.score > 0.65 && label.description) // Filter by confidence
+      .slice(0, 5) // Take top 5 relevant labels
+      .map((label) => label.description.trim())
+      .filter(Boolean) // Ensure no empty strings
+
+    console.log('[VisionAPI Search] Detected and filtered labels:', labels)
+
+    if (labels.length === 0) {
+      console.log('[VisionAPI Search] No relevant labels detected for the image.')
+      return res.json({ labels: [], products: [] })
+    }
+
+    // Escape regex special characters from labels
+    const escapedLabels = labels.map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+
+    // Construct a query to find products matching any of the labels
+    // in title, category, or description
+    const searchConditions = escapedLabels.flatMap((label) => [
+      { title: { $regex: label, $options: 'i' } },
+      { category: { $regex: label, $options: 'i' } },
+      { description: { $regex: label, $options: 'i' } },
+    ])
+
     let products = []
-    for (let label of labels) {
-      const foundProducts = await Product.find({ title: { $regex: label, $options: 'i' } })
+    if (searchConditions.length > 0) {
+      const foundProducts = await Product.find({ $or: searchConditions }).limit(20) // Limit results
       products.push(...foundProducts)
     }
+
+    // Deduplicate products
     const uniqueIds = new Set()
     const uniqueProducts = products.filter((p) => {
       const idString = p._id.toString()
@@ -381,10 +472,31 @@ exports.searchProductsByImage = async (req, res) => {
       }
       return false
     })
-    res.json({ labels, products: uniqueProducts }) // Includes virtuals
+
+    console.log(
+      `[VisionAPI Search] Found ${uniqueProducts.length} unique products for labels: ${labels.join(
+        ', ',
+      )}`,
+    )
+    res.json({ labels, products: uniqueProducts })
   } catch (error) {
-    console.error('Image Search Error:', error)
+    console.error('[VisionAPI Search] Error:', error)
+    if (error.message && error.message.toLowerCase().includes('credential')) {
+      return res
+        .status(500)
+        .json({ message: 'Image search authentication failed. Please check server logs.' })
+    }
     res.status(500).json({ message: `Failed to search by image: ${error.message}` })
+  } finally {
+    // Clean up the uploaded file after processing
+    if (imagePath) {
+      try {
+        await fsp.unlink(imagePath)
+        console.log(`[VisionAPI Search] Cleaned up uploaded file: ${imagePath}`)
+      } catch (cleanupError) {
+        console.error(`[VisionAPI Search] Error cleaning up file ${imagePath}:`, cleanupError)
+      }
+    }
   }
 }
 
@@ -392,27 +504,76 @@ exports.searchProductsByImage = async (req, res) => {
 exports.getNewCollectionProducts = async (req, res) => {
   try {
     const requestedLimit = parseInt(req.query.limit, 10)
-    const limit = !isNaN(requestedLimit) && requestedLimit > 0 ? requestedLimit : 3
+    const limit = !isNaN(requestedLimit) && requestedLimit > 0 ? requestedLimit : 4 // Default to 4 or a reasonable number
 
     console.log(`[New Collection] Fetching up to ${limit} in-stock products.`)
 
-    // Find products marked as new collection
     const newCollectionProducts = await Product.find({ isNewCollection: true }).sort({
       createdAt: -1,
-    }) // Fetch all new first
+    })
 
-    // Filter results based on the 'isInStock' virtual property AFTER fetching
     const inStockNewCollection = newCollectionProducts
       .filter((p) => p.isInStock) // Use the virtual getter
-      .slice(0, limit) // Apply limit to the filtered results
+      .slice(0, limit)
 
     console.log(
       `[New Collection] Found ${inStockNewCollection.length} in-stock products marked as new.`,
     )
-    res.status(200).json(inStockNewCollection) // Send filtered list (includes virtuals)
+    res.status(200).json(inStockNewCollection)
   } catch (error) {
     console.error('Error fetching new collection products:', error)
     res.status(500).json({ message: 'Failed to fetch new collection products.' })
+  }
+}
+
+// --- Utility for Atomic Stock Decrease ---
+async function decreaseStockAtomically(productId, size, quantityToDecrease = 1, session = null) {
+  const stockField = `stockDetails.${size}`
+  try {
+    const updateOptions = { new: true }
+    if (session) {
+      updateOptions.session = session
+    }
+
+    const updatedProduct = await Product.findOneAndUpdate(
+      {
+        _id: productId,
+        [stockField]: { $gte: quantityToDecrease },
+      },
+      {
+        $inc: { [stockField]: -quantityToDecrease },
+      },
+      updateOptions,
+    )
+
+    if (!updatedProduct) {
+      // More detailed check for failure reason
+      const product = await Product.findById(productId).select('stockDetails').lean()
+      if (!product) {
+        throw new Error(`Product with ID ${productId} not found.`)
+      }
+      if (!product.stockDetails || product.stockDetails.get(size) === undefined) {
+        throw new Error(`Size "${size}" not found in stock details for product ${productId}.`)
+      }
+      // If product and size exist, it means stock was insufficient
+      throw new Error(
+        `Insufficient stock for product ${productId}, size ${size}. Available: ${product.stockDetails.get(
+          size,
+        )}, Required: ${quantityToDecrease}.`,
+      )
+    }
+
+    console.log(
+      `Successfully decreased stock for product ${productId}, size ${size}. New quantity: ${updatedProduct.stockDetails.get(
+        size,
+      )}`,
+    )
+    return updatedProduct
+  } catch (error) {
+    console.error(
+      `Error during atomic stock decrease for product ${productId}, size ${size}: ${error.message}`,
+    )
+    throw error // Re-throw to be handled by calling function
   }
 }
 

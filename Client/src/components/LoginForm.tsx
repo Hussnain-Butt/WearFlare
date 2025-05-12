@@ -285,7 +285,10 @@ const LoginForm: React.FC = () => {
                 <span>Remember for 30 days</span>
               </label>
               {/* UPDATED: text-trendzone-light-blue -> text-accent (or text-primary) */}
-              <Link to="/forgot-password" className="font-semibold text-accent hover:underline">
+              <Link
+                to="/forgot-password"
+                className="font-semibold text-trendzone-light-blue hover:text-trendzone-light-blue"
+              >
                 Forgot password
               </Link>
             </motion.div>
@@ -323,7 +326,10 @@ const LoginForm: React.FC = () => {
           >
             Don't have an account?{' '}
             {/* UPDATED: text-trendzone-light-blue -> text-accent (or text-primary) */}
-            <Link to="/signup" className="text-accent font-semibold hover:underline">
+            <Link
+              to="/signup"
+              className="text-trendzone-light-blue font-semibold hover:underline hover:text-trendzone-light-blue"
+            >
               Sign up
             </Link>
           </motion.p>

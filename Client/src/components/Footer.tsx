@@ -65,14 +65,17 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   to="/terms"
-                  // hover:text-trendzone-light-blue -> hover:text-accent
-                  className="hover:text-accent transition-colors duration-200"
+                  // hover:text-trendzone-light-blue -> hover:text-trendzone-light-blue
+                  className="hover:text-trendzone-light-blue transition-colors duration-200"
                 >
                   Terms & Conditions
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="hover:text-accent transition-colors duration-200">
+                <Link
+                  to="/privacy"
+                  className="hover:text-trendzone-light-blue transition-colors duration-200"
+                >
                   Privacy Policy
                 </Link>
               </li>
@@ -86,12 +89,15 @@ const Footer: React.FC = () => {
             </h3>
             <ul className="space-y-3 text-sm">
               {/* <li>
-                <Link to="/about-us" className="hover:text-accent transition-colors duration-200">
+                <Link to="/about-us" className="hover:text-trendzone-light-blue transition-colors duration-200">
                   About Us
                 </Link>
               </li> */}
               <li>
-                <Link to="/contact" className="hover:text-accent transition-colors duration-200">
+                <Link
+                  to="/contact"
+                  className="hover:text-trendzone-light-blue transition-colors duration-200"
+                >
                   Contact
                 </Link>
               </li>
@@ -105,12 +111,18 @@ const Footer: React.FC = () => {
             </h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/men" className="hover:text-accent transition-colors duration-200">
+                <Link
+                  to="/men"
+                  className="hover:text-trendzone-light-blue transition-colors duration-200"
+                >
                   Men
                 </Link>
               </li>
               <li>
-                <Link to="/women" className="hover:text-accent transition-colors duration-200">
+                <Link
+                  to="/women"
+                  className="hover:text-trendzone-light-blue transition-colors duration-200"
+                >
                   Women
                 </Link>
               </li>
@@ -125,7 +137,7 @@ const Footer: React.FC = () => {
             <Link
               to="/"
               // text-white -> text-foreground
-              className="text-2xl lg:text-3xl font-bold mb-5 text-foreground uppercase tracking-widest"
+              className="text-2xl lg:text-3xl font-bold mb-5 text-foreground uppercase tracking-widest hover:text-trendzone-light-blue"
             >
               WearFlare
             </Link>
@@ -149,14 +161,14 @@ const Footer: React.FC = () => {
             <Link
               to="/terms"
               // text-gray-400 -> text-muted-foreground
-              // hover:text-trendzone-light-blue -> hover:text-accent
-              className="text-xs text-muted-foreground hover:text-accent transition-colors duration-200"
+              // hover:text-trendzone-light-blue -> hover:text-trendzone-light-blue
+              className="text-xs text-muted-foreground hover:text-trendzone-light-blue transition-colors duration-200"
             >
               Terms of Service
             </Link>
             <Link
               to="/privacy"
-              className="text-xs text-muted-foreground hover:text-accent transition-colors duration-200"
+              className="text-xs text-muted-foreground hover:text-trendzone-light-blue transition-colors duration-200"
             >
               Privacy Policy
             </Link>
