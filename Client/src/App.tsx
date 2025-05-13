@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 // --- Layouts ---
 import DashboardLayout from './admin/layout/DashboardLayout'
-import ProductManagerLayout from './product-manager/layout/ProductManagerLayout.jsx'
 import PublicLayout from './layouts/PublicLayout'
 
 // --- Core Components ---
